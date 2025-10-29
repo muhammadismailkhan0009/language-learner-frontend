@@ -9,6 +9,7 @@ import {redirect} from "next/navigation";
 import FlashCardView from "@/app/flashcards/_client_components/FlashCardView";
 import FlashCardActions from "@/app/flashcards/_client_components/FlashCardActions";
 import {Rating} from "@/lib/types/Rating";
+import {playCardAudio} from "@/lib/ttsGoogle";
 
 type FlashCardStudyViewProps = {
     deckId: string;
