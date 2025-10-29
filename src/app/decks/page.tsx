@@ -10,7 +10,6 @@ export default async function DecksPage() {
 
     return (
         <div className="">
-            <Header></Header>
             <main className="">
                 <h1 className="">Decks ({mode})</h1>
                 <Table>

@@ -9,7 +9,6 @@ export default function DashBoardPage() {
 
     return (
         <div className="">
-            <Header></Header>
             <div className="">
                 <form className="" action={generateFlashCards}>
                     <Label htmlFor="message">Scanerio</Label>
