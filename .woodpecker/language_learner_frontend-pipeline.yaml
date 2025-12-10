@@ -1,0 +1,37 @@
+when:
+  - event: push
+    branch: main
+steps:
+  - name: build the docker image from latest commit
+    image: docker:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    commands:
+      - docker build -t language_learner_frontend:${CI_COMMIT_SHA} .
+
+  - name: stop and remove old docker image
+    image: docker:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    commands:
+      # Stop and remove the old application container
+      - docker stop language_learner_frontend || true
+      - docker rm language_learner_frontend || true
+
+  - name: deploy the latest build
+    image: docker:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    when:
+      status:
+        - success
+
+    commands:
+      # Deploy the new container
+      - docker run -d --name language_learner_frontend -p 3010:3000
+        language_learner_frontend:${CI_COMMIT_SHA}
+      - |
+        docker images --format "{{.Repository}}:{{.Tag}}" \
+        | grep "^language_learner_frontend:" \
+        | grep -v "language_learner_frontend:${CI_COMMIT_SHA}" \
+        | xargs -r docker rmi -f

@@ -1,9 +1,9 @@
 "use client"
 
-import {FlashCard} from "@/lib/types/responses/FlashCard";
-import {Card, CardContent} from "@/components/ui/card";
-import {Button} from "@/components/ui/button";
-import {playCardAudio} from "@/lib/ttsGoogle";
+import { FlashCard } from "@/lib/types/responses/FlashCard";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { playCardAudio } from "@/lib/ttsGoogle";
 
 type FlashCardViewProps = {
     flipped: boolean;
@@ -11,12 +11,13 @@ type FlashCardViewProps = {
 }
 export default function FlashCardView(props: FlashCardViewProps) {
 
+    console.log(props.card);
     return (
         <Card>
             <CardContent>
                 {props.flipped ? props.card.back.text : props.card.front.text}
             </CardContent>
-            <Button onClick={() => playCardAudio(props.card.id,props.card.front.text,"de")}>Play Audio</Button>
+            <Button onClick={() => playCardAudio(props.card.id, props.card.isReverse ? props.card.back.text : props.card.front.text, "de")}>Play Audio</Button>
 
         </Card>
     )

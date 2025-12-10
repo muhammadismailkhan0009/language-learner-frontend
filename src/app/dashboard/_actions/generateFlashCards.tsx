@@ -1,6 +1,6 @@
 "use server"
 
-import { sendGenerateFlashCardsRequest } from "@/lib/backendApiCalls";
+import { sendGenerateFlashCardsRequest } from "@/lib/clientbackendApiCalls";
 import { redirect } from "next/navigation";
 
 export async function generateFlashCards(formData: FormData) {

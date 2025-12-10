@@ -1,8 +1,7 @@
-import { Header } from "@/components/common/app-header";
-import {fetchDecksList, fetchFlashCardsData} from "@/lib/backendApiCalls";
 import { FlashCardMode } from "@/lib/types/requests/FlashCardMode"
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import OpenFlashCardsButton from "./_client_components/OpenFlashCards";
+import { fetchDecksList } from "@/lib/serverBackedApiCalls";
 
 export default async function DecksPage() {
     const mode = FlashCardMode.FRESH;

@@ -10,11 +10,12 @@ export default function DashBoardPage() {
     return (
         <div className="">
             <div className="">
-                <form className="" action={generateFlashCards}>
-                    <Label htmlFor="message">Scanerio</Label>
-                    <Textarea placeholder="Describe your scenario here." id="message" />
-                    <Button type="submit">Generate</Button>
-                </form>
+                {/*<form className="" action={generateFlashCards}>*/}
+                {/*    <Label htmlFor="message">Scanerio</Label>*/}
+                {/*    <Textarea placeholder="Describe your scenario here." id="message" />*/}
+                {/*    <Button type="submit">Generate</Button>*/}
+                {/*</form>*/}
+                <h1>This is moved for later sprint.</h1>
             </div>
         </div>
 

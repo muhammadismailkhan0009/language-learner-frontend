@@ -41,3 +41,6 @@ yarn-error.log*
 next-env.d.ts
 
 .idea
+.idea/inspectionProfiles/Project_Default.xml
+.vscode/launch.json
+.idea/inspectionProfiles/Project_Default.xml
