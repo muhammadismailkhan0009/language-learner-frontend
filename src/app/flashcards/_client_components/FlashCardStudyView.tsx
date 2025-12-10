@@ -24,7 +24,7 @@ export function FlashcardStudyView({ deckId }: FlashCardStudyViewProps) {
 
     async function loadNextCard() {
 
-        let response = await fetchFlashCardsAction(deckId);
+        const response = await fetchFlashCardsAction(deckId);
         console.log("response got.")
         if (response != null) {
             setNextCard(response);
@@ -56,6 +56,9 @@ export function FlashcardStudyView({ deckId }: FlashCardStudyViewProps) {
     }
 
     async function handleReviewAction(rating: Rating) {
+        if (!nextCard) {
+            throw new Error("handleReviewAction called without an active card");
+        }
         await reviewStudiedCard(deckId, nextCard.id, rating);
         loadNextCard();
     }

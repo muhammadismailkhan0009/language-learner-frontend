@@ -26,7 +26,7 @@ export async function callRegisterUserApi(email: string, password: string): Prom
 export async function registerUser(email: string, password: string) {
 
     console.log(email);
-    let response = await callRegisterUserApi(email, password);
+    const response = await callRegisterUserApi(email, password);
     return response;
 
 

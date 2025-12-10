@@ -8,7 +8,7 @@ export async function registerUserAction(email: string, password: string) {
     
 
     console.log(email);
-    let response = await registerUser(email, password);
+    const response = await registerUser(email, password);
     if (response.status === 200) {
         const cookieStore = await cookies()
 
