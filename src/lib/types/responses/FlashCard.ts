@@ -3,6 +3,7 @@ export type FlashCard = {
   front:Front;
   back: Back;
   isReverse: boolean;
+  isRevision: boolean;
   relatedTo: string | null;
   scenario: string;
 };

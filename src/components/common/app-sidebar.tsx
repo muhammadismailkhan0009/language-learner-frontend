@@ -19,6 +19,11 @@ const items = [
         url: "/decks",
         icon: Inbox,
     },
+    {
+        title: "Decks To Revise",
+        url: "/revision",
+        icon: Inbox,
+    },
 ]
 export function AppSidebar() {
     return (

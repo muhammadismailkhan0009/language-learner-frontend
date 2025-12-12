@@ -48,11 +48,42 @@ export async function fetchNextFlashCardToStudy(deckId: string): Promise<AxiosRe
 
 }
 
+export async function fetchNextFlashCardToRevise(deckId: string): Promise<AxiosResponse<ApiResponse<FlashCard>>> {
+
+    // Axios call (typed)
+    const response = await api.get<ApiResponse<FlashCard>>(`/api/decks/${deckId}/cards/revision/next/v1`,
+        {
+            params: {
+                userId: (await cookies()).get("userId")?.value
+            }
+        }
+    );
+
+
+    return response;
+
+}
+
 export async function fetchDecksList(mode: FlashCardMode): Promise<AxiosResponse<ApiResponse<DeckView[]>>> {
 
 
     // Axios call (typed)
     const response = await api.get<ApiResponse<DeckView[]>>("/api/decks/v1", {
+        params: {
+            mode: mode,
+            userId: (await cookies()).get("userId")?.value
+        }
+    });
+
+    return response;
+
+}
+
+export async function fetchRevisionList(mode: FlashCardMode): Promise<AxiosResponse<ApiResponse<DeckView[]>>> {
+
+
+    // Axios call (typed)
+    const response = await api.get<ApiResponse<DeckView[]>>("/api/decks/revision/v1", {
         params: {
             mode: mode,
             userId: (await cookies()).get("userId")?.value

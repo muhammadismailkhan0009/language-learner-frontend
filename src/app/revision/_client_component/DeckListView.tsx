@@ -1,13 +1,10 @@
-import { FlashCardMode } from "@/lib/types/requests/FlashCardMode"
+'use client'
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
-import { fetchDecksList } from "@/lib/serverBackedApiCalls";
 import { Button } from "@/components/ui/button";
-import { redirect } from "next/navigation";
-import { Link } from "lucide-react";
 
-export default async function DecksPage() {
-    const mode = FlashCardMode.FRESH;
-    const decks = await fetchDecksList(mode);
+export default function DeckListView({ input , output }) {
+
+    const { mode, decks } = input;
 
     return (
         <div className="">
@@ -15,7 +12,7 @@ export default async function DecksPage() {
                 <h1 className="">Decks ({mode})</h1>
                 <Table>
                     <TableBody>
-                        {decks.data.response.map((deck) => (
+                        {decks.map((deck) => (
                             <TableRow key={deck.id}>
                                 <TableCell>{deck.name}</TableCell>
                                 <TableCell>
@@ -23,7 +20,6 @@ export default async function DecksPage() {
                                         <a href={`/flashcards?deckId=${deck.id}`}>
                                             Study
                                         </a>
-
                                     </Button>
                                 </TableCell>
                             </TableRow>

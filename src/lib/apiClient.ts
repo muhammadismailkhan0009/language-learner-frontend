@@ -6,17 +6,15 @@ export const api = axios.create({
 });
 
 function getApiBaseUrl() {
-  if (typeof window === "undefined") {
+  const isLive: boolean = false;
+  if (isLive) {
     // SSR fallback – keep predictable
+    console.log("it is fallback")
     return "https://api-langlearn.myriadcode.com";
   }
-
-  const host = window.location.hostname;
-
-  if (host === "localhost" || host === "127.0.0.1") {
+  else {
     return "http://localhost:8080";
   }
 
-  // production (explicit, no parsing)
-  return "https://api-langlearn.myriadcode.com";
+
 }
