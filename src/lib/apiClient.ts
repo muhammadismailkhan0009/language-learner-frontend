@@ -6,7 +6,7 @@ export const api = axios.create({
 });
 
 function getApiBaseUrl() {
-  const isLive: boolean = true;
+  const isLive: boolean = false;
   if (isLive) {
     // SSR fallback – keep predictable
     console.log("it is fallback")

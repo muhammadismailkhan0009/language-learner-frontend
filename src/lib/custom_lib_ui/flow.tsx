@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react/no-unescaped-entities */
+
 // src/flow.tsx
 import React, { useEffect, useRef, useState } from "react";
 
@@ -138,25 +141,8 @@ export function FlowRunner<D extends FlowData = FlowData>(
     const [busy, setBusy] = useState(false); // for action steps
     const isMountedRef = useRef(true);
 
-    useEffect(() => {
-        return () => {
-            isMountedRef.current = false;
-        };
-    }, []);
-
     const { currentStep, data } = state;
-    const step = flow.steps[currentStep];
 
-    if (!step) {
-        // Fails fast if flow is misconfigured.
-        return (
-            <div>
-                <strong>FlowRunner error:</strong> Unknown step "{currentStep}".
-            </div>
-        );
-    }
-
-    // Helper to apply a next step (if returned) and ensure React re-renders
     const applyTransition = (nextStepName?: string | void) => {
         if (!isMountedRef.current) return;
 
@@ -175,9 +161,13 @@ export function FlowRunner<D extends FlowData = FlowData>(
         }
     };
 
-    // -----------------------
-    // ACTION STEP HANDLING
-    // -----------------------
+    useEffect(() => {
+        return () => {
+            isMountedRef.current = false;
+        };
+    }, []);
+
+    const step = flow.steps[currentStep];
 
     // If the step is an action (no view), run it in an effect.
     const isActionStep = (step as any).action && !(step as any).view;
@@ -204,6 +194,25 @@ export function FlowRunner<D extends FlowData = FlowData>(
         // We only want to run this when step changes, not on arbitrary data changes.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentStep]);
+
+
+
+    if (!step) {
+        // Fails fast if flow is misconfigured.
+        return (
+            <div>
+                <strong>FlowRunner error:</strong> Unknown step "{currentStep}".
+            </div>
+        );
+    }
+
+    // Helper to apply a next step (if returned) and ensure React re-renders
+
+    // -----------------------
+    // ACTION STEP HANDLING
+    // -----------------------
+
+
 
     // If it's an action step, show a simple placeholder or nothing.
     if (isActionStep) {
