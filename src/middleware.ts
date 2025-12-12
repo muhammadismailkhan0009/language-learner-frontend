@@ -25,5 +25,6 @@ export const config = {
     matcher: [
         "/decks/:path*",
         "/flashcards/:path*",
+        "/revision/:path"
     ],
 };
