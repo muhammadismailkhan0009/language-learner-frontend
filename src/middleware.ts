@@ -23,6 +23,7 @@ export function middleware(request: NextRequest) {
  */
 export const config = {
     matcher: [
+        "/dashboard/:path",
         "/decks/:path*",
         "/flashcards/:path*",
         "/revision/:path"
