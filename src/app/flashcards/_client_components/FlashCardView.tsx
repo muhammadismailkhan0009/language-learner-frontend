@@ -20,6 +20,7 @@ export default function FlashCardView(props: FlashCardViewProps) {
     console.log(props.input.card);
     return (
         <div>
+            
             <Card>
                 <CardContent>
                     {props.input.flipped ? props.input.card.back.text : props.input.card.front.text}

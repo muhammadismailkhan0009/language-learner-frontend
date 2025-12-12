@@ -5,6 +5,7 @@ import FlashCardView from "../_client_components/FlashCardView";
 import FlashCardActions, { ShowCardOutput } from "../_client_components/FlashCardActions";
 import { Rating } from "@/lib/types/Rating";
 import { reviewStudiedCard } from "@/lib/clientbackendApiCalls";
+import NoCardUI from "../_client_components/NoCardUI";
 
 
 interface StudyFlashCardData {
@@ -29,7 +30,21 @@ export const studyFlashCard = defineFlow<StudyFlashCardData>({
             data.flowData.flipped = false;
             return { ok: true }
         },
-        onOutput: () => "studyCard"
+        onOutput: () => "decideCardState"
+    },
+
+    decideCardState: {
+        input: (data) => ({ card: data.flowData.card }),
+        action: ({ card }) => !!card,
+        onOutput: (_, exists) => {
+            return exists ? "studyCard" : "noCard"
+        }
+    },
+
+    noCard: {
+        input: (data) => ({ card: data.flowData.card }),
+        view: NoCardUI,
+        onOutput: () => "null"
     },
 
     studyCard: {
