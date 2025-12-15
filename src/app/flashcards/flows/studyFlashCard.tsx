@@ -72,7 +72,7 @@ export const studyFlashCard = defineFlow<StudyFlashCardData>({
     reviewCard: {
         input: (data) => ({ deckId: data.deckId, cardId: data.flowData.card?.id, rating: data.flowData.rating }),
         action: async ({ deckId, cardId, rating }, data) => {
-            await reviewStudiedCard(deckId, cardId, rating);
+            reviewStudiedCard(deckId, cardId, rating);
             return { ok: true }
         },
         onOutput: (data) => {
