@@ -44,7 +44,7 @@ export const studyFlashCard = defineFlow<StudyFlashCardData>({
     noCard: {
         input: (data) => ({ card: data.flowData.card }),
         view: NoCardUI,
-        onOutput: () => "null"
+        onOutput: () => { }
     },
 
     studyCard: {
@@ -75,7 +75,8 @@ export const studyFlashCard = defineFlow<StudyFlashCardData>({
             await reviewStudiedCard(deckId, cardId, rating);
             return { ok: true }
         },
-        onOutput: (data) => {
+        onOutput: (data, _, events) => {
+            events!.studiedCounter.emit((c:number) => c + 1);
             return "fetchCardData";
         }
     },
