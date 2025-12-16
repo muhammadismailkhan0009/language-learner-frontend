@@ -2,7 +2,6 @@
 
 import { createFlowChannel, FlowRunner } from "@/lib/custom_lib_ui/flow";
 import { studyFlashCard } from "../flows/studyFlashCard";
-import { useRef } from "react";
 import { studyCounterFlow } from "../flows/studyCounterFlow";
 
 type FlashCardStudyViewProps = {

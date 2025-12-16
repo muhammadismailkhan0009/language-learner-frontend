@@ -53,7 +53,7 @@ export const studyFlashCard = defineFlow<StudyFlashCardData>({
             flipped: data.flowData.flipped
         }),
         view: FlashCardView,
-        onOutput: (data, output: ShowCardOutput) => {
+        onOutput: (data, output: ShowCardOutput, events) => {
             if (output.action === "flip") {
                 data.flowData.flipped = true;
                 return "studyCard";
@@ -64,6 +64,8 @@ export const studyFlashCard = defineFlow<StudyFlashCardData>({
                 return "reviewCard";
             }
             if (output.action === "next") {
+                events!.studiedCounter.emit((c: number) => c + 1);
+
                 return "fetchCardData";
             }
         }
@@ -76,7 +78,7 @@ export const studyFlashCard = defineFlow<StudyFlashCardData>({
             return { ok: true }
         },
         onOutput: (data, _, events) => {
-            events!.studiedCounter.emit((c:number) => c + 1);
+            events!.studiedCounter.emit((c: number) => c + 1);
             return "fetchCardData";
         }
     },
