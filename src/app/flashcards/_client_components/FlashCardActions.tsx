@@ -37,8 +37,10 @@ type CardActionsInternalProps = {
 function ReviewAction(actions: CardActionsInternalProps) {
 
     return (
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-3 flex-wrap justify-center">
             <Button
+                size="lg"
+                className="text-lg px-6 py-3 min-w-[100px]"
                 onClick={() => actions.output.emit({ action: "rate", rating: Rating.EASY })}
                 disabled={actions.input.disabled}
             >
@@ -46,6 +48,8 @@ function ReviewAction(actions: CardActionsInternalProps) {
             </Button>
 
             <Button
+                size="lg"
+                className="text-lg px-6 py-3 min-w-[100px]"
                 onClick={() => actions.output.emit({ action: "rate", rating: Rating.GOOD })}
                 disabled={actions.input.disabled}
             >
@@ -53,6 +57,8 @@ function ReviewAction(actions: CardActionsInternalProps) {
             </Button>
 
             <Button
+                size="lg"
+                className="text-lg px-6 py-3 min-w-[100px]"
                 onClick={() => actions.output.emit({ action: "rate", rating: Rating.HARD })}
                 disabled={actions.input.disabled}
             >
@@ -60,6 +66,8 @@ function ReviewAction(actions: CardActionsInternalProps) {
             </Button>
 
             <Button
+                size="lg"
+                className="text-lg px-6 py-3 min-w-[100px]"
                 onClick={() => actions.output.emit({ action: "rate", rating: Rating.AGAIN })}
                 disabled={actions.input.disabled}
             >
@@ -71,10 +79,12 @@ function ReviewAction(actions: CardActionsInternalProps) {
 
 export default function FlashCardActions(actions: CardActionsProps) {
     return (
-        <div className="flex gap-4">
+        <div className="flex gap-4 justify-center">
             {!actions.input.flipped ?
                 // if
                 (<Button 
+                    size="lg"
+                    className="text-lg px-8 py-3"
                     onClick={() => actions.output.emit({ action: "flip" })}
                     disabled={actions.input.disabled}
                 >
@@ -83,6 +93,8 @@ export default function FlashCardActions(actions: CardActionsProps) {
                 : actions.input.isRevision ?
                     (
                         (<Button 
+                            size="lg"
+                            className="text-lg px-8 py-3"
                             onClick={() => actions.output.emit({ action: "next" })}
                             disabled={actions.input.disabled}
                         >

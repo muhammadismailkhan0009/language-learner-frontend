@@ -13,18 +13,17 @@ export function FlashcardStudyView({ deckId }: FlashCardStudyViewProps) {
     const studiedCounter = createFlowChannel<number>(0);
 
     return (
-
-        <div className="flex flex-col items-center gap-4">
-
-
+        <div className="w-full min-h-screen py-6">
             {/* Counter UI (independent flow) */}
-            <FlowRunner
-                flow={studyCounterFlow}
-                initialData={{}}
-                eventChannels={{ studiedCounter }}
-            />
+            <div className="mb-6">
+                <FlowRunner
+                    flow={studyCounterFlow}
+                    initialData={{}}
+                    eventChannels={{ studiedCounter }}
+                />
+            </div>
 
-
+            {/* Flash Cards */}
             <FlowRunner
                 flow={studyFlashCard}
                 initialData={{
@@ -35,10 +34,7 @@ export function FlashcardStudyView({ deckId }: FlashCardStudyViewProps) {
                     },
                 }}
                 eventChannels={{ studiedCounter }}
-
             />
-
-
         </div>
     );
 }
