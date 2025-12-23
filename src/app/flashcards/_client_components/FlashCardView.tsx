@@ -23,11 +23,7 @@ type FlashCardViewProps = {
 export default function FlashCardView(props: FlashCardViewProps) {
     const handleCardAction = (cardId: string, action: CardActionWithoutId) => {
         // Add cardId to the action and emit
-        if (action.action === "flip") {
-            props.output.emit({ ...action, cardId });
-        } else if (action.action === "rate") {
-            props.output.emit({ ...action, cardId });
-        } else if (action.action === "next") {
+        if (action.action === "flip" || action.action === "rate" || action.action === "next") {
             props.output.emit({ ...action, cardId });
         }
     };
@@ -40,18 +36,18 @@ export default function FlashCardView(props: FlashCardViewProps) {
                         <Card className="h-full flex flex-col">
                             <CardContent className="p-4 flex-1 flex flex-col justify-center items-center ">
                                 <div className="text-2xl font-normal text-center leading-relaxed mb-6">
-                                    {cardWithState.flipped 
-                                        ? cardWithState.card.back.text 
+                                    {cardWithState.flipped
+                                        ? cardWithState.card.back.text
                                         : cardWithState.card.front.text}
                                 </div>
-                                <Button 
+                                <Button
                                     size="lg"
                                     className="text-lg px-6 py-3"
                                     onClick={() => playCardAudio(
-                                        cardWithState.card.id, 
-                                        cardWithState.card.isReverse 
-                                            ? cardWithState.card.back.text 
-                                            : cardWithState.card.front.text, 
+                                        cardWithState.card.id,
+                                        cardWithState.card.isReverse
+                                            ? cardWithState.card.back.text
+                                            : cardWithState.card.front.text,
                                         "de"
                                     )}
                                     disabled={cardWithState.disabled}
@@ -61,7 +57,7 @@ export default function FlashCardView(props: FlashCardViewProps) {
                             </CardContent>
                         </Card>
                         <FlashCardActions
-                            input={{ 
+                            input={{
                                 flipped: cardWithState.flipped,
                                 isRevision: cardWithState.card.isRevision,
                                 disabled: cardWithState.disabled

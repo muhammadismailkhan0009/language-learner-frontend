@@ -2,7 +2,7 @@ import { defineFlow } from "@/lib/custom_lib_ui/flow";
 import fetchFlashCardsListAction from "../_server_actions/fetchFlashCardsListAction";
 import { FlashCard } from "@/lib/types/responses/FlashCard";
 import FlashCardView from "../_client_components/FlashCardView";
-import FlashCardActions, { ShowCardOutput } from "../_client_components/FlashCardActions";
+import { ShowCardOutput } from "../_client_components/FlashCardActions";
 import { Rating } from "@/lib/types/Rating";
 import { reviewStudiedCard } from "@/lib/clientbackendApiCalls";
 import NoCardUI from "../_client_components/NoCardUI";
@@ -83,7 +83,7 @@ export const studyFlashCard = defineFlow<StudyFlashCardData>({
             const cards = await fetchFlashCardsListAction(deckId);
             console.log(cards);
             // Initialize completely with defaults
-            data.flowData.cards = cards && cards.length > 0 
+            data.flowData.cards = cards && cards.length > 0
                 ? CardOps.initializeCards(cards)
                 : [];
             data.flowData.activeCardId = null;
@@ -93,7 +93,7 @@ export const studyFlashCard = defineFlow<StudyFlashCardData>({
     },
 
     decideCardState: {
-        input: (data) => ({ 
+        input: (data) => ({
             hasCards: data.flowData.cards.length > 0
         }),
         action: ({ hasCards }) => hasCards,
@@ -132,7 +132,7 @@ export const studyFlashCard = defineFlow<StudyFlashCardData>({
                 CardOps.setRating(data.flowData, cardId, output.rating);
                 return "reviewCard";
             }
-            
+
             if (output.action === "next") {
                 // For revision cards, just mark as studied and fetch next batch
                 events!.studiedCounter.emit((c: number) => c + 1);
@@ -145,9 +145,9 @@ export const studyFlashCard = defineFlow<StudyFlashCardData>({
     reviewCard: {
         input: (data) => {
             const activeCard = CardOps.getActiveCard(data.flowData);
-            return { 
-                deckId: data.deckId, 
-                cardId: data.flowData.activeCardId!, 
+            return {
+                deckId: data.deckId,
+                cardId: data.flowData.activeCardId!,
                 rating: activeCard!.rating!
             };
         },
