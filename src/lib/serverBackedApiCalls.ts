@@ -64,6 +64,21 @@ export async function fetchNextFlashCardToRevise(deckId: string): Promise<AxiosR
 
 }
 
+export async function fetchFlashCardsList(deckId: string): Promise<AxiosResponse<ApiResponse<FlashCard[]>>> {
+
+    // Axios call (typed)
+    const response = await api.get<ApiResponse<FlashCard[]>>(`/api/decks/${deckId}/cards/next/v1`,
+        {
+            params: {
+                userId: (await cookies()).get("userId")?.value
+            }
+        }
+    );
+
+    return response;
+
+}
+
 export async function fetchDecksList(mode: FlashCardMode): Promise<AxiosResponse<ApiResponse<DeckView[]>>> {
 
 

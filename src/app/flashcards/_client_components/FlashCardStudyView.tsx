@@ -30,9 +30,9 @@ export function FlashcardStudyView({ deckId }: FlashCardStudyViewProps) {
                 initialData={{
                     deckId: deckId,
                     flowData: {
-                        card: null,
-                        flipped: false,
-                        rating: null
+                        cards: [],
+                        cardData: new Map(),
+                        activeCardId: null
                     },
                 }}
                 eventChannels={{ studiedCounter }}
