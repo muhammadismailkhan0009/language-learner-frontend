@@ -13,16 +13,67 @@ interface StudyFlashCardData {
     flowData: FlowDataHolder
 }
 
-interface FlowDataHolder {
-    cards: FlashCard[];
-    cardData: Map<string, CardData>;
-    activeCardId: string | null; // Track which card is currently being acted upon
-}
-
-interface CardData {
+// Co-located: card and its state together
+interface CardWithState {
+    card: FlashCard;
     flipped: boolean;
     rating: Rating | null;
 }
+
+interface FlowDataHolder {
+    // Co-located state: cards with their metadata together
+    cards: CardWithState[];
+    // Track which card is currently being acted upon
+    activeCardId: string | null;
+}
+
+// Helper operations for card state management
+const CardOps = {
+    // Get card state by ID
+    getCard: (data: FlowDataHolder, cardId: string): CardWithState | undefined => {
+        return data.cards.find(c => c.card.id === cardId);
+    },
+
+    // Get active card
+    getActiveCard: (data: FlowDataHolder): CardWithState | undefined => {
+        if (!data.activeCardId) return undefined;
+        return CardOps.getCard(data, data.activeCardId);
+    },
+
+    // Set card flipped state
+    setFlipped: (data: FlowDataHolder, cardId: string, flipped: boolean): void => {
+        const cardWithState = CardOps.getCard(data, cardId);
+        if (cardWithState) {
+            cardWithState.flipped = flipped;
+        }
+    },
+
+    // Set card rating
+    setRating: (data: FlowDataHolder, cardId: string, rating: Rating): void => {
+        const cardWithState = CardOps.getCard(data, cardId);
+        if (cardWithState) {
+            cardWithState.rating = rating;
+        }
+    },
+
+    // Initialize cards from FlashCard array
+    initializeCards: (cards: FlashCard[]): CardWithState[] => {
+        return cards.map(card => ({
+            card,
+            flipped: false,
+            rating: null
+        }));
+    },
+
+    // Get cards ready for display (with disabled state)
+    getCardsForDisplay: (data: FlowDataHolder) => {
+        return data.cards.map(cardWithState => ({
+            card: cardWithState.card,
+            flipped: cardWithState.flipped,
+            disabled: data.activeCardId !== null && data.activeCardId !== cardWithState.card.id
+        }));
+    }
+};
 export const studyFlashCard = defineFlow<StudyFlashCardData>({
 
 
@@ -31,22 +82,11 @@ export const studyFlashCard = defineFlow<StudyFlashCardData>({
         action: async ({ deckId }, data) => {
             const cards = await fetchFlashCardsListAction(deckId);
             console.log(cards);
-            if (cards && cards.length > 0) {
-                data.flowData.cards = cards;
-                data.flowData.cardData = new Map();
-                data.flowData.activeCardId = null;
-                // Initialize card data for all cards
-                cards.forEach(card => {
-                    data.flowData.cardData.set(card.id, {
-                        flipped: false,
-                        rating: null
-                    });
-                });
-            } else {
-                data.flowData.cards = [];
-                data.flowData.cardData = new Map();
-                data.flowData.activeCardId = null;
-            }
+            // Initialize completely with defaults
+            data.flowData.cards = cards && cards.length > 0 
+                ? CardOps.initializeCards(cards)
+                : [];
+            data.flowData.activeCardId = null;
             return { ok: true }
         },
         onOutput: () => "decideCardState"
@@ -70,48 +110,32 @@ export const studyFlashCard = defineFlow<StudyFlashCardData>({
 
     studyCard: {
         input: (data) => {
-            // Prepare cards with their states for display
-            const cardsWithState = data.flowData.cards.map(card => {
-                const cardData = data.flowData.cardData.get(card.id) || { flipped: false, rating: null };
-                // Disable "Show Answer" buttons for other cards when:
-                // 1. A card is flipped (activeCardId is set and it's not this card)
-                // 2. Any card has an activeCardId set (being rated)
-                const isShowAnswerDisabled = data.flowData.activeCardId !== null && data.flowData.activeCardId !== card.id;
-                return {
-                    card,
-                    flipped: cardData.flipped,
-                    disabled: isShowAnswerDisabled
-                };
-            });
+            // Use helper to get cards ready for display
             return {
-                cards: cardsWithState
+                cards: CardOps.getCardsForDisplay(data.flowData)
             };
         },
         view: FlashCardView,
         onOutput: (data, output: ShowCardOutput, events) => {
             const cardId = output.cardId;
-            const cardData = data.flowData.cardData.get(cardId) || { flipped: false, rating: null };
 
             if (output.action === "flip") {
                 // Set active card to disable other "Show Answer" buttons
-                // Keep activeCardId set until the card is rated and we fetch next batch
                 data.flowData.activeCardId = cardId;
-                cardData.flipped = true;
-                data.flowData.cardData.set(cardId, cardData);
+                CardOps.setFlipped(data.flowData, cardId, true);
                 return "studyCard";
             }
 
             if (output.action === "rate") {
-                // Keep activeCardId set (it should already be set from flip, but ensure it's set)
+                // Set active card and rating
                 data.flowData.activeCardId = cardId;
-                cardData.rating = output.rating;
-                data.flowData.cardData.set(cardId, cardData);
+                CardOps.setRating(data.flowData, cardId, output.rating);
                 return "reviewCard";
             }
+            
             if (output.action === "next") {
                 // For revision cards, just mark as studied and fetch next batch
                 events!.studiedCounter.emit((c: number) => c + 1);
-                // Clear activeCardId before fetching next batch
                 data.flowData.activeCardId = null;
                 return "fetchCardsData";
             }
@@ -120,12 +144,11 @@ export const studyFlashCard = defineFlow<StudyFlashCardData>({
 
     reviewCard: {
         input: (data) => {
-            const cardId = data.flowData.activeCardId!;
-            const cardData = data.flowData.cardData.get(cardId) || { flipped: false, rating: null };
+            const activeCard = CardOps.getActiveCard(data.flowData);
             return { 
                 deckId: data.deckId, 
-                cardId: cardId, 
-                rating: cardData.rating 
+                cardId: data.flowData.activeCardId!, 
+                rating: activeCard!.rating!
             };
         },
         action: async ({ deckId, cardId, rating }, data) => {
@@ -134,7 +157,6 @@ export const studyFlashCard = defineFlow<StudyFlashCardData>({
         },
         onOutput: (data, _, events) => {
             events!.studiedCounter.emit((c: number) => c + 1);
-            // Clear active card and fetch next batch
             data.flowData.activeCardId = null;
             return "fetchCardsData";
         }

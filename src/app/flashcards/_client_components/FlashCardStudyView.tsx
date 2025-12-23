@@ -31,7 +31,6 @@ export function FlashcardStudyView({ deckId }: FlashCardStudyViewProps) {
                     deckId: deckId,
                     flowData: {
                         cards: [],
-                        cardData: new Map(),
                         activeCardId: null
                     },
                 }}
