@@ -152,7 +152,7 @@ export const studyFlashCard = defineFlow<StudyFlashCardData>({
             };
         },
         action: async ({ deckId, cardId, rating }, data) => {
-            await reviewStudiedCard(deckId, cardId, rating);
+            reviewStudiedCard(deckId, cardId, rating);
             return { ok: true }
         },
         onOutput: (data, _, events) => {
