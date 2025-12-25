@@ -50,4 +50,18 @@ export async function reviewStudiedCard(deckId: string, cardId: string, rating: 
 }
 
 
+export async function reviewAudioCard(cardId: string, rating: Rating): Promise<AxiosResponse<ApiResponse<void>>> {
+
+    const cardRating: CardRating = { rating: rating };
+    const request: ApiRequest<CardRating> = { payload: cardRating };
+
+    // Axios call (typed)
+    const response = await api.post<ApiResponse<void>>
+        (`/api/exercise/audio-only/${cardId}/review/v1`, request);
+
+    return response;
+
+}
+
+
 

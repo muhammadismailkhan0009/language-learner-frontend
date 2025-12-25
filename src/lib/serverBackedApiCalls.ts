@@ -8,6 +8,8 @@ import { cookies } from "next/headers";
 import { FlashCard } from "./types/responses/FlashCard";
 import { FlashCardMode } from "./types/requests/FlashCardMode";
 import { DeckView } from "./types/responses/DeckView";
+import { Rating } from "./types/Rating";
+import { CardRating } from "./types/requests/CardRating";
 
 export async function callRegisterUserApi(email: string, password: string): Promise<AxiosResponse<ApiResponse<UserInfoResponse>>> {
 
@@ -36,6 +38,22 @@ export async function fetchNextFlashCardToStudy(deckId: string): Promise<AxiosRe
 
     // Axios call (typed)
     const response = await api.get<ApiResponse<FlashCard>>(`/api/decks/${deckId}/cards/next/v1`,
+        {
+            params: {
+                userId: (await cookies()).get("userId")?.value
+            }
+        }
+    );
+
+
+    return response;
+
+}
+
+export async function fetchNextAudioCardToStudy(): Promise<AxiosResponse<ApiResponse<FlashCard>>> {
+
+    // Axios call (typed)
+    const response = await api.get<ApiResponse<FlashCard>>(`/api/exercise/audio-only/next/v1`,
         {
             params: {
                 userId: (await cookies()).get("userId")?.value
@@ -104,6 +122,19 @@ export async function fetchRevisionList(mode: FlashCardMode): Promise<AxiosRespo
             userId: (await cookies()).get("userId")?.value
         }
     });
+
+    return response;
+
+}
+
+export async function reviewAudioCard(cardId: string, rating: Rating): Promise<AxiosResponse<ApiResponse<void>>> {
+
+    const cardRating: CardRating = { rating: rating };
+    const request: ApiRequest<CardRating> = { payload: cardRating };
+
+    // Axios call (typed)
+    const response = await api.post<ApiResponse<void>>
+        (`/api/exercise/audio-only/${cardId}/review/v1`, request);
 
     return response;
 

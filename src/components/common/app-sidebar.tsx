@@ -24,6 +24,11 @@ const items = [
         url: "/revision",
         icon: Inbox,
     },
+    {
+        title: "Exercise",
+        url: "/exercise",
+        icon: Inbox,
+    },
 ]
 export function AppSidebar() {
     return (
