@@ -35,6 +35,7 @@ export const exerciseAudioComprehension = defineFlow<AudioComprehensionExercise>
                 showFrontText: false,
                 rating: null
             };
+            
             return { ok: true };
         },
         onOutput: () => "decideCardState"
