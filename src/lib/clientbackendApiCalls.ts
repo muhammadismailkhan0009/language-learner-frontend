@@ -6,6 +6,7 @@ import { LanguageScenario } from "./types/requests/LanguageScenario";
 import { FlashCard } from "@/lib/types/responses/FlashCard";
 import { Rating } from "@/lib/types/Rating";
 import { CardRating } from "@/lib/types/requests/CardRating";
+import { SentenceGroup } from "@/lib/types/responses/Sentence";
 
 export async function sendGenerateFlashCardsRequest(scenario: string): Promise<AxiosResponse<ApiResponse<void>>> {
 
@@ -58,6 +59,16 @@ export async function reviewAudioCard(cardId: string, rating: Rating): Promise<A
     // Axios call (typed)
     const response = await api.post<ApiResponse<void>>
         (`/api/exercise/audio-only/${cardId}/review/v1`, request);
+
+    return response;
+
+}
+
+
+export async function fetchSentences(): Promise<AxiosResponse<ApiResponse<SentenceGroup[]>>> {
+
+    // Axios call (typed)
+    const response = await api.get<ApiResponse<SentenceGroup[]>>("/api/v1/sentences/v1");
 
     return response;
 

@@ -29,6 +29,11 @@ const items = [
         url: "/exercise",
         icon: Inbox,
     },
+    {
+        title: "All Sentences",
+        url: "/sentences",
+        icon: Inbox,
+    },
 ]
 export function AppSidebar() {
     return (
