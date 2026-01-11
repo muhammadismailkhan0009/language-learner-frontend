@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { SentenceGroup } from "@/lib/types/responses/Sentence";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -18,21 +18,49 @@ export default function SentencesView(props: SentencesViewProps) {
     const [selectedScenario, setSelectedScenario] = useState<string>("all");
     const [selectedFunction, setSelectedFunction] = useState<string>("all");
 
-    // Extract unique scenarios and functions
+    // Extract unique scenarios
     const scenarios = useMemo(() => {
         const unique = Array.from(new Set(props.input.sentences.map(g => g.scenario)));
         return unique.sort();
     }, [props.input.sentences]);
 
+    // Extract functions based on selected scenario
     const functions = useMemo(() => {
-        const allFunctions = new Set<string>();
-        props.input.sentences.forEach(group => {
-            group.functions.forEach(func => {
-                allFunctions.add(func.function);
+        const functionsSet = new Set<string>();
+        
+        if (selectedScenario === "all") {
+            // Show all functions when "all" is selected
+            props.input.sentences.forEach(group => {
+                group.functions.forEach(func => {
+                    functionsSet.add(func.function);
+                });
             });
-        });
-        return Array.from(allFunctions).sort();
-    }, [props.input.sentences]);
+        } else {
+            // Show only functions for the selected scenario
+            const selectedGroup = props.input.sentences.find(g => g.scenario === selectedScenario);
+            if (selectedGroup) {
+                selectedGroup.functions.forEach(func => {
+                    functionsSet.add(func.function);
+                });
+            }
+        }
+        
+        return Array.from(functionsSet).sort();
+    }, [props.input.sentences, selectedScenario]);
+
+    // Reset function selection if it's not available in the current scenario
+    useEffect(() => {
+        if (selectedFunction !== "all" && selectedScenario !== "all") {
+            const selectedGroup = props.input.sentences.find(g => g.scenario === selectedScenario);
+            const availableFunctions = new Set(
+                selectedGroup?.functions.map(f => f.function) || []
+            );
+            
+            if (!availableFunctions.has(selectedFunction)) {
+                setSelectedFunction("all");
+            }
+        }
+    }, [selectedScenario, selectedFunction, props.input.sentences]);
 
     // Filter sentences based on selections
     const filteredSentences = useMemo(() => {
@@ -70,8 +98,22 @@ export default function SentencesView(props: SentencesViewProps) {
                             id="scenario-select"
                             value={selectedScenario}
                             onChange={(e) => {
-                                setSelectedScenario(e.target.value);
-                                setSelectedFunction("all"); // Reset function when scenario changes
+                                const newScenario = e.target.value;
+                                setSelectedScenario(newScenario);
+                                
+                                // Reset function when scenario changes, or if current function is not available in new scenario
+                                if (newScenario === "all") {
+                                    setSelectedFunction("all");
+                                } else {
+                                    const newScenarioGroup = props.input.sentences.find(g => g.scenario === newScenario);
+                                    const availableFunctions = new Set(
+                                        newScenarioGroup?.functions.map(f => f.function) || []
+                                    );
+                                    
+                                    if (selectedFunction !== "all" && !availableFunctions.has(selectedFunction)) {
+                                        setSelectedFunction("all");
+                                    }
+                                }
                             }}
                             className="w-full h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                         >
@@ -126,27 +168,33 @@ export default function SentencesView(props: SentencesViewProps) {
                                             {/* Desktop: Table view with improved layout */}
                                             <div className="hidden md:block">
                                                 <div className="w-full">
-                                                    <Table className="w-full">
+                                                    <Table className="w-full table-fixed">
+                                                        <colgroup>
+                                                            <col style={{ width: '50%' }} />
+                                                            <col style={{ width: '50%' }} />
+                                                        </colgroup>
                                                         <TableHeader>
                                                             <TableRow>
-                                                                <TableHead>Sentence</TableHead>
-                                                                <TableHead>Translation</TableHead>
+                                                                <TableHead className="border-r">Sentence</TableHead>
+                                                                <TableHead className="border-l">Translation</TableHead>
                                                             </TableRow>
                                                         </TableHeader>
                                                         <TableBody>
                                                             {func.sentence.map((sentence, sentenceIndex) => (
                                                                 <TableRow key={sentenceIndex}>
-                                                                    <TableCell className="font-medium align-top pr-4 break-words" style={{ 
-                                                                        maxWidth: '600px',
+                                                                    <TableCell className="font-medium align-top pr-4 break-words border-r" style={{ 
                                                                         wordWrap: 'break-word',
-                                                                        overflowWrap: 'break-word'
+                                                                        overflowWrap: 'break-word',
+                                                                        whiteSpace: 'normal',
+                                                                        overflow: 'hidden'
                                                                     }}>
                                                                         {sentence.sentence}
                                                                     </TableCell>
-                                                                    <TableCell className="align-top pl-4 text-muted-foreground break-words" style={{ 
-                                                                        maxWidth: '600px',
+                                                                    <TableCell className="align-top pl-4 text-muted-foreground break-words border-l" style={{ 
                                                                         wordWrap: 'break-word',
-                                                                        overflowWrap: 'break-word'
+                                                                        overflowWrap: 'break-word',
+                                                                        whiteSpace: 'normal',
+                                                                        overflow: 'hidden'
                                                                     }}>
                                                                         {sentence.translation}
                                                                     </TableCell>
