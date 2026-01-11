@@ -10,9 +10,9 @@ import { Calendar, Home, Inbox, Search, Settings } from "lucide-react"
 // Menu items.
 const items = [
     {
-        title: "Scenario",
-        url: "/dashboard",
-        icon: Home,
+        title: "All Sentences",
+        url: "/sentences",
+        icon: Inbox,
     },
     {
         title: "Decks To Study",
@@ -29,11 +29,7 @@ const items = [
         url: "/exercise",
         icon: Inbox,
     },
-    {
-        title: "All Sentences",
-        url: "/sentences",
-        icon: Inbox,
-    },
+    
 ]
 export function AppSidebar() {
     return (
