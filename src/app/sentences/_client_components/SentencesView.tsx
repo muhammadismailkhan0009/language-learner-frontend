@@ -129,26 +129,24 @@ export default function SentencesView(props: SentencesViewProps) {
                                                     <Table className="w-full">
                                                         <TableHeader>
                                                             <TableRow>
-                                                                <TableHead className="w-[48%]">Sentence</TableHead>
-                                                                <TableHead className="w-[48%]">Translation</TableHead>
+                                                                <TableHead>Sentence</TableHead>
+                                                                <TableHead>Translation</TableHead>
                                                             </TableRow>
                                                         </TableHeader>
                                                         <TableBody>
                                                             {func.sentence.map((sentence, sentenceIndex) => (
                                                                 <TableRow key={sentenceIndex}>
-                                                                    <TableCell className="font-medium align-top pr-4" style={{ 
-                                                                        wordBreak: 'break-word', 
-                                                                        overflowWrap: 'anywhere',
-                                                                        maxWidth: 0,
-                                                                        width: '48%'
+                                                                    <TableCell className="font-medium align-top pr-4 break-words" style={{ 
+                                                                        maxWidth: '600px',
+                                                                        wordWrap: 'break-word',
+                                                                        overflowWrap: 'break-word'
                                                                     }}>
                                                                         {sentence.sentence}
                                                                     </TableCell>
-                                                                    <TableCell className="align-top pl-4 text-muted-foreground" style={{ 
-                                                                        wordBreak: 'break-word', 
-                                                                        overflowWrap: 'anywhere',
-                                                                        maxWidth: 0,
-                                                                        width: '48%'
+                                                                    <TableCell className="align-top pl-4 text-muted-foreground break-words" style={{ 
+                                                                        maxWidth: '600px',
+                                                                        wordWrap: 'break-word',
+                                                                        overflowWrap: 'break-word'
                                                                     }}>
                                                                         {sentence.translation}
                                                                     </TableCell>
