@@ -6,6 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { OutputHandle } from "@/lib/custom_lib_ui/flow";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Volume2 } from "lucide-react";
+import { playCardAudio } from "@/lib/ttsGoogle";
 
 type SentencesViewProps = {
     input: {
@@ -188,7 +191,18 @@ export default function SentencesView(props: SentencesViewProps) {
                                                                         whiteSpace: 'normal',
                                                                         overflow: 'hidden'
                                                                     }}>
-                                                                        {sentence.sentence}
+                                                                        <div className="flex items-start gap-2">
+                                                                            <Button
+                                                                                variant="ghost"
+                                                                                size="icon"
+                                                                                className="h-6 w-6 shrink-0 mt-0.5"
+                                                                                onClick={() => playCardAudio(sentence.id, sentence.sentence, "de")}
+                                                                                title="Play audio"
+                                                                            >
+                                                                                <Volume2 className="h-4 w-4" />
+                                                                            </Button>
+                                                                            <span className="flex-1">{sentence.sentence}</span>
+                                                                        </div>
                                                                     </TableCell>
                                                                     <TableCell className="align-top pl-4 text-muted-foreground break-words border-l" style={{ 
                                                                         wordWrap: 'break-word',
@@ -214,8 +228,19 @@ export default function SentencesView(props: SentencesViewProps) {
                                                                 <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
                                                                     Sentence
                                                                 </div>
-                                                                <div className="text-sm font-medium leading-relaxed break-words">
-                                                                    {sentence.sentence}
+                                                                <div className="flex items-start gap-2">
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="h-6 w-6 shrink-0 mt-0.5"
+                                                                        onClick={() => playCardAudio(sentence.id, sentence.sentence, "de")}
+                                                                        title="Play audio"
+                                                                    >
+                                                                        <Volume2 className="h-4 w-4" />
+                                                                    </Button>
+                                                                    <div className="text-sm font-medium leading-relaxed break-words flex-1">
+                                                                        {sentence.sentence}
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                             <div className="border-t pt-2">

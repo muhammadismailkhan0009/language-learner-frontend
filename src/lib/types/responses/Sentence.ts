@@ -1,4 +1,5 @@
 export type Sentence = {
+  id: string;
   sentence: string;
   translation: string;
 };
@@ -12,4 +13,7 @@ export type SentenceGroup = {
   scenario: string;
   functions: SentenceFunction[];
 };
+
+
+
 
