@@ -6,19 +6,99 @@ function blobToBase64(blob: Blob): Promise<string> {
     });
 }
 
+// IndexedDB helper functions
+const DB_NAME = 'tts_cache_db';
+const STORE_NAME = 'audio_cache';
+const DB_VERSION = 1;
+
+function openDB(): Promise<IDBDatabase> {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+        
+        request.onupgradeneeded = (event) => {
+            const db = (event.target as IDBOpenDBRequest).result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                db.createObjectStore(STORE_NAME);
+            }
+        };
+    });
+}
+
+async function getFromIndexedDB(key: string): Promise<string | null> {
+    try {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([STORE_NAME], 'readonly');
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.get(key);
+            
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve(request.result || null);
+        });
+    } catch (error) {
+        console.warn('IndexedDB read failed:', error);
+        return null;
+    }
+}
+
+async function setToIndexedDB(key: string, value: string): Promise<void> {
+    try {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([STORE_NAME], 'readwrite');
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.put(value, key);
+            
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve();
+        });
+    } catch (error) {
+        console.warn('IndexedDB write failed:', error);
+        throw error;
+    }
+}
+
 export async function getAudioUrlForCard(cardId: string, text: string, lang = "en") {
     const cacheKey = `tts_${lang}_${cardId}`;
-    const cached = localStorage.getItem(cacheKey);
+    
+    // Try localStorage first (faster)
+    const cachedLocal = localStorage.getItem(cacheKey);
+    if (cachedLocal) return cachedLocal;
+    
+    // Try IndexedDB as fallback
+    const cachedIndexed = await getFromIndexedDB(cacheKey);
+    if (cachedIndexed) return cachedIndexed;
 
-    if (cached) return cached;
-
+    // Fetch from API if not cached
     const response = await fetch(`/api/tts?q=${encodeURIComponent(text)}&lang=${lang}`);
     if (!response.ok) throw new Error("TTS fetch failed");
 
     const blob = await response.blob();
     const base64 = await blobToBase64(blob);
-    localStorage.setItem(cacheKey, base64);
-    return base64;
+    
+    // Try localStorage first
+    try {
+        localStorage.setItem(cacheKey, base64);
+        return base64;
+    } catch (error) {
+        // If quota exceeded, use IndexedDB as fallback
+        if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+            console.warn('localStorage quota exceeded, using IndexedDB for caching');
+            try {
+                await setToIndexedDB(cacheKey, base64);
+                return base64;
+            } catch (indexedError) {
+                console.warn('IndexedDB storage also failed, continuing without cache:', indexedError);
+                // Still return the audio even if caching fails
+                return base64;
+            }
+        } else {
+            throw error;
+        }
+    }
 }
 
 export async function playCardAudio(cardId: string, text: string, lang = "en") {
