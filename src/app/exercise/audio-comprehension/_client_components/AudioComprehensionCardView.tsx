@@ -4,7 +4,7 @@ import { FlashCard } from "@/lib/types/responses/FlashCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { playCardAudio } from "@/lib/ttsGoogle";
-import { OutputHandle } from "@/lib/custom_lib_ui/flow";
+import { OutputHandle } from "@myriadcodelabs/uiflow";
 import AudioComprehensionActions, { AudioComprehensionOutput } from "./AudioComprehensionActions";
 
 type AudioComprehensionCardViewProps = {

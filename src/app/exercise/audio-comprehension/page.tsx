@@ -1,5 +1,5 @@
 'use client'
-import { FlowRunner } from "@/lib/custom_lib_ui/flow";
+import { FlowRunner } from "@myriadcodelabs/uiflow";
 import { ExerciseMode } from "@/lib/types/requests/ExerciseMode";
 import { exerciseAudioComprehension } from "./flows/exerciseAudioComprehension";
 

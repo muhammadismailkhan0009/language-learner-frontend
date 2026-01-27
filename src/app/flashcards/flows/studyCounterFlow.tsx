@@ -1,5 +1,5 @@
 // flows/studyCounterFlow.ts
-import { defineFlow } from "@/lib/custom_lib_ui/flow";
+import { defineFlow } from "@myriadcodelabs/uiflow";
 import { StudyCounterView } from "../_client_components/StudyCounterView";
 
 export const studyCounterFlow = defineFlow({

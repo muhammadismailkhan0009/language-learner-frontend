@@ -1,5 +1,5 @@
 'use client'
-import { FlowRunner } from "@/lib/custom_lib_ui/flow";
+import { FlowRunner } from "@myriadcodelabs/uiflow";
 import { FlashCardMode } from "@/lib/types/requests/FlashCardMode";
 import { deckListFlow } from "./flows/deckListFlow";
 

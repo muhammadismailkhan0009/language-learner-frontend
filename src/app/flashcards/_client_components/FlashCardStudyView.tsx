@@ -1,6 +1,6 @@
 "use client";
 
-import { createFlowChannel, FlowRunner } from "@/lib/custom_lib_ui/flow";
+import { createFlowChannel, FlowRunner } from "@myriadcodelabs/uiflow";
 import { studyFlashCard } from "../flows/studyFlashCard";
 import { studyCounterFlow } from "../flows/studyCounterFlow";
 

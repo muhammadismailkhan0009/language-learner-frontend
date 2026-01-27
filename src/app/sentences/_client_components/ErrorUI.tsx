@@ -1,6 +1,6 @@
 "use client";
 
-import { OutputHandle } from "@/lib/custom_lib_ui/flow";
+import { OutputHandle } from "@myriadcodelabs/uiflow";
 
 type ErrorUIProps = {
     input: {

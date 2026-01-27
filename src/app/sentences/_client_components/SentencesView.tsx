@@ -1,95 +1,42 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
 import { SentenceGroup } from "@/lib/types/responses/Sentence";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { OutputHandle } from "@/lib/custom_lib_ui/flow";
+import { OutputHandle } from "@myriadcodelabs/uiflow";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Volume2 } from "lucide-react";
 import { playCardAudio } from "@/lib/ttsGoogle";
 
+export type SentencesViewOutput =
+    | { type: "setScenario"; scenario: string }
+    | { type: "setFunction"; func: string };
+
 type SentencesViewProps = {
     input: {
-        sentences: SentenceGroup[];
+        scenarios: string[];
+        functions: string[];
+        selectedScenario: string;
+        selectedFunction: string;
+        filteredSentences: SentenceGroup[];
     };
-    output: OutputHandle<void>;
-}
+    output: OutputHandle<SentencesViewOutput>;
+};
 
-export default function SentencesView(props: SentencesViewProps) {
-    const [selectedScenario, setSelectedScenario] = useState<string>("all");
-    const [selectedFunction, setSelectedFunction] = useState<string>("all");
-
-    // Extract unique scenarios
-    const scenarios = useMemo(() => {
-        const unique = Array.from(new Set(props.input.sentences.map(g => g.scenario)));
-        return unique.sort();
-    }, [props.input.sentences]);
-
-    // Extract functions based on selected scenario
-    const functions = useMemo(() => {
-        const functionsSet = new Set<string>();
-        
-        if (selectedScenario === "all") {
-            // Show all functions when "all" is selected
-            props.input.sentences.forEach(group => {
-                group.functions.forEach(func => {
-                    functionsSet.add(func.function);
-                });
-            });
-        } else {
-            // Show only functions for the selected scenario
-            const selectedGroup = props.input.sentences.find(g => g.scenario === selectedScenario);
-            if (selectedGroup) {
-                selectedGroup.functions.forEach(func => {
-                    functionsSet.add(func.function);
-                });
-            }
-        }
-        
-        return Array.from(functionsSet).sort();
-    }, [props.input.sentences, selectedScenario]);
-
-    // Reset function selection if it's not available in the current scenario
-    useEffect(() => {
-        if (selectedFunction !== "all" && selectedScenario !== "all") {
-            const selectedGroup = props.input.sentences.find(g => g.scenario === selectedScenario);
-            const availableFunctions = new Set(
-                selectedGroup?.functions.map(f => f.function) || []
-            );
-            
-            if (!availableFunctions.has(selectedFunction)) {
-                setSelectedFunction("all");
-            }
-        }
-    }, [selectedScenario, selectedFunction, props.input.sentences]);
-
-    // Filter sentences based on selections
-    const filteredSentences = useMemo(() => {
-        return props.input.sentences.filter(group => {
-            if (selectedScenario !== "all" && group.scenario !== selectedScenario) {
-                return false;
-            }
-            if (selectedFunction !== "all") {
-                return group.functions.some(func => func.function === selectedFunction);
-            }
-            return true;
-        }).map(group => {
-            if (selectedFunction !== "all") {
-                return {
-                    ...group,
-                    functions: group.functions.filter(func => func.function === selectedFunction)
-                };
-            }
-            return group;
-        });
-    }, [props.input.sentences, selectedScenario, selectedFunction]);
+export default function SentencesView({ input, output }: SentencesViewProps) {
+    const {
+        scenarios,
+        functions,
+        selectedScenario,
+        selectedFunction,
+        filteredSentences,
+    } = input;
 
     return (
         <div className="w-full min-h-screen py-4 px-2 sm:py-6 sm:px-4">
             <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 px-2 sm:px-0">Sentences</h1>
-            
+
             {/* Filter Controls */}
             <div className="mb-6 px-2 sm:px-0">
                 <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
@@ -100,24 +47,9 @@ export default function SentencesView(props: SentencesViewProps) {
                         <select
                             id="scenario-select"
                             value={selectedScenario}
-                            onChange={(e) => {
-                                const newScenario = e.target.value;
-                                setSelectedScenario(newScenario);
-                                
-                                // Reset function when scenario changes, or if current function is not available in new scenario
-                                if (newScenario === "all") {
-                                    setSelectedFunction("all");
-                                } else {
-                                    const newScenarioGroup = props.input.sentences.find(g => g.scenario === newScenario);
-                                    const availableFunctions = new Set(
-                                        newScenarioGroup?.functions.map(f => f.function) || []
-                                    );
-                                    
-                                    if (selectedFunction !== "all" && !availableFunctions.has(selectedFunction)) {
-                                        setSelectedFunction("all");
-                                    }
-                                }
-                            }}
+                            onChange={(e) =>
+                                output.emit({ type: "setScenario", scenario: e.target.value })
+                            }
                             className="w-full h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             <option value="all">All Scenarios</option>
@@ -135,7 +67,7 @@ export default function SentencesView(props: SentencesViewProps) {
                         <select
                             id="function-select"
                             value={selectedFunction}
-                            onChange={(e) => setSelectedFunction(e.target.value)}
+                            onChange={(e) => output.emit({ type: "setFunction", func: e.target.value })}
                             className="w-full h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             <option value="all">All Functions</option>
@@ -167,14 +99,14 @@ export default function SentencesView(props: SentencesViewProps) {
                                             <h3 className="text-base sm:text-lg font-semibold text-gray-700 break-words">
                                                 {func.function}
                                             </h3>
-                                            
+
                                             {/* Desktop: Table view with improved layout */}
                                             <div className="hidden md:block">
                                                 <div className="w-full">
                                                     <Table className="w-full table-fixed">
                                                         <colgroup>
-                                                            <col style={{ width: '50%' }} />
-                                                            <col style={{ width: '50%' }} />
+                                                            <col style={{ width: "50%" }} />
+                                                            <col style={{ width: "50%" }} />
                                                         </colgroup>
                                                         <TableHeader>
                                                             <TableRow>
@@ -185,18 +117,27 @@ export default function SentencesView(props: SentencesViewProps) {
                                                         <TableBody>
                                                             {func.sentence.map((sentence, sentenceIndex) => (
                                                                 <TableRow key={sentenceIndex}>
-                                                                    <TableCell className="font-medium align-top pr-4 break-words border-r" style={{ 
-                                                                        wordWrap: 'break-word',
-                                                                        overflowWrap: 'break-word',
-                                                                        whiteSpace: 'normal',
-                                                                        overflow: 'hidden'
-                                                                    }}>
+                                                                    <TableCell
+                                                                        className="font-medium align-top pr-4 break-words border-r"
+                                                                        style={{
+                                                                            wordWrap: "break-word",
+                                                                            overflowWrap: "break-word",
+                                                                            whiteSpace: "normal",
+                                                                            overflow: "hidden",
+                                                                        }}
+                                                                    >
                                                                         <div className="flex items-start gap-2">
                                                                             <Button
                                                                                 variant="ghost"
                                                                                 size="icon"
                                                                                 className="h-6 w-6 shrink-0 mt-0.5"
-                                                                                onClick={() => playCardAudio(sentence.id, sentence.sentence, "de")}
+                                                                                onClick={() =>
+                                                                                    playCardAudio(
+                                                                                        sentence.id,
+                                                                                        sentence.sentence,
+                                                                                        "de"
+                                                                                    )
+                                                                                }
                                                                                 title="Play audio"
                                                                             >
                                                                                 <Volume2 className="h-4 w-4" />
@@ -204,12 +145,15 @@ export default function SentencesView(props: SentencesViewProps) {
                                                                             <span className="flex-1">{sentence.sentence}</span>
                                                                         </div>
                                                                     </TableCell>
-                                                                    <TableCell className="align-top pl-4 text-muted-foreground break-words border-l" style={{ 
-                                                                        wordWrap: 'break-word',
-                                                                        overflowWrap: 'break-word',
-                                                                        whiteSpace: 'normal',
-                                                                        overflow: 'hidden'
-                                                                    }}>
+                                                                    <TableCell
+                                                                        className="align-top pl-4 text-muted-foreground break-words border-l"
+                                                                        style={{
+                                                                            wordWrap: "break-word",
+                                                                            overflowWrap: "break-word",
+                                                                            whiteSpace: "normal",
+                                                                            overflow: "hidden",
+                                                                        }}
+                                                                    >
                                                                         {sentence.translation}
                                                                     </TableCell>
                                                                 </TableRow>
@@ -233,7 +177,13 @@ export default function SentencesView(props: SentencesViewProps) {
                                                                         variant="ghost"
                                                                         size="icon"
                                                                         className="h-6 w-6 shrink-0 mt-0.5"
-                                                                        onClick={() => playCardAudio(sentence.id, sentence.sentence, "de")}
+                                                                        onClick={() =>
+                                                                            playCardAudio(
+                                                                                sentence.id,
+                                                                                sentence.sentence,
+                                                                                "de"
+                                                                            )
+                                                                        }
                                                                         title="Play audio"
                                                                     >
                                                                         <Volume2 className="h-4 w-4" />
@@ -266,4 +216,3 @@ export default function SentencesView(props: SentencesViewProps) {
         </div>
     );
 }
-

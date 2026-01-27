@@ -1,5 +1,5 @@
 'use client'
-import { defineFlow } from "@/lib/custom_lib_ui/flow";
+import { defineFlow } from "@myriadcodelabs/uiflow";
 import { FlashCardMode } from "@/lib/types/requests/FlashCardMode";
 import DeckListView from "../_client_component/DeckListView";
 import fetchRevisionListAction from "../_server_actions/fetchRevisionListAction";

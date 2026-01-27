@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button";
-import { OutputHandle } from "@/lib/custom_lib_ui/flow";
+import { OutputHandle } from "@myriadcodelabs/uiflow";
 import { Rating } from "@/lib/types/Rating";
 
 type CardActionsProps = {

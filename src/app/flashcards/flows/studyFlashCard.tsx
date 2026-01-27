@@ -1,4 +1,4 @@
-import { defineFlow } from "@/lib/custom_lib_ui/flow";
+import { defineFlow } from "@myriadcodelabs/uiflow";
 import fetchFlashCardsListAction from "../_server_actions/fetchFlashCardsListAction";
 import { FlashCard } from "@/lib/types/responses/FlashCard";
 import FlashCardView from "../_client_components/FlashCardView";

@@ -1,6 +1,6 @@
 "use client";
 
-import { FlowRunner } from "@/lib/custom_lib_ui/flow";
+import { FlowRunner } from "@myriadcodelabs/uiflow";
 import { sentencesFlow } from "../flows/sentencesFlow";
 
 export function SentencesListView() {
@@ -11,11 +11,12 @@ export function SentencesListView() {
                 initialData={{
                     flowData: {
                         sentences: [],
-                        error: null
+                        error: null,
+                        selectedScenario: "all",
+                        selectedFunction: "all",
                     }
                 }}
             />
         </div>
     );
 }
-

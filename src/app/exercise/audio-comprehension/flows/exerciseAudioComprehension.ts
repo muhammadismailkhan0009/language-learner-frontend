@@ -1,5 +1,5 @@
 'use client'
-import { defineFlow } from "@/lib/custom_lib_ui/flow";
+import { defineFlow } from "@myriadcodelabs/uiflow";
 import { ExerciseMode } from "@/lib/types/requests/ExerciseMode";
 import { FlashCard } from "@/lib/types/responses/FlashCard";
 import AudioComprehensionCardView from "../_client_components/AudioComprehensionCardView";
