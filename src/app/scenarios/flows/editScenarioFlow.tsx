@@ -5,12 +5,15 @@ import EditScenarioView, { EditScenarioViewOutput } from "../_client_components/
 import { ScenarioDraft, ScreenMode } from "../types";
 import { createEmptySentence, createInitialDraft, isDraftValid, mapScenarioToDraft, normalizeDraft } from "./scenarioDraftOps";
 import { EditScenarioRequest } from "@/lib/types/requests/EditScenarioRequest";
+import { deleteAudioCacheForCard } from "@/lib/ttsGoogle";
 
 type EditScenarioDomainData = Record<string, never>;
 
 interface EditScenarioInternalData {
     flowData: {
         selectedScenarioNature: string | null;
+        originalTargetLanguage: string;
+        originalSentences: Array<{ id: string; sentence: string }>;
         draft: ScenarioDraft;
         ui: {
             isLoading: boolean;
@@ -25,6 +28,8 @@ function createEditScenarioInternalData(): EditScenarioInternalData {
     return {
         flowData: {
             selectedScenarioNature: null,
+            originalTargetLanguage: "en",
+            originalSentences: [],
             draft: createInitialDraft(),
             ui: {
                 isLoading: false,
@@ -137,10 +142,19 @@ export const editScenarioFlow = defineFlow<EditScenarioDomainData, EditScenarioI
                 }
 
                 internal.flowData.selectedScenarioNature = scenario.nature;
+                internal.flowData.originalTargetLanguage = scenario.targetLanguage ?? "en";
+                internal.flowData.originalSentences = (scenario.sentences ?? [])
+                    .filter((item) => !!item.id)
+                    .map((item) => ({
+                        id: item.id,
+                        sentence: item.sentence ?? "",
+                    }));
                 internal.flowData.draft = mapScenarioToDraft(scenario);
             } catch (err) {
                 internal.flowData.ui.fetchError = err instanceof Error ? err.message : "Failed to load scenario";
                 internal.flowData.selectedScenarioNature = null;
+                internal.flowData.originalTargetLanguage = "en";
+                internal.flowData.originalSentences = [];
                 internal.flowData.draft = createInitialDraft();
             } finally {
                 internal.flowData.ui.isLoading = false;
@@ -182,6 +196,23 @@ export const editScenarioFlow = defineFlow<EditScenarioDomainData, EditScenarioI
                 const updatedScenario = await editScenarioAction(selectedScenarioId, requestBody);
                 if (!updatedScenario) {
                     throw new Error("Failed to update scenario");
+                }
+
+                const oldLang = internal.flowData.originalTargetLanguage || "en";
+                const newLang = draft.targetLanguage || oldLang;
+                const nextSentencesById = new Map(
+                    draft.sentences.filter((item) => !!item.id).map((item) => [item.id as string, item.sentence])
+                );
+
+                for (const previous of internal.flowData.originalSentences) {
+                    const nextSentence = nextSentencesById.get(previous.id);
+                    const wasRemoved = !nextSentence;
+                    const wasEdited = !!nextSentence && nextSentence !== previous.sentence;
+                    const languageChanged = oldLang !== newLang;
+
+                    if (wasRemoved || wasEdited || languageChanged) {
+                        await deleteAudioCacheForCard(previous.id, oldLang);
+                    }
                 }
             } catch (err) {
                 internal.flowData.ui.saveError = err instanceof Error ? err.message : "Failed to update scenario";

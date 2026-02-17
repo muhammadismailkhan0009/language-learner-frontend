@@ -61,6 +61,22 @@ async function setToIndexedDB(key: string, value: string): Promise<void> {
     }
 }
 
+async function deleteFromIndexedDB(key: string): Promise<void> {
+    try {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([STORE_NAME], "readwrite");
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.delete(key);
+
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve();
+        });
+    } catch (error) {
+        console.warn("IndexedDB delete failed:", error);
+    }
+}
+
 export type AudioSpeed = "slow" | "normal" | "fast";
 
 const SPEED_TO_RATE: Record<AudioSpeed, number> = {
@@ -71,6 +87,12 @@ const SPEED_TO_RATE: Record<AudioSpeed, number> = {
 
 export function getPlaybackRate(speed: AudioSpeed): number {
     return SPEED_TO_RATE[speed];
+}
+
+export async function deleteAudioCacheForCard(cardId: string, lang = "en"): Promise<void> {
+    const cacheKey = `tts_${lang}_${cardId}`;
+    localStorage.removeItem(cacheKey);
+    await deleteFromIndexedDB(cacheKey);
 }
 
 export async function getAudioUrlForCard(cardId: string, text: string, lang = "en") {
