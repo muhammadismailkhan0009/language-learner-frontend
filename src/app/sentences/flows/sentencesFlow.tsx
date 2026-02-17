@@ -83,7 +83,7 @@ const SentenceFilterOps = {
 
 export const sentencesFlow = defineFlow<SentencesData>({
     fetchSentences: {
-        input: (data) => ({}),
+        input: (_domain, _internal) => ({}),
         action: async (_, data) => {
             try {
                 data.flowData.error = null;
@@ -102,7 +102,7 @@ export const sentencesFlow = defineFlow<SentencesData>({
                 return { ok: false };
             }
         },
-        onOutput: (data, output) => {
+        onOutput: (_domain, _internal, output) => {
             if (!output.ok) {
                 return "error";
             }
@@ -111,7 +111,7 @@ export const sentencesFlow = defineFlow<SentencesData>({
     },
 
     error: {
-        input: (data) => ({
+        input: (data, _internal) => ({
             error: data.flowData.error || "An error occurred"
         }),
         view: ErrorUI,
@@ -119,7 +119,7 @@ export const sentencesFlow = defineFlow<SentencesData>({
     },
 
     displaySentences: {
-        input: (data) => {
+        input: (data, _internal) => {
             const scenarios = SentenceFilterOps.getScenarios(data.flowData.sentences);
             const functions = SentenceFilterOps.getFunctions(
                 data.flowData.sentences,
@@ -140,7 +140,7 @@ export const sentencesFlow = defineFlow<SentencesData>({
             };
         },
         view: SentencesView,
-        onOutput: (data, output: SentencesViewOutput) => {
+        onOutput: (data, _internal, output: SentencesViewOutput) => {
             if (output.type === "setScenario") {
                 data.flowData.selectedScenario = output.scenario;
 

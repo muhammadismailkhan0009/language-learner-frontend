@@ -7,6 +7,8 @@ import { FlashCard } from "@/lib/types/responses/FlashCard";
 import { Rating } from "@/lib/types/Rating";
 import { CardRating } from "@/lib/types/requests/CardRating";
 import { SentenceGroup } from "@/lib/types/responses/Sentence";
+import { WordToListenToResponse } from "@/lib/types/responses/WordToListenToResponse";
+import { WordToListenToRequest } from "@/lib/types/requests/WordToListenToRequest";
 
 export async function sendGenerateFlashCardsRequest(scenario: string): Promise<AxiosResponse<ApiResponse<void>>> {
 
@@ -74,5 +76,13 @@ export async function fetchSentences(): Promise<AxiosResponse<ApiResponse<Senten
 
 }
 
+export async function fetchWordsToListenTo(): Promise<AxiosResponse<ApiResponse<WordToListenToResponse[]>>> {
+    const response = await api.get<ApiResponse<WordToListenToResponse[]>>("/api/v1/listening/v1");
+    return response;
+}
 
-
+export async function saveWordToListenTo(word: string): Promise<AxiosResponse<void>> {
+    const requestBody: WordToListenToRequest = { word };
+    const response = await api.post<void>("/api/v1/listening/v1", requestBody);
+    return response;
+}

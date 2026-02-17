@@ -4,7 +4,7 @@ import { StudyCounterView } from "../_client_components/StudyCounterView";
 
 export const studyCounterFlow = defineFlow({
     showCount: {
-        input: (_, events) => ({
+        input: (_domain, _internal, events) => ({
             count: events!.studiedCounter.get(),
         }),
         view: StudyCounterView,

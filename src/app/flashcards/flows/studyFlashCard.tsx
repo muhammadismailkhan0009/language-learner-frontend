@@ -78,7 +78,7 @@ export const studyFlashCard = defineFlow<StudyFlashCardData>({
 
 
     fetchCardsData: {
-        input: (data) => ({ deckId: data.deckId }),
+        input: (data, _internal) => ({ deckId: data.deckId }),
         action: async ({ deckId }, data) => {
             const cards = await fetchFlashCardsListAction(deckId);
             console.log(cards);
@@ -93,30 +93,30 @@ export const studyFlashCard = defineFlow<StudyFlashCardData>({
     },
 
     decideCardState: {
-        input: (data) => ({
+        input: (data, _internal) => ({
             hasCards: data.flowData.cards.length > 0
         }),
         action: ({ hasCards }) => hasCards,
-        onOutput: (_, exists) => {
+        onOutput: (_domain, _internal, exists) => {
             return exists ? "studyCard" : "noCard"
         }
     },
 
     noCard: {
-        input: (data) => ({ card: null }),
+        input: (_data, _internal) => ({ card: null }),
         view: NoCardUI,
         onOutput: () => { }
     },
 
     studyCard: {
-        input: (data) => {
+        input: (data, _internal) => {
             // Use helper to get cards ready for display
             return {
                 cards: CardOps.getCardsForDisplay(data.flowData)
             };
         },
         view: FlashCardView,
-        onOutput: (data, output: ShowCardOutput, events) => {
+        onOutput: (data, _internal, output: ShowCardOutput, events) => {
             const cardId = output.cardId;
 
             if (output.action === "flip") {
@@ -143,7 +143,7 @@ export const studyFlashCard = defineFlow<StudyFlashCardData>({
     },
 
     reviewCard: {
-        input: (data) => {
+        input: (data, _internal) => {
             const activeCard = CardOps.getActiveCard(data.flowData);
             return {
                 deckId: data.deckId,
@@ -155,7 +155,7 @@ export const studyFlashCard = defineFlow<StudyFlashCardData>({
             reviewStudiedCard(deckId, cardId, rating);
             return { ok: true }
         },
-        onOutput: (data, _, events) => {
+        onOutput: (data, _internal, _, events) => {
             events!.studiedCounter.emit((c: number) => c + 1);
             data.flowData.activeCardId = null;
             return "fetchCardsData";

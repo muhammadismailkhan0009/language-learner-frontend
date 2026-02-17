@@ -1,11 +1,9 @@
 import {
     Sidebar,
-    SidebarContent,
-    SidebarFooter,
     SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
-    SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
+    SidebarMenu, SidebarMenuButton, SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { Calendar, Home, Inbox, Search, Settings } from "lucide-react"
+import { Headphones, Inbox, NotebookPen } from "lucide-react"
 
 // Menu items.
 const items = [
@@ -28,6 +26,16 @@ const items = [
         title: "Exercise",
         url: "/exercise",
         icon: Inbox,
+    },
+    {
+        title: "Listen",
+        url: "/listen",
+        icon: Headphones,
+    },
+    {
+        title: "Scenarios",
+        url: "/scenarios",
+        icon: NotebookPen,
     },
     
 ]

@@ -26,6 +26,7 @@ export const config = {
         "/dashboard/:path*",
         "/decks/:path*",
         "/flashcards/:path*",
-        "/revision/:path*"
+        "/revision/:path*",
+        "/scenarios/:path*"
     ],
 };

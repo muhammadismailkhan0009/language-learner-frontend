@@ -24,7 +24,7 @@ interface FlowData {
 export const exerciseAudioComprehension = defineFlow<AudioComprehensionExercise>({
 
     fetchCard: {
-        input: (data) => ({ mode: data.mode }),
+        input: (data, _internal) => ({ mode: data.mode }),
         action: async ({ mode }, data) => {
             // Fetch next audio card from server
             const card = await fetchNextAudioCardAction();
@@ -42,27 +42,27 @@ export const exerciseAudioComprehension = defineFlow<AudioComprehensionExercise>
     },
 
     decideCardState: {
-        input: (data) => ({
+        input: (data, _internal) => ({
             hasCard: data.flowData?.exercise !== null && data.flowData?.exercise !== undefined
         }),
         action: ({ hasCard }) => hasCard,
-        onOutput: (_, exists) => {
+        onOutput: (_domain, _internal, exists) => {
             return exists ? "displayExercise" : "noCard"
         }
     },
 
     noCard: {
-        input: (data) => ({ card: null }),
+        input: (_data, _internal) => ({ card: null }),
         view: NoCardUI,
         onOutput: () => { }
     },
 
     displayExercise: {
-        input: (data) => {
+        input: (data, _internal) => {
             if (!data.flowData?.exercise) {
                 // Fallback - should not happen if decideCardState works correctly
                 return {
-                    card: null as any,
+                    card: null as unknown as FlashCard,
                     flipped: false,
                     disabled: false,
                     showFrontText: false
@@ -76,7 +76,7 @@ export const exerciseAudioComprehension = defineFlow<AudioComprehensionExercise>
             };
         },
         view: AudioComprehensionCardView,
-        onOutput: (data, output: AudioComprehensionOutput) => {
+        onOutput: (data, _internal, output: AudioComprehensionOutput) => {
             if (!data.flowData) return;
 
             if (output.action === "flip") {
@@ -108,7 +108,7 @@ export const exerciseAudioComprehension = defineFlow<AudioComprehensionExercise>
     },
 
     reviewCard: {
-        input: (data) => {
+        input: (data, _internal) => {
             if (!data.flowData?.exercise || !data.flowData?.rating) {
                 return {
                     cardId: "",
@@ -125,7 +125,7 @@ export const exerciseAudioComprehension = defineFlow<AudioComprehensionExercise>
             await reviewAudioCardAction(cardId, rating);
             return { ok: true };
         },
-        onOutput: (data) => {
+        onOutput: (data, _internal) => {
             // Reset state and fetch next card
             data.flowData!.flipped = false;
             data.flowData!.showFrontText = false;

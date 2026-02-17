@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@myriadcodelabs/uiflow':
-        specifier: 0.1.0
-        version: 0.1.0(react@19.1.0)
+        specifier: 0.2.1
+        version: 0.2.1(react@19.1.0)
       '@radix-ui/react-dialog':
         specifier: ^1.1.15
         version: 1.1.15(@types/react-dom@19.2.1(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -321,8 +321,9 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@myriadcodelabs/uiflow@0.1.0':
-    resolution: {integrity: sha512-MQjM+WUniiUj4SwfiDFBFFduC7UBEhvkSAhiA8bmWyMRDAC6soO7s52ZfZ7p2zT0bxDKmSffCB6eU2jN5cBYdw==}
+  '@myriadcodelabs/uiflow@0.2.1':
+    resolution: {integrity: sha512-U4IHe8DgHq8BbEmKJB6qOBT2GgHcA1kJskz8uYJGnquPwBCC11rU43LdQ0Dm8/+PqQpVAkONVaFV0j64TMawbQ==}
+    hasBin: true
     peerDependencies:
       react: '>=18'
 
@@ -2467,7 +2468,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@myriadcodelabs/uiflow@0.1.0(react@19.1.0)':
+  '@myriadcodelabs/uiflow@0.2.1(react@19.1.0)':
     dependencies:
       react: 19.1.0
 
