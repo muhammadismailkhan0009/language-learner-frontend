@@ -1,11 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { Volume2 } from "lucide-react";
 import { OutputHandle } from "@myriadcodelabs/uiflow";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { playCardAudio } from "@/lib/ttsGoogle";
+import { AudioSpeed, getPlaybackRate, playCardAudio } from "@/lib/ttsGoogle";
 import { WordToListenToResponse } from "@/lib/types/responses/WordToListenToResponse";
 
 export type WordsListViewOutput =
@@ -23,20 +24,33 @@ type WordsListViewProps = {
 
 export default function WordsListView({ input, output }: WordsListViewProps) {
     const { words, error, isLoading } = input;
+    const [audioSpeed, setAudioSpeed] = useState<AudioSpeed>("normal");
 
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Words to Listen To</CardTitle>
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => output.emit({ type: "reload" })}
-                    disabled={isLoading}
-                >
-                    Refresh
-                </Button>
+                <div className="flex items-center gap-2">
+                    <select
+                        aria-label="Audio speed"
+                        value={audioSpeed}
+                        onChange={(e) => setAudioSpeed(e.target.value as AudioSpeed)}
+                        className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    >
+                        <option value="slow">Slow</option>
+                        <option value="normal">Normal</option>
+                        <option value="fast">Fast</option>
+                    </select>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => output.emit({ type: "reload" })}
+                        disabled={isLoading}
+                    >
+                        Refresh
+                    </Button>
+                </div>
             </CardHeader>
             <CardContent>
                 {isLoading ? (
@@ -62,7 +76,7 @@ export default function WordsListView({ input, output }: WordsListViewProps) {
                                             size="icon"
                                             title={`Play ${item.word}`}
                                             onClick={() => {
-                                                void playCardAudio(item.word, item.word, "de");
+                                                void playCardAudio(item.word, item.word, "de", getPlaybackRate(audioSpeed));
                                             }}
                                         >
                                             <Volume2 className="h-4 w-4" />

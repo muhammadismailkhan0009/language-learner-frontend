@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { SentenceGroup } from "@/lib/types/responses/Sentence";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -7,7 +8,7 @@ import { OutputHandle } from "@myriadcodelabs/uiflow";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Volume2 } from "lucide-react";
-import { playCardAudio } from "@/lib/ttsGoogle";
+import { AudioSpeed, getPlaybackRate, playCardAudio } from "@/lib/ttsGoogle";
 
 export type SentencesViewOutput =
     | { type: "setScenario"; scenario: string }
@@ -32,6 +33,7 @@ export default function SentencesView({ input, output }: SentencesViewProps) {
         selectedFunction,
         filteredSentences,
     } = input;
+    const [audioSpeed, setAudioSpeed] = useState<AudioSpeed>("normal");
 
     return (
         <div className="w-full min-h-screen py-4 px-2 sm:py-6 sm:px-4">
@@ -76,6 +78,21 @@ export default function SentencesView({ input, output }: SentencesViewProps) {
                                     {func}
                                 </option>
                             ))}
+                        </select>
+                    </div>
+                    <div className="flex-1">
+                        <Label htmlFor="audio-speed-select" className="mb-2 block text-sm font-medium">
+                            Audio Speed
+                        </Label>
+                        <select
+                            id="audio-speed-select"
+                            value={audioSpeed}
+                            onChange={(e) => setAudioSpeed(e.target.value as AudioSpeed)}
+                            className="w-full h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        >
+                            <option value="slow">Slow</option>
+                            <option value="normal">Normal</option>
+                            <option value="fast">Fast</option>
                         </select>
                     </div>
                 </div>
@@ -135,7 +152,8 @@ export default function SentencesView({ input, output }: SentencesViewProps) {
                                                                                     playCardAudio(
                                                                                         sentence.id,
                                                                                         sentence.sentence,
-                                                                                        "de"
+                                                                                        "de",
+                                                                                        getPlaybackRate(audioSpeed)
                                                                                     )
                                                                                 }
                                                                                 title="Play audio"
@@ -181,7 +199,8 @@ export default function SentencesView({ input, output }: SentencesViewProps) {
                                                                             playCardAudio(
                                                                                 sentence.id,
                                                                                 sentence.sentence,
-                                                                                "de"
+                                                                                "de",
+                                                                                getPlaybackRate(audioSpeed)
                                                                             )
                                                                         }
                                                                         title="Play audio"

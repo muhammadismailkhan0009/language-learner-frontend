@@ -1,11 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { OutputHandle } from "@myriadcodelabs/uiflow";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Volume2 } from "lucide-react";
-import { playCardAudio } from "@/lib/ttsGoogle";
+import { AudioSpeed, getPlaybackRate, playCardAudio } from "@/lib/ttsGoogle";
 import { ScenarioListItem, ScreenMode } from "../types";
 
 export type ScenariosListViewOutput =
@@ -28,6 +29,7 @@ type ScenariosListViewProps = {
 
 export default function ScenariosListView({ input, output }: ScenariosListViewProps) {
     const { mode, scenarios, selectedScenarioId, error, isLoading } = input;
+    const [audioSpeed, setAudioSpeed] = useState<AudioSpeed>("normal");
 
     if (mode !== "list") {
         return null;
@@ -86,6 +88,21 @@ export default function ScenariosListView({ input, output }: ScenariosListViewPr
                                         ))}
                                     </select>
                                 </div>
+                                <div className="space-y-2">
+                                    <label htmlFor="scenario-audio-speed-select" className="text-sm font-medium">
+                                        Audio Speed
+                                    </label>
+                                    <select
+                                        id="scenario-audio-speed-select"
+                                        value={audioSpeed}
+                                        onChange={(e) => setAudioSpeed(e.target.value as AudioSpeed)}
+                                        className="w-full h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    >
+                                        <option value="slow">Slow</option>
+                                        <option value="normal">Normal</option>
+                                        <option value="fast">Fast</option>
+                                    </select>
+                                </div>
 
                                 {selectedScenario ? (
                                     <div className="rounded-md border p-4 space-y-3">
@@ -141,7 +158,8 @@ export default function ScenariosListView({ input, output }: ScenariosListViewPr
                                                                                     playCardAudio(
                                                                                         sentence.id ?? `scenario-${index}`,
                                                                                         sentence.sentence,
-                                                                                        selectedScenario.targetLanguage
+                                                                                        selectedScenario.targetLanguage,
+                                                                                        getPlaybackRate(audioSpeed)
                                                                                     )
                                                                                 }
                                                                                 title="Play audio"
@@ -185,7 +203,8 @@ export default function ScenariosListView({ input, output }: ScenariosListViewPr
                                                                                 playCardAudio(
                                                                                     sentence.id ?? `scenario-${index}`,
                                                                                     sentence.sentence,
-                                                                                    selectedScenario.targetLanguage
+                                                                                    selectedScenario.targetLanguage,
+                                                                                    getPlaybackRate(audioSpeed)
                                                                                 )
                                                                             }
                                                                             title="Play audio"

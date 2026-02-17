@@ -61,6 +61,18 @@ async function setToIndexedDB(key: string, value: string): Promise<void> {
     }
 }
 
+export type AudioSpeed = "slow" | "normal" | "fast";
+
+const SPEED_TO_RATE: Record<AudioSpeed, number> = {
+    slow: 0.8,
+    normal: 1.0,
+    fast: 1.25,
+};
+
+export function getPlaybackRate(speed: AudioSpeed): number {
+    return SPEED_TO_RATE[speed];
+}
+
 export async function getAudioUrlForCard(cardId: string, text: string, lang = "en") {
     const cacheKey = `tts_${lang}_${cardId}`;
     
@@ -101,8 +113,9 @@ export async function getAudioUrlForCard(cardId: string, text: string, lang = "e
     }
 }
 
-export async function playCardAudio(cardId: string, text: string, lang = "en") {
+export async function playCardAudio(cardId: string, text: string, lang = "en", playbackRate = 1) {
     const base64Url = await getAudioUrlForCard(cardId, text, lang);
     const audio = new Audio(base64Url);
+    audio.playbackRate = playbackRate;
     await audio.play();
 }
