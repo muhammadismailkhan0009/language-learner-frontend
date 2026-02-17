@@ -68,12 +68,17 @@ export const editScenarioFlow = defineFlow<EditScenarioDomainData, EditScenarioI
                     return "displayForm";
                 }
 
-                if (!isDraftValid(output.draft)) {
+                const draftToSave: ScenarioDraft = {
+                    ...output.draft,
+                    targetLanguage: "de",
+                };
+
+                if (!isDraftValid(draftToSave)) {
                     internal.flowData.ui.saveError = "Complete required fields before saving";
                     return "displayForm";
                 }
 
-                internal.flowData.draft = output.draft;
+                internal.flowData.draft = draftToSave;
                 internal.flowData.ui.saveError = null;
                 internal.flowData.ui.isSaving = true;
                 return "saveScenario";
@@ -155,7 +160,7 @@ export const editScenarioFlow = defineFlow<EditScenarioDomainData, EditScenarioI
             try {
                 const requestBody: EditScenarioRequest = {
                     nature: draft.nature,
-                    targetLanguage: draft.targetLanguage,
+                    targetLanguage: "de",
                     sentences: draft.sentences.map((item) => ({
                         id: item.id,
                         sentence: item.sentence,
@@ -169,7 +174,7 @@ export const editScenarioFlow = defineFlow<EditScenarioDomainData, EditScenarioI
                 }
 
                 const oldLang = internal.flowData.originalTargetLanguage || "en";
-                const newLang = draft.targetLanguage || oldLang;
+                const newLang = "de";
                 const nextSentencesById = new Map(
                     draft.sentences.filter((item) => !!item.id).map((item) => [item.id as string, item.sentence])
                 );

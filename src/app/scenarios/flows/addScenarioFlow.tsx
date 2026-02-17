@@ -51,12 +51,17 @@ export const addScenarioFlow = defineFlow<AddScenarioDomainData, AddScenarioInte
                     return "displayForm";
                 }
 
-                if (!isDraftValid(output.draft)) {
-                    internal.flowData.ui.error = "Nature, target language, and at least one complete sentence are required";
+                const draftToSave: ScenarioDraft = {
+                    ...output.draft,
+                    targetLanguage: "de",
+                };
+
+                if (!isDraftValid(draftToSave)) {
+                    internal.flowData.ui.error = "Nature and at least one complete sentence are required";
                     return "displayForm";
                 }
 
-                internal.flowData.draft = output.draft;
+                internal.flowData.draft = draftToSave;
                 internal.flowData.ui.error = null;
                 internal.flowData.ui.isSaving = true;
                 return "saveScenario";
@@ -77,7 +82,7 @@ export const addScenarioFlow = defineFlow<AddScenarioDomainData, AddScenarioInte
             try {
                 const requestBody: CreateScenarioRequest = {
                     nature: draft.nature,
-                    targetLanguage: draft.targetLanguage,
+                    targetLanguage: "de",
                     sentences: draft.sentences.map((item) => ({
                         sentence: item.sentence,
                         translation: item.translation,

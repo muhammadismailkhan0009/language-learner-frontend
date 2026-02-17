@@ -40,7 +40,6 @@ export default function EditScenarioView({ input, output }: EditScenarioViewProp
 
     const canSubmit =
         !!localDraft.nature.trim() &&
-        !!localDraft.targetLanguage.trim() &&
         localDraft.sentences.some((item) => item.sentence.trim() && item.translation.trim());
 
     if (mode !== "edit") {
@@ -75,11 +74,7 @@ export default function EditScenarioView({ input, output }: EditScenarioViewProp
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="edit-scenario-language">Target Language</Label>
-                                        <Input
-                                            id="edit-scenario-language"
-                                            value={localDraft.targetLanguage}
-                                            onChange={(e) => setLocalDraft((prev) => ({ ...prev, targetLanguage: e.target.value }))}
-                                        />
+                                        <Input id="edit-scenario-language" value="German" disabled />
                                     </div>
                                 </div>
 

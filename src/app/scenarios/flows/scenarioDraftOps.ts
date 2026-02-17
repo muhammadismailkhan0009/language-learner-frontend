@@ -8,7 +8,7 @@ export function createEmptySentence(): SentenceDraft {
 export function createInitialDraft(): ScenarioDraft {
     return {
         nature: "",
-        targetLanguage: "",
+        targetLanguage: "de",
         sentences: [createEmptySentence()],
     };
 }
@@ -46,4 +46,3 @@ export function isDraftValid(draft: ScenarioDraft): boolean {
 
     return draft.sentences.some((item) => item.sentence.trim() && item.translation.trim());
 }
-

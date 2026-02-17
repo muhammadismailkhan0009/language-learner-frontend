@@ -36,7 +36,6 @@ export default function AddScenarioView({ input, output }: AddScenarioViewProps)
 
     const canSubmit =
         !!localDraft.nature.trim() &&
-        !!localDraft.targetLanguage.trim() &&
         localDraft.sentences.some((item) => item.sentence.trim() && item.translation.trim());
 
     if (mode !== "create") {
@@ -65,11 +64,7 @@ export default function AddScenarioView({ input, output }: AddScenarioViewProps)
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="new-scenario-language">Target Language</Label>
-                                <Input
-                                    id="new-scenario-language"
-                                    value={localDraft.targetLanguage}
-                                    onChange={(e) => setLocalDraft((prev) => ({ ...prev, targetLanguage: e.target.value }))}
-                                />
+                                <Input id="new-scenario-language" value="German" disabled />
                             </div>
                         </div>
 
