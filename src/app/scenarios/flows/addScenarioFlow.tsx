@@ -103,7 +103,7 @@ export const addScenarioFlow = defineFlow<AddScenarioDomainData, AddScenarioInte
         input: (_domain, internal) => ({
             draft: normalizeDraft(internal.flowData.draft),
         }),
-        action: async ({ draft }, _domain, internal) => {
+        action: async ({ draft }: { draft: ScenarioDraft }, _domain, internal) => {
             try {
                 const requestBody: CreateScenarioRequest = {
                     nature: draft.nature,
@@ -143,4 +143,3 @@ export const addScenarioFlow = defineFlow<AddScenarioDomainData, AddScenarioInte
     },
     createInternalData: createAddScenarioInternalData,
 });
-

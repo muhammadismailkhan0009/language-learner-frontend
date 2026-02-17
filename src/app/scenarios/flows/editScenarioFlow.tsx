@@ -117,7 +117,11 @@ export const editScenarioFlow = defineFlow<EditScenarioDomainData, EditScenarioI
             mode: (events?.screenMode?.get() as ScreenMode | undefined) ?? "list",
             selectedScenarioId: (events?.selectedScenarioId?.get() as string | null | undefined) ?? null,
         }),
-        action: async ({ mode, selectedScenarioId }, _domain, internal) => {
+        action: async (
+            { mode, selectedScenarioId }: { mode: ScreenMode; selectedScenarioId: string | null },
+            _domain,
+            internal
+        ) => {
             if (mode !== "edit" || !selectedScenarioId) {
                 return { ok: true };
             }
@@ -153,7 +157,11 @@ export const editScenarioFlow = defineFlow<EditScenarioDomainData, EditScenarioI
             selectedScenarioId: (events?.selectedScenarioId?.get() as string | null | undefined) ?? null,
             draft: normalizeDraft(internal.flowData.draft),
         }),
-        action: async ({ selectedScenarioId, draft }, _domain, internal) => {
+        action: async (
+            { selectedScenarioId, draft }: { selectedScenarioId: string | null; draft: ScenarioDraft },
+            _domain,
+            internal
+        ) => {
             if (!selectedScenarioId) {
                 internal.flowData.ui.saveError = "Missing selected scenario";
                 internal.flowData.ui.isSaving = false;
@@ -217,4 +225,3 @@ export const editScenarioFlow = defineFlow<EditScenarioDomainData, EditScenarioI
     },
     createInternalData: createEditScenarioInternalData,
 });
-
