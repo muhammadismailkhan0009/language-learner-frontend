@@ -3,7 +3,7 @@ import fetchScenarioAction from "../_server_actions/fetchScenarioAction";
 import editScenarioAction from "../_server_actions/editScenarioAction";
 import EditScenarioView, { EditScenarioViewOutput } from "../_client_components/EditScenarioView";
 import { ScenarioDraft, ScreenMode } from "../types";
-import { createEmptySentence, createInitialDraft, isDraftValid, mapScenarioToDraft, normalizeDraft } from "./scenarioDraftOps";
+import { createInitialDraft, isDraftValid, mapScenarioToDraft, normalizeDraft } from "./scenarioDraftOps";
 import { EditScenarioRequest } from "@/lib/types/requests/EditScenarioRequest";
 import { deleteAudioCacheForCard } from "@/lib/ttsGoogle";
 
@@ -63,47 +63,17 @@ export const editScenarioFlow = defineFlow<EditScenarioDomainData, EditScenarioI
                 return "displayForm";
             }
 
-            if (output.type === "setNature") {
-                internal.flowData.draft.nature = output.value;
-                return "displayForm";
-            }
-
-            if (output.type === "setTargetLanguage") {
-                internal.flowData.draft.targetLanguage = output.value;
-                return "displayForm";
-            }
-
-            if (output.type === "setSentence") {
-                const sentence = internal.flowData.draft.sentences[output.index];
-                if (sentence) {
-                    sentence[output.field] = output.value;
-                }
-                return "displayForm";
-            }
-
-            if (output.type === "addSentence") {
-                internal.flowData.draft.sentences.push(createEmptySentence());
-                return "displayForm";
-            }
-
-            if (output.type === "removeSentence") {
-                internal.flowData.draft.sentences = internal.flowData.draft.sentences.filter((_, index) => index !== output.index);
-                if (internal.flowData.draft.sentences.length === 0) {
-                    internal.flowData.draft.sentences = [createEmptySentence()];
-                }
-                return "displayForm";
-            }
-
             if (output.type === "submit") {
                 if (internal.flowData.ui.isSaving) {
                     return "displayForm";
                 }
 
-                if (!isDraftValid(internal.flowData.draft)) {
+                if (!isDraftValid(output.draft)) {
                     internal.flowData.ui.saveError = "Complete required fields before saving";
                     return "displayForm";
                 }
 
+                internal.flowData.draft = output.draft;
                 internal.flowData.ui.saveError = null;
                 internal.flowData.ui.isSaving = true;
                 return "saveScenario";

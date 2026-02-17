@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { OutputHandle } from "@myriadcodelabs/uiflow";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,12 +10,7 @@ import { ScenarioDraft, ScreenMode } from "../types";
 
 export type AddScenarioViewOutput =
     | { type: "cancel" }
-    | { type: "setNature"; value: string }
-    | { type: "setTargetLanguage"; value: string }
-    | { type: "setSentence"; index: number; field: "sentence" | "translation"; value: string }
-    | { type: "addSentence" }
-    | { type: "removeSentence"; index: number }
-    | { type: "submit" }
+    | { type: "submit"; draft: ScenarioDraft }
     | { type: "clearError" };
 
 type AddScenarioViewProps = {
@@ -29,7 +25,19 @@ type AddScenarioViewProps = {
 };
 
 export default function AddScenarioView({ input, output }: AddScenarioViewProps) {
-    const { mode, draft, error, isSaving, canSubmit } = input;
+    const { mode, draft, error, isSaving } = input;
+    const [localDraft, setLocalDraft] = useState<ScenarioDraft>(draft);
+
+    useEffect(() => {
+        if (mode === "create") {
+            setLocalDraft(draft);
+        }
+    }, [mode, draft]);
+
+    const canSubmit =
+        !!localDraft.nature.trim() &&
+        !!localDraft.targetLanguage.trim() &&
+        localDraft.sentences.some((item) => item.sentence.trim() && item.translation.trim());
 
     if (mode !== "create") {
         return null;
@@ -49,14 +57,18 @@ export default function AddScenarioView({ input, output }: AddScenarioViewProps)
                         <div className="grid gap-4 md:grid-cols-2">
                             <div className="space-y-2">
                                 <Label htmlFor="new-scenario-nature">Nature</Label>
-                                <Input id="new-scenario-nature" value={draft.nature} onChange={(e) => output.emit({ type: "setNature", value: e.target.value })} />
+                                <Input
+                                    id="new-scenario-nature"
+                                    value={localDraft.nature}
+                                    onChange={(e) => setLocalDraft((prev) => ({ ...prev, nature: e.target.value }))}
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="new-scenario-language">Target Language</Label>
                                 <Input
                                     id="new-scenario-language"
-                                    value={draft.targetLanguage}
-                                    onChange={(e) => output.emit({ type: "setTargetLanguage", value: e.target.value })}
+                                    value={localDraft.targetLanguage}
+                                    onChange={(e) => setLocalDraft((prev) => ({ ...prev, targetLanguage: e.target.value }))}
                                 />
                             </div>
                         </div>
@@ -64,23 +76,52 @@ export default function AddScenarioView({ input, output }: AddScenarioViewProps)
                         <div className="space-y-3">
                             <div className="flex items-center justify-between">
                                 <Label>Sentences</Label>
-                                <Button type="button" variant="outline" size="sm" onClick={() => output.emit({ type: "addSentence" })}>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setLocalDraft((prev) => ({ ...prev, sentences: [...prev.sentences, { sentence: "", translation: "" }] }))}
+                                >
                                     Add sentence
                                 </Button>
                             </div>
-                            {draft.sentences.map((item, index) => (
+                            {localDraft.sentences.map((item, index) => (
                                 <div key={`create-sentence-${index}`} className="grid gap-2 md:grid-cols-[1fr_1fr_auto]">
                                     <Input
                                         value={item.sentence}
-                                        onChange={(e) => output.emit({ type: "setSentence", index, field: "sentence", value: e.target.value })}
+                                        onChange={(e) =>
+                                            setLocalDraft((prev) => {
+                                                const next = [...prev.sentences];
+                                                next[index] = { ...next[index], sentence: e.target.value };
+                                                return { ...prev, sentences: next };
+                                            })
+                                        }
                                         placeholder="Sentence"
                                     />
                                     <Input
                                         value={item.translation}
-                                        onChange={(e) => output.emit({ type: "setSentence", index, field: "translation", value: e.target.value })}
+                                        onChange={(e) =>
+                                            setLocalDraft((prev) => {
+                                                const next = [...prev.sentences];
+                                                next[index] = { ...next[index], translation: e.target.value };
+                                                return { ...prev, sentences: next };
+                                            })
+                                        }
                                         placeholder="Translation"
                                     />
-                                    <Button type="button" variant="ghost" onClick={() => output.emit({ type: "removeSentence", index })}>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        onClick={() =>
+                                            setLocalDraft((prev) => {
+                                                const filtered = prev.sentences.filter((_, sentenceIndex) => sentenceIndex !== index);
+                                                return {
+                                                    ...prev,
+                                                    sentences: filtered.length > 0 ? filtered : [{ sentence: "", translation: "" }],
+                                                };
+                                            })
+                                        }
+                                    >
                                         Remove
                                     </Button>
                                 </div>
@@ -88,7 +129,7 @@ export default function AddScenarioView({ input, output }: AddScenarioViewProps)
                         </div>
 
                         <div className="flex flex-wrap items-center gap-3">
-                            <Button type="button" onClick={() => output.emit({ type: "submit" })} disabled={!canSubmit || isSaving}>
+                            <Button type="button" onClick={() => output.emit({ type: "submit", draft: localDraft })} disabled={!canSubmit || isSaving}>
                                 {isSaving ? "Adding..." : "Add scenario"}
                             </Button>
                             {error ? (
@@ -106,4 +147,3 @@ export default function AddScenarioView({ input, output }: AddScenarioViewProps)
         </div>
     );
 }
-

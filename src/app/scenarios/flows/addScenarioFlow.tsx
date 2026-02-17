@@ -2,7 +2,7 @@ import { defineFlow } from "@myriadcodelabs/uiflow";
 import createScenarioAction from "../_server_actions/createScenarioAction";
 import AddScenarioView, { AddScenarioViewOutput } from "../_client_components/AddScenarioView";
 import { ScenarioDraft, ScreenMode } from "../types";
-import { createEmptySentence, createInitialDraft, isDraftValid, normalizeDraft } from "./scenarioDraftOps";
+import { createInitialDraft, isDraftValid, normalizeDraft } from "./scenarioDraftOps";
 import { CreateScenarioRequest } from "@/lib/types/requests/CreateScenarioRequest";
 
 type AddScenarioDomainData = Record<string, never>;
@@ -46,47 +46,17 @@ export const addScenarioFlow = defineFlow<AddScenarioDomainData, AddScenarioInte
                 return "displayForm";
             }
 
-            if (output.type === "setNature") {
-                internal.flowData.draft.nature = output.value;
-                return "displayForm";
-            }
-
-            if (output.type === "setTargetLanguage") {
-                internal.flowData.draft.targetLanguage = output.value;
-                return "displayForm";
-            }
-
-            if (output.type === "setSentence") {
-                const sentence = internal.flowData.draft.sentences[output.index];
-                if (sentence) {
-                    sentence[output.field] = output.value;
-                }
-                return "displayForm";
-            }
-
-            if (output.type === "addSentence") {
-                internal.flowData.draft.sentences.push(createEmptySentence());
-                return "displayForm";
-            }
-
-            if (output.type === "removeSentence") {
-                internal.flowData.draft.sentences = internal.flowData.draft.sentences.filter((_, index) => index !== output.index);
-                if (internal.flowData.draft.sentences.length === 0) {
-                    internal.flowData.draft.sentences = [createEmptySentence()];
-                }
-                return "displayForm";
-            }
-
             if (output.type === "submit") {
                 if (internal.flowData.ui.isSaving) {
                     return "displayForm";
                 }
 
-                if (!isDraftValid(internal.flowData.draft)) {
+                if (!isDraftValid(output.draft)) {
                     internal.flowData.ui.error = "Nature, target language, and at least one complete sentence are required";
                     return "displayForm";
                 }
 
+                internal.flowData.draft = output.draft;
                 internal.flowData.ui.error = null;
                 internal.flowData.ui.isSaving = true;
                 return "saveScenario";
