@@ -37,6 +37,11 @@ const items = [
         url: "/scenarios",
         icon: NotebookPen,
     },
+    {
+        title: "Grammar",
+        url: "/grammar",
+        icon: NotebookPen,
+    },
     
 ]
 export function AppSidebar() {

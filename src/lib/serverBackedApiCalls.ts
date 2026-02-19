@@ -13,6 +13,9 @@ import { CardRating } from "./types/requests/CardRating";
 import { ScenarioResponse } from "./types/responses/ScenarioResponse";
 import { CreateScenarioRequest } from "./types/requests/CreateScenarioRequest";
 import { EditScenarioRequest } from "./types/requests/EditScenarioRequest";
+import { GrammarRuleResponse } from "./types/responses/GrammarRuleResponse";
+import { CreateGrammarRuleRequest } from "./types/requests/CreateGrammarRuleRequest";
+import { EditGrammarRuleRequest } from "./types/requests/EditGrammarRuleRequest";
 
 export async function callRegisterUserApi(email: string, password: string): Promise<AxiosResponse<ApiResponse<UserInfoResponse>>> {
 
@@ -195,5 +198,30 @@ export async function editScenario(
         params: { userId },
     });
 
+    return response;
+}
+
+export async function fetchGrammarRules(): Promise<AxiosResponse<ApiResponse<GrammarRuleResponse[]>>> {
+    const response = await api.get<ApiResponse<GrammarRuleResponse[]>>("/api/v1/grammar-rules/v1");
+    return response;
+}
+
+export async function fetchGrammarRule(grammarRuleId: string): Promise<AxiosResponse<ApiResponse<GrammarRuleResponse>>> {
+    const response = await api.get<ApiResponse<GrammarRuleResponse>>(`/api/v1/grammar-rules/${grammarRuleId}/v1`);
+    return response;
+}
+
+export async function createGrammarRule(
+    requestBody: CreateGrammarRuleRequest
+): Promise<AxiosResponse<ApiResponse<GrammarRuleResponse>>> {
+    const response = await api.post<ApiResponse<GrammarRuleResponse>>("/api/v1/grammar-rules/v1", requestBody);
+    return response;
+}
+
+export async function editGrammarRule(
+    grammarRuleId: string,
+    requestBody: EditGrammarRuleRequest
+): Promise<AxiosResponse<ApiResponse<GrammarRuleResponse>>> {
+    const response = await api.put<ApiResponse<GrammarRuleResponse>>(`/api/v1/grammar-rules/${grammarRuleId}/v1`, requestBody);
     return response;
 }
