@@ -3,9 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { VocabularyEntryKind } from "@/lib/types/requests/AddVocabularyRequest";
 import { VocabularyDraft } from "../types";
+import NotesRichTextEditor from "./NotesRichTextEditor";
 
 type VocabularyFormProps = {
     draft: VocabularyDraft;
@@ -65,13 +65,11 @@ export default function VocabularyForm({ draft, onChange, disabled = false }: Vo
 
             <div className="space-y-2">
                 <Label htmlFor="vocabulary-notes">Notes</Label>
-                <Textarea
-                    id="vocabulary-notes"
+                <NotesRichTextEditor
                     value={draft.notes}
-                    onChange={(e) => onChange({ ...draft, notes: e.target.value })}
+                    onChange={(notes) => onChange({ ...draft, notes })}
                     placeholder="Usage notes, gender, mnemonic..."
                     disabled={disabled}
-                    rows={3}
                 />
             </div>
 

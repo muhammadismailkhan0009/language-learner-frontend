@@ -1,5 +1,6 @@
 import { VocabularyResponse } from "@/lib/types/responses/VocabularyResponse";
 import { VocabularyDraft } from "../types";
+import { normalizeNotesHtml } from "../notesHtml";
 
 export function createInitialVocabularyDraft(): VocabularyDraft {
     return {
@@ -24,7 +25,7 @@ export function normalizeVocabularyDraft(draft: VocabularyDraft): VocabularyDraf
         surface: draft.surface.trim(),
         translation: draft.translation.trim(),
         entryKind: draft.entryKind,
-        notes: draft.notes.trim(),
+        notes: normalizeNotesHtml(draft.notes),
         exampleSentences: normalizedSentences,
     };
 }

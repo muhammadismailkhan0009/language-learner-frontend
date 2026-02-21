@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { playCardAudio } from "@/lib/ttsGoogle";
 import { ScreenMode, VocabularyListItem } from "../types";
+import { sanitizeNotesHtml } from "../notesHtml";
 
 export type VocabularyListViewOutput =
     | { type: "reload" }
@@ -32,6 +33,7 @@ export default function VocabularyListView({ input, output }: VocabularyListView
     const { mode, vocabularies, selectedVocabularyId, error, isLoading } = input;
     const [isNotesVisible, setIsNotesVisible] = useState(false);
     const selectedVocabulary = vocabularies.find((item) => item.id === selectedVocabularyId) ?? vocabularies[0] ?? null;
+    const sanitizedNotesHtml = selectedVocabulary ? sanitizeNotesHtml(selectedVocabulary.notes) : "";
 
     useEffect(() => {
         setIsNotesVisible(false);
@@ -166,7 +168,14 @@ export default function VocabularyListView({ input, output }: VocabularyListView
                                             {isNotesVisible ? (
                                                 <div className="space-y-2">
                                                     <div className="text-sm font-medium">Notes</div>
-                                                    <p className="text-sm text-muted-foreground leading-relaxed">{selectedVocabulary.notes || "No notes."}</p>
+                                                    {sanitizedNotesHtml ? (
+                                                        <div
+                                                            className="prose prose-sm max-w-none text-muted-foreground"
+                                                            dangerouslySetInnerHTML={{ __html: sanitizedNotesHtml }}
+                                                        />
+                                                    ) : (
+                                                        <p className="text-sm text-muted-foreground leading-relaxed">No notes.</p>
+                                                    )}
                                                 </div>
                                             ) : null}
 
