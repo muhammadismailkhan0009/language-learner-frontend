@@ -16,7 +16,6 @@ export default function RegisterPage() {
         registerUserAction(email,password);
         
     }
-
     return (
         <div className="flex min-h-screen items-center justify-center">
             <Card className="w-full max-w-md">

@@ -16,6 +16,9 @@ import { EditScenarioRequest } from "./types/requests/EditScenarioRequest";
 import { GrammarRuleResponse } from "./types/responses/GrammarRuleResponse";
 import { CreateGrammarRuleRequest } from "./types/requests/CreateGrammarRuleRequest";
 import { EditGrammarRuleRequest } from "./types/requests/EditGrammarRuleRequest";
+import { VocabularyResponse } from "./types/responses/VocabularyResponse";
+import { AddVocabularyRequest } from "./types/requests/AddVocabularyRequest";
+import { UpdateVocabularyRequest } from "./types/requests/UpdateVocabularyRequest";
 
 export async function callRegisterUserApi(email: string, password: string): Promise<AxiosResponse<ApiResponse<UserInfoResponse>>> {
 
@@ -223,5 +226,62 @@ export async function editGrammarRule(
     requestBody: EditGrammarRuleRequest
 ): Promise<AxiosResponse<ApiResponse<GrammarRuleResponse>>> {
     const response = await api.put<ApiResponse<GrammarRuleResponse>>(`/api/v1/grammar-rules/${grammarRuleId}/v1`, requestBody);
+    return response;
+}
+
+export async function fetchVocabularies(): Promise<AxiosResponse<ApiResponse<VocabularyResponse[]>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const response = await api.get<ApiResponse<VocabularyResponse[]>>("/api/v1/vocabularies/v1", {
+        params: { userId },
+    });
+
+    return response;
+}
+
+export async function fetchVocabulary(vocabularyId: string): Promise<AxiosResponse<ApiResponse<VocabularyResponse>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const response = await api.get<ApiResponse<VocabularyResponse>>(`/api/v1/vocabularies/${vocabularyId}/v1`, {
+        params: { userId },
+    });
+
+    return response;
+}
+
+export async function addVocabulary(
+    requestBody: AddVocabularyRequest
+): Promise<AxiosResponse<ApiResponse<VocabularyResponse>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const response = await api.post<ApiResponse<VocabularyResponse>>("/api/v1/vocabularies/v1", requestBody, {
+        params: { userId },
+    });
+
+    return response;
+}
+
+export async function updateVocabulary(
+    vocabularyId: string,
+    requestBody: UpdateVocabularyRequest
+): Promise<AxiosResponse<ApiResponse<VocabularyResponse>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const response = await api.put<ApiResponse<VocabularyResponse>>(`/api/v1/vocabularies/${vocabularyId}/v1`, requestBody, {
+        params: { userId },
+    });
+
     return response;
 }

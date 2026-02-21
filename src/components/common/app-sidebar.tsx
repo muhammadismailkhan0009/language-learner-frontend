@@ -3,7 +3,7 @@ import {
     SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
     SidebarMenu, SidebarMenuButton, SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { Headphones, Inbox, NotebookPen } from "lucide-react"
+import { BookOpenText, Headphones, Inbox, NotebookPen } from "lucide-react"
 
 // Menu items.
 const items = [
@@ -41,6 +41,11 @@ const items = [
         title: "Grammar",
         url: "/grammar",
         icon: NotebookPen,
+    },
+    {
+        title: "Vocabulary",
+        url: "/vocabulary",
+        icon: BookOpenText,
     },
     
 ]
