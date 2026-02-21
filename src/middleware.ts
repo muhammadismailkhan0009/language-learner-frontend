@@ -27,6 +27,9 @@ export const config = {
         "/decks/:path*",
         "/flashcards/:path*",
         "/revision/:path*",
-        "/scenarios/:path*"
+        "/scenarios/:path*",
+        "/grammar/:path*",
+        "/listen/:path*",
+        "/vocabulary/:path*"
     ],
 };
