@@ -19,6 +19,8 @@ import { EditGrammarRuleRequest } from "./types/requests/EditGrammarRuleRequest"
 import { VocabularyResponse } from "./types/responses/VocabularyResponse";
 import { AddVocabularyRequest } from "./types/requests/AddVocabularyRequest";
 import { UpdateVocabularyRequest } from "./types/requests/UpdateVocabularyRequest";
+import { PublicVocabularyResponse } from "./types/responses/PublicVocabularyResponse";
+import { PublishPublicVocabularyRequest } from "./types/requests/PublishPublicVocabularyRequest";
 
 export async function callRegisterUserApi(email: string, password: string): Promise<AxiosResponse<ApiResponse<UserInfoResponse>>> {
 
@@ -280,6 +282,27 @@ export async function updateVocabulary(
     }
 
     const response = await api.put<ApiResponse<VocabularyResponse>>(`/api/v1/vocabularies/${vocabularyId}/v1`, requestBody, {
+        params: { userId },
+    });
+
+    return response;
+}
+
+export async function fetchPublicVocabularies(): Promise<AxiosResponse<ApiResponse<PublicVocabularyResponse[]>>> {
+    const response = await api.get<ApiResponse<PublicVocabularyResponse[]>>("/api/v1/public-vocabularies/v1");
+    return response;
+}
+
+export async function publishVocabulary(
+    vocabularyId: string,
+    requestBody: PublishPublicVocabularyRequest
+): Promise<AxiosResponse<ApiResponse<PublicVocabularyResponse>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const response = await api.post<ApiResponse<PublicVocabularyResponse>>(`/api/v1/public-vocabularies/${vocabularyId}/v1`, requestBody, {
         params: { userId },
     });
 

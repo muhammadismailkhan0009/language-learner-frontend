@@ -24,3 +24,14 @@ export type VocabularyListItem = {
     notes: string;
     exampleSentences: VocabularyExampleSentenceDraft[];
 };
+
+export type PublicVocabularyListItem = {
+    publicVocabularyId: string;
+    sourceVocabularyId: string;
+    publishedByUserId: string;
+    publishedAt: string;
+    surface: string;
+    translation: string;
+    notes: string;
+    exampleSentences: VocabularyExampleSentenceDraft[];
+};
