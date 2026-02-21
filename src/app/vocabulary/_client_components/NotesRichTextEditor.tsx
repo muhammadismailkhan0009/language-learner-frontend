@@ -29,6 +29,8 @@ export default function NotesRichTextEditor({
     const showPlaceholder = !isFocused && !hasVisibleText(normalizedValue);
 
     useEffect(() => {
+        document.execCommand("styleWithCSS", false, "false");
+
         const editor = editorRef.current;
         if (!editor) {
             return;

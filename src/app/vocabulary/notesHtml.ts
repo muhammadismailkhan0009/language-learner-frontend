@@ -54,6 +54,15 @@ export function sanitizeNotesHtml(rawHtml: string): string {
         return "";
     }
 
+    const wrapChildren = (node: Element, tagName: "strong" | "em" | "u") => {
+        const wrapper = doc.createElement(tagName);
+        while (node.firstChild) {
+            wrapper.appendChild(node.firstChild);
+        }
+        node.parentNode?.replaceChild(wrapper, node);
+        return wrapper;
+    };
+
     const clean = (node: Element) => {
         const tagName = node.tagName.toLowerCase();
 
@@ -64,6 +73,52 @@ export function sanitizeNotesHtml(rawHtml: string): string {
 
         const children = Array.from(node.children);
         children.forEach(clean);
+
+        if (tagName === "div" && node !== root) {
+            const paragraph = doc.createElement("p");
+            while (node.firstChild) {
+                paragraph.appendChild(node.firstChild);
+            }
+            node.parentNode?.replaceChild(paragraph, node);
+            return;
+        }
+
+        if (tagName === "span") {
+            const style = (node.getAttribute("style") ?? "").toLowerCase();
+            const isBold = /font-weight\s*:\s*(bold|[6-9]00)/.test(style);
+            const isItalic = /font-style\s*:\s*italic/.test(style);
+            const isUnderline = /text-decoration[^;]*:\s*[^;]*underline/.test(style);
+
+            let currentNode: Element | null = node;
+            if (isBold) {
+                currentNode = wrapChildren(currentNode, "strong");
+            }
+            if (isItalic) {
+                currentNode = wrapChildren(currentNode, "em");
+            }
+            if (isUnderline) {
+                currentNode = wrapChildren(currentNode, "u");
+            }
+
+            if (currentNode) {
+                Array.from(currentNode.attributes).forEach((attr) => {
+                    currentNode?.removeAttribute(attr.name);
+                });
+            }
+
+            if (!isBold && !isItalic && !isUnderline) {
+                const parent = node.parentNode;
+                if (!parent) {
+                    node.remove();
+                    return;
+                }
+                while (node.firstChild) {
+                    parent.insertBefore(node.firstChild, node);
+                }
+                parent.removeChild(node);
+            }
+            return;
+        }
 
         if (!ALLOWED_TAGS.has(tagName) && node !== root) {
             const parent = node.parentNode;
