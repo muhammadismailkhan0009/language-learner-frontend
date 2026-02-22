@@ -89,6 +89,46 @@ export function getPlaybackRate(speed: AudioSpeed): number {
     return SPEED_TO_RATE[speed];
 }
 
+async function hashTextKey(content: string): Promise<string> {
+    const normalized = content.trim().toLowerCase();
+    const data = new TextEncoder().encode(normalized);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    return Array.from(new Uint8Array(hashBuffer))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+}
+
+async function getAudioUrlForCacheKey(cacheKey: string, text: string, lang: string) {
+    const cachedLocal = localStorage.getItem(cacheKey);
+    if (cachedLocal) return cachedLocal;
+
+    const cachedIndexed = await getFromIndexedDB(cacheKey);
+    if (cachedIndexed) return cachedIndexed;
+
+    const response = await fetch(`/api/tts?q=${encodeURIComponent(text)}&lang=${lang}`);
+    if (!response.ok) throw new Error("TTS fetch failed");
+
+    const blob = await response.blob();
+    const base64 = await blobToBase64(blob);
+
+    try {
+        localStorage.setItem(cacheKey, base64);
+        return base64;
+    } catch (error) {
+        if (error instanceof DOMException && error.name === "QuotaExceededError") {
+            console.warn("localStorage quota exceeded, using IndexedDB for caching");
+            try {
+                await setToIndexedDB(cacheKey, base64);
+                return base64;
+            } catch (indexedError) {
+                console.warn("IndexedDB storage also failed, continuing without cache:", indexedError);
+                return base64;
+            }
+        }
+        throw error;
+    }
+}
+
 export async function deleteAudioCacheForCard(cardId: string, lang = "en"): Promise<void> {
     const cacheKey = `tts_${lang}_${cardId}`;
     localStorage.removeItem(cacheKey);
@@ -97,42 +137,13 @@ export async function deleteAudioCacheForCard(cardId: string, lang = "en"): Prom
 
 export async function getAudioUrlForCard(cardId: string, text: string, lang = "en") {
     const cacheKey = `tts_${lang}_${cardId}`;
-    
-    // Try localStorage first (faster)
-    const cachedLocal = localStorage.getItem(cacheKey);
-    if (cachedLocal) return cachedLocal;
-    
-    // Try IndexedDB as fallback
-    const cachedIndexed = await getFromIndexedDB(cacheKey);
-    if (cachedIndexed) return cachedIndexed;
+    return getAudioUrlForCacheKey(cacheKey, text, lang);
+}
 
-    // Fetch from API if not cached
-    const response = await fetch(`/api/tts?q=${encodeURIComponent(text)}&lang=${lang}`);
-    if (!response.ok) throw new Error("TTS fetch failed");
-
-    const blob = await response.blob();
-    const base64 = await blobToBase64(blob);
-    
-    // Try localStorage first
-    try {
-        localStorage.setItem(cacheKey, base64);
-        return base64;
-    } catch (error) {
-        // If quota exceeded, use IndexedDB as fallback
-        if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-            console.warn('localStorage quota exceeded, using IndexedDB for caching');
-            try {
-                await setToIndexedDB(cacheKey, base64);
-                return base64;
-            } catch (indexedError) {
-                console.warn('IndexedDB storage also failed, continuing without cache:', indexedError);
-                // Still return the audio even if caching fails
-                return base64;
-            }
-        } else {
-            throw error;
-        }
-    }
+export async function getAudioUrlForText(text: string, lang = "en") {
+    const key = await hashTextKey(text);
+    const cacheKey = `tts_text_${lang}_${key}`;
+    return getAudioUrlForCacheKey(cacheKey, text, lang);
 }
 
 export async function playCardAudio(cardId: string, text: string, lang = "en", playbackRate = 1) {
@@ -140,4 +151,45 @@ export async function playCardAudio(cardId: string, text: string, lang = "en", p
     const audio = new Audio(base64Url);
     audio.playbackRate = playbackRate;
     await audio.play();
+}
+
+export async function playTextAudio(text: string, lang = "en", playbackRate = 1, signal?: AbortSignal) {
+    const cleaned = text.trim();
+    if (!cleaned || signal?.aborted) {
+        return;
+    }
+
+    const base64Url = await getAudioUrlForText(cleaned, lang);
+    if (signal?.aborted) {
+        return;
+    }
+
+    const audio = new Audio(base64Url);
+    audio.playbackRate = playbackRate;
+
+    let resolvePlayback: (() => void) | null = null;
+    const playbackDone = new Promise<void>((resolve) => {
+        resolvePlayback = resolve;
+        audio.onended = () => resolve();
+        audio.onerror = () => resolve();
+    });
+
+    const onAbort = () => {
+        audio.pause();
+        audio.currentTime = 0;
+        resolvePlayback?.();
+    };
+
+    if (signal) {
+        signal.addEventListener("abort", onAbort, { once: true });
+    }
+
+    try {
+        await audio.play();
+        await playbackDone;
+    } finally {
+        if (signal) {
+            signal.removeEventListener("abort", onAbort);
+        }
+    }
 }
