@@ -20,6 +20,7 @@ export type VocabularyListViewOutput =
     | { type: "setSelectedVocabulary"; vocabularyId: string }
     | { type: "openEdit"; vocabularyId: string }
     | { type: "addToFlashcards"; vocabularyId: string }
+    | { type: "addPublicToPrivate"; publicVocabularyId: string }
     | { type: "publishVocabulary"; vocabularyId: string; adminKey: string };
 
 type VocabularyListViewProps = {
@@ -32,6 +33,7 @@ type VocabularyListViewProps = {
         isLoading: boolean;
         isPublishing: boolean;
         isAddingToFlashcards: boolean;
+        isAddingPublicToPrivate: boolean;
         publishError: string | null;
         publishSuccess: string | null;
         addToFlashcardsError: string | null;
@@ -49,6 +51,7 @@ export default function VocabularyListView({ input, output }: VocabularyListView
         isLoading,
         isPublishing,
         isAddingToFlashcards,
+        isAddingPublicToPrivate,
         publishError,
         publishSuccess,
         addToFlashcardsError,
@@ -67,6 +70,7 @@ export default function VocabularyListView({ input, output }: VocabularyListView
             key: string;
             source: "private" | "public";
             id: string;
+            sourceVocabularyId?: string;
             surface: string;
             translation: string;
             notes: string;
@@ -93,6 +97,7 @@ export default function VocabularyListView({ input, output }: VocabularyListView
                     key: `public:${item.publicVocabularyId}`,
                     source: "public" as const,
                     id: item.publicVocabularyId,
+                    sourceVocabularyId: item.sourceVocabularyId,
                     surface: item.surface,
                     translation: item.translation,
                     notes: item.notes,
@@ -160,14 +165,19 @@ export default function VocabularyListView({ input, output }: VocabularyListView
         key: string;
         source: "private" | "public";
         id: string;
+        sourceVocabularyId?: string;
         surface: string;
         translation: string;
         notes: string;
         exampleSentences: { id?: string; sentence: string; translation: string }[];
     }, compact: boolean) => {
         const isPrivateRow = row.source === "private";
+        const isPublicRow = row.source === "public";
         const rowNotesHtml = sanitizeNotesHtml(row.notes);
         const isAlreadyPublished = isPrivateRow && publicVocabularies.some((item) => item.sourceVocabularyId === row.id);
+        const isAlreadyPrivate = isPublicRow && row.sourceVocabularyId
+            ? vocabularies.some((item) => item.id === row.sourceVocabularyId)
+            : false;
 
         return (
             <div className={compact ? "space-y-3 rounded-md border bg-muted/30 p-3" : "space-y-4"}>
@@ -232,6 +242,19 @@ export default function VocabularyListView({ input, output }: VocabularyListView
                                 onClick={() => output.emit({ type: "openEdit", vocabularyId: row.id })}
                             >
                                 Edit Entry
+                            </Button>
+                        </div>
+                    ) : null}
+                {isPublicRow ? (
+                        <div className="flex w-full sm:w-auto flex-wrap items-center gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size={compact ? "sm" : "default"}
+                                onClick={() => output.emit({ type: "addPublicToPrivate", publicVocabularyId: row.id })}
+                                disabled={isAddingPublicToPrivate || isAlreadyPrivate}
+                            >
+                                {isAlreadyPrivate ? "In Private Vocabulary" : isAddingPublicToPrivate ? "Adding..." : "Add to Private"}
                             </Button>
                         </div>
                     ) : null}

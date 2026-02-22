@@ -355,3 +355,20 @@ export async function publishVocabulary(
 
     return response;
 }
+
+export async function addPublicVocabularyToPrivate(
+    publicVocabularyId: string
+): Promise<AxiosResponse<ApiResponse<VocabularyResponse>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const response = await api.post<ApiResponse<VocabularyResponse>>(
+        `/api/v1/public-vocabularies/${publicVocabularyId}/private/v1`,
+        undefined,
+        { params: { userId } }
+    );
+
+    return response;
+}

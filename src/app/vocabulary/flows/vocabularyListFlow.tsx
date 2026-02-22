@@ -3,6 +3,7 @@ import fetchVocabulariesAction from "../_server_actions/fetchVocabulariesAction"
 import fetchPublicVocabulariesAction from "../_server_actions/fetchPublicVocabulariesAction";
 import publishVocabularyAction from "../_server_actions/publishVocabularyAction";
 import createVocabularyFlashcardsAction from "../_server_actions/createVocabularyFlashcardsAction";
+import addPublicVocabularyToPrivateAction from "../_server_actions/addPublicVocabularyToPrivateAction";
 import VocabularyListView, { VocabularyListViewOutput } from "../_client_components/VocabularyListView";
 import { PublicVocabularyListItem, ScreenMode, VocabularyListItem } from "../types";
 
@@ -17,6 +18,9 @@ interface VocabularyListInternalData {
             vocabularyId: string | null;
             adminKey: string;
         };
+        publicToPrivateRequest: {
+            publicVocabularyId: string | null;
+        };
         flashcardRequest: {
             vocabularyId: string | null;
         };
@@ -24,6 +28,7 @@ interface VocabularyListInternalData {
             isLoading: boolean;
             isPublishing: boolean;
             isAddingToFlashcards: boolean;
+            isAddingPublicToPrivate: boolean;
             error: string | null;
             publishError: string | null;
             publishSuccess: string | null;
@@ -43,6 +48,9 @@ function createVocabularyListInternalData(): VocabularyListInternalData {
                 vocabularyId: null,
                 adminKey: "",
             },
+            publicToPrivateRequest: {
+                publicVocabularyId: null,
+            },
             flashcardRequest: {
                 vocabularyId: null,
             },
@@ -50,6 +58,7 @@ function createVocabularyListInternalData(): VocabularyListInternalData {
                 isLoading: false,
                 isPublishing: false,
                 isAddingToFlashcards: false,
+                isAddingPublicToPrivate: false,
                 error: null,
                 publishError: null,
                 publishSuccess: null,
@@ -132,6 +141,7 @@ export const vocabularyListFlow = defineFlow<VocabularyListDomainData, Vocabular
             publishError: internal.flowData.ui.publishError,
             publishSuccess: internal.flowData.ui.publishSuccess,
             isAddingToFlashcards: internal.flowData.ui.isAddingToFlashcards,
+            isAddingPublicToPrivate: internal.flowData.ui.isAddingPublicToPrivate,
             addToFlashcardsError: internal.flowData.ui.addToFlashcardsError,
             addToFlashcardsSuccess: internal.flowData.ui.addToFlashcardsSuccess,
         }),
@@ -180,6 +190,19 @@ export const vocabularyListFlow = defineFlow<VocabularyListDomainData, Vocabular
                 internal.flowData.ui.addToFlashcardsError = null;
                 internal.flowData.ui.addToFlashcardsSuccess = null;
                 return "addToFlashcards";
+            }
+
+            if (output.type === "addPublicToPrivate") {
+                if (internal.flowData.ui.isAddingPublicToPrivate) {
+                    return "displayList";
+                }
+
+                internal.flowData.publicToPrivateRequest = {
+                    publicVocabularyId: output.publicVocabularyId,
+                };
+                internal.flowData.ui.isAddingPublicToPrivate = true;
+                internal.flowData.ui.error = null;
+                return "addPublicToPrivate";
             }
 
             if (output.type === "publishVocabulary") {
@@ -270,6 +293,57 @@ export const vocabularyListFlow = defineFlow<VocabularyListDomainData, Vocabular
                     err instanceof Error ? err.message : "Failed to add vocabulary to flashcards";
             } finally {
                 internal.flowData.ui.isAddingToFlashcards = false;
+            }
+
+            return { ok: true };
+        },
+        render: { mode: "preserve-previous" },
+        onOutput: () => "displayList",
+    },
+    addPublicToPrivate: {
+        input: (_domain, internal) => ({
+            publicVocabularyId: internal.flowData.publicToPrivateRequest.publicVocabularyId,
+        }),
+        action: async ({ publicVocabularyId }: { publicVocabularyId: string | null }, _domain, internal) => {
+            if (!publicVocabularyId) {
+                internal.flowData.ui.error = "Missing public vocabulary selection";
+                internal.flowData.ui.isAddingPublicToPrivate = false;
+                return { ok: true };
+            }
+
+            try {
+                const response = await addPublicVocabularyToPrivateAction(publicVocabularyId);
+                if (!response) {
+                    throw new Error("Failed to add public vocabulary to private list");
+                }
+
+                const exists = internal.flowData.vocabularies.some((item) => item.id === response.id);
+                if (!exists) {
+                    internal.flowData.vocabularies = [
+                        {
+                            id: response.id,
+                            surface: response.surface ?? "",
+                            translation: response.translation ?? "",
+                            entryKind: response.entryKind ?? "WORD",
+                            notes: response.notes ?? "",
+                            exampleSentences: (response.exampleSentences ?? []).map((sentence) => ({
+                                id: sentence.id,
+                                sentence: sentence.sentence ?? "",
+                                translation: sentence.translation ?? "",
+                            })),
+                        },
+                        ...internal.flowData.vocabularies,
+                    ];
+
+                    if (!internal.flowData.selectedVocabularyId) {
+                        internal.flowData.selectedVocabularyId = response.id;
+                    }
+                }
+            } catch (err) {
+                internal.flowData.ui.error =
+                    err instanceof Error ? err.message : "Failed to add public vocabulary to private list";
+            } finally {
+                internal.flowData.ui.isAddingPublicToPrivate = false;
             }
 
             return { ok: true };
