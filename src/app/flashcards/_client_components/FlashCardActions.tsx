@@ -37,10 +37,10 @@ type CardActionsInternalProps = {
 function ReviewAction(actions: CardActionsInternalProps) {
 
     return (
-        <div className="flex gap-3 flex-wrap justify-center">
+        <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:justify-center">
             <Button
                 size="lg"
-                className="text-lg px-6 py-3 min-w-[100px]"
+                className="text-base sm:text-lg px-4 sm:px-6 py-3 w-full sm:w-auto min-w-[110px]"
                 onClick={() => actions.output.emit({ action: "rate", rating: Rating.EASY })}
                 disabled={actions.input.disabled}
             >
@@ -49,7 +49,7 @@ function ReviewAction(actions: CardActionsInternalProps) {
 
             <Button
                 size="lg"
-                className="text-lg px-6 py-3 min-w-[100px]"
+                className="text-base sm:text-lg px-4 sm:px-6 py-3 w-full sm:w-auto min-w-[110px]"
                 onClick={() => actions.output.emit({ action: "rate", rating: Rating.GOOD })}
                 disabled={actions.input.disabled}
             >
@@ -58,7 +58,7 @@ function ReviewAction(actions: CardActionsInternalProps) {
 
             <Button
                 size="lg"
-                className="text-lg px-6 py-3 min-w-[100px]"
+                className="text-base sm:text-lg px-4 sm:px-6 py-3 w-full sm:w-auto min-w-[110px]"
                 onClick={() => actions.output.emit({ action: "rate", rating: Rating.HARD })}
                 disabled={actions.input.disabled}
             >
@@ -67,7 +67,7 @@ function ReviewAction(actions: CardActionsInternalProps) {
 
             <Button
                 size="lg"
-                className="text-lg px-6 py-3 min-w-[100px]"
+                className="text-base sm:text-lg px-4 sm:px-6 py-3 w-full sm:w-auto min-w-[110px]"
                 onClick={() => actions.output.emit({ action: "rate", rating: Rating.AGAIN })}
                 disabled={actions.input.disabled}
             >
@@ -79,12 +79,12 @@ function ReviewAction(actions: CardActionsInternalProps) {
 
 export default function FlashCardActions(actions: CardActionsProps) {
     return (
-        <div className="flex gap-4 justify-center">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
             {!actions.input.flipped ?
                 // if
                 (<Button 
                     size="lg"
-                    className="text-lg px-8 py-3"
+                    className="text-base sm:text-lg px-6 sm:px-8 py-3 w-full sm:w-auto"
                     onClick={() => actions.output.emit({ action: "flip" })}
                     disabled={actions.input.disabled}
                 >
@@ -94,7 +94,7 @@ export default function FlashCardActions(actions: CardActionsProps) {
                     (
                         (<Button 
                             size="lg"
-                            className="text-lg px-8 py-3"
+                            className="text-base sm:text-lg px-6 sm:px-8 py-3 w-full sm:w-auto"
                             onClick={() => actions.output.emit({ action: "next" })}
                             disabled={actions.input.disabled}
                         >
