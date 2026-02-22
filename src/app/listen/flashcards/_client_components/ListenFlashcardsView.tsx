@@ -81,7 +81,7 @@ async function playCardSequence(card: FlashCard, playbackRate: number, signal?: 
     if (german.trim()) {
         await playTextAudio(german, "de", playbackRate, signal);
     }
-    await sleep(10000, signal);
+    await sleep(8000, signal);
     if (signal?.aborted) {
         return;
     }
@@ -89,7 +89,7 @@ async function playCardSequence(card: FlashCard, playbackRate: number, signal?: 
     if (english.trim()) {
         await playTextAudio(english, "en", playbackRate, signal);
     }
-    await sleep(5000, signal);
+    await sleep(3000, signal);
 
     for (const sentence of germanSentences) {
         if (signal?.aborted) {
@@ -100,7 +100,7 @@ async function playCardSequence(card: FlashCard, playbackRate: number, signal?: 
             continue;
         }
         await playTextAudio(cleaned, "de", playbackRate, signal);
-        await sleep(5000, signal);
+        await sleep(3000, signal);
     }
 }
 
