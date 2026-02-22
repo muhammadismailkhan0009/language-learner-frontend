@@ -212,18 +212,19 @@ export default function VocabularyListView({ input, output }: VocabularyListView
                             >
                                 {isAddingToFlashcards ? "Adding..." : "Add to Flashcards"}
                             </Button>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size={compact ? "sm" : "default"}
-                                onClick={() => {
-                                    output.emit({ type: "clearPublishStatus" });
-                                    setIsPublishModalOpen(true);
-                                }}
-                                disabled={isAlreadyPublished}
-                            >
-                                {isAlreadyPublished ? "Published" : "Publish"}
-                            </Button>
+                            {!isAlreadyPublished ? (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size={compact ? "sm" : "default"}
+                                    onClick={() => {
+                                        output.emit({ type: "clearPublishStatus" });
+                                        setIsPublishModalOpen(true);
+                                    }}
+                                >
+                                    Publish
+                                </Button>
+                            ) : null}
                             <Button
                                 type="button"
                                 variant="outline"
