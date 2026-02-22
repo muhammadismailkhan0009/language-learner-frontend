@@ -120,10 +120,11 @@ export default function ListenFlashcardsView({ input, output }: ListenFlashcards
         const loopId = loopRef.current;
         const controller = new AbortController();
         const playbackRate = getPlaybackRate(input.audioSpeed);
+        const deckId = input.selectedDeckId;
 
         const runLoop = async () => {
             while (!controller.signal.aborted && loopId === loopRef.current) {
-                const fetchPromise = fetchNextRevisionCardAction(input.selectedDeckId);
+                const fetchPromise = fetchNextRevisionCardAction(deckId);
                 await playTextAudio("Next Card", "en", playbackRate, controller.signal);
                 await sleep(3000, controller.signal);
                 const card = await fetchPromise;
