@@ -21,6 +21,7 @@ import { AddVocabularyRequest } from "./types/requests/AddVocabularyRequest";
 import { UpdateVocabularyRequest } from "./types/requests/UpdateVocabularyRequest";
 import { PublicVocabularyResponse } from "./types/responses/PublicVocabularyResponse";
 import { PublishPublicVocabularyRequest } from "./types/requests/PublishPublicVocabularyRequest";
+import { isRevisionDeckId, isVocabularyDeckId } from "./flashcards/flashcardApiUtils";
 
 export async function callRegisterUserApi(email: string, password: string): Promise<AxiosResponse<ApiResponse<UserInfoResponse>>> {
 
@@ -45,25 +46,34 @@ export async function registerUser(email: string, password: string) {
 
 }
 
-export async function fetchNextFlashCardToStudy(deckId: string): Promise<AxiosResponse<ApiResponse<FlashCard>>> {
+export async function fetchNextFlashCardToStudy(deckId: string): Promise<AxiosResponse<ApiResponse<FlashCard | null>>> {
 
-    // Axios call (typed)
-    const response = await api.get<ApiResponse<FlashCard>>(`/api/decks/${deckId}/cards/next/v1`,
-        {
-            params: {
-                userId: (await cookies()).get("userId")?.value
-            }
-        }
-    );
+    const userId = (await cookies()).get("userId")?.value;
+    const response = isVocabularyDeckId(deckId)
+        ? await api.get<ApiResponse<FlashCard[]>>(`/api/v1/vocabulary-flashcards/cards/next/v1`, {
+            params: { userId },
+        })
+        : await api.get<ApiResponse<FlashCard>>(`/api/decks/${deckId}/cards/next/v1`, {
+            params: { userId },
+        });
 
+    if (isVocabularyDeckId(deckId)) {
+        const data = response.data.response as FlashCard[];
+        return {
+            ...(response as AxiosResponse<ApiResponse<FlashCard[]>>),
+            data: {
+                ...response.data,
+                response: data[0] ?? null,
+            },
+        } as AxiosResponse<ApiResponse<FlashCard | null>>;
+    }
 
-    return response;
+    return response as AxiosResponse<ApiResponse<FlashCard | null>>;
 
 }
 
-export async function fetchNextAudioCardToStudy(): Promise<AxiosResponse<ApiResponse<FlashCard>>> {
+export async function fetchNextAudioCardToStudy(): Promise<AxiosResponse<ApiResponse<FlashCard | null>>> {
 
-    // Axios call (typed)
     const response = await api.get<ApiResponse<FlashCard>>(`/api/exercise/audio-only/next/v1`,
         {
             params: {
@@ -72,39 +82,61 @@ export async function fetchNextAudioCardToStudy(): Promise<AxiosResponse<ApiResp
         }
     );
 
-
-    return response;
+    return response as AxiosResponse<ApiResponse<FlashCard | null>>;
 
 }
 
-export async function fetchNextFlashCardToRevise(deckId: string): Promise<AxiosResponse<ApiResponse<FlashCard>>> {
+export async function fetchNextFlashCardToRevise(deckId: string): Promise<AxiosResponse<ApiResponse<FlashCard | null>>> {
 
-    // Axios call (typed)
-    const response = await api.get<ApiResponse<FlashCard>>(`/api/decks/${deckId}/cards/revision/next/v1`,
-        {
-            params: {
-                userId: (await cookies()).get("userId")?.value
-            }
-        }
-    );
+    const userId = (await cookies()).get("userId")?.value;
+    const response = isVocabularyDeckId(deckId)
+        ? await api.get<ApiResponse<FlashCard>>(`/api/v1/vocabulary-flashcards/cards/revision/next/v1`, {
+            params: { userId },
+        })
+        : await api.get<ApiResponse<FlashCard>>(`/api/decks/${deckId}/cards/revision/next/v1`, {
+            params: { userId },
+        });
 
-
-    return response;
+    return response as AxiosResponse<ApiResponse<FlashCard | null>>;
 
 }
 
 export async function fetchFlashCardsList(deckId: string): Promise<AxiosResponse<ApiResponse<FlashCard[]>>> {
 
-    // Axios call (typed)
-    const response = await api.get<ApiResponse<FlashCard[]>>(`/api/decks/${deckId}/cards/next/v1`,
-        {
-            params: {
-                userId: (await cookies()).get("userId")?.value
-            }
-        }
-    );
+    const userId = (await cookies()).get("userId")?.value;
+    const isRevision = isRevisionDeckId(deckId);
 
-    return response;
+    if (isVocabularyDeckId(deckId)) {
+        const response = isRevision
+            ? await api.get<ApiResponse<FlashCard[]>>(`/api/v1/vocabulary-flashcards/cards/revision/v1`, {
+                params: { userId },
+            })
+            : await api.get<ApiResponse<FlashCard[]>>(`/api/v1/vocabulary-flashcards/cards/next/v1`, {
+                params: { userId },
+            });
+
+        return response as AxiosResponse<ApiResponse<FlashCard[]>>;
+    }
+
+    if (isRevision) {
+        const response = await api.get<ApiResponse<FlashCard>>(`/api/decks/${deckId}/cards/revision/next/v1`, {
+            params: { userId },
+        });
+
+        return {
+            ...(response as AxiosResponse<ApiResponse<FlashCard>>),
+            data: {
+                ...response.data,
+                response: response.data.response ? [response.data.response] : [],
+            },
+        } as AxiosResponse<ApiResponse<FlashCard[]>>;
+    }
+
+    const response = await api.get<ApiResponse<FlashCard[]>>(`/api/decks/${deckId}/cards/next/v1`, {
+        params: { userId },
+    });
+
+    return response as AxiosResponse<ApiResponse<FlashCard[]>>;
 
 }
 
@@ -282,6 +314,21 @@ export async function updateVocabulary(
     }
 
     const response = await api.put<ApiResponse<VocabularyResponse>>(`/api/v1/vocabularies/${vocabularyId}/v1`, requestBody, {
+        params: { userId },
+    });
+
+    return response;
+}
+
+export async function createVocabularyFlashcards(
+    vocabularyId: string
+): Promise<AxiosResponse<void>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const response = await api.post<void>(`/api/v1/vocabularies/${vocabularyId}/flashcards/v1`, undefined, {
         params: { userId },
     });
 

@@ -21,6 +21,10 @@ type FlashCardViewProps = {
 }
 
 export default function FlashCardView(props: FlashCardViewProps) {
+    const getFrontText = (card: FlashCard) => card.front?.wordOrChunk ?? "";
+    const getBackText = (card: FlashCard) => card.back?.wordOrChunk ?? "";
+    const isReversed = (card: FlashCard) => card.isReverse ?? card.isReversed ?? false;
+
     const handleCardAction = (cardId: string, action: CardActionWithoutId) => {
         // Add cardId to the action and emit
         if (action.action === "flip" || action.action === "rate" || action.action === "next") {
@@ -37,17 +41,29 @@ export default function FlashCardView(props: FlashCardViewProps) {
                             <CardContent className="p-4 flex-1 flex flex-col justify-center items-center ">
                                 <div className="text-2xl font-normal text-center leading-relaxed mb-6">
                                     {cardWithState.flipped
-                                        ? cardWithState.card.back.text
-                                        : cardWithState.card.front.text}
+                                        ? getBackText(cardWithState.card)
+                                        : getFrontText(cardWithState.card)}
                                 </div>
+                                {cardWithState.flipped && cardWithState.card.back?.sentences?.length ? (
+                                    <div className="w-full space-y-3 mb-4">
+                                        
+                                        <div className="space-y-2">
+                                            {cardWithState.card.back.sentences.map((sentence) => (
+                                                <div key={sentence.id} className="rounded-md border bg-muted/30 p-2">
+                                                    <div className="text-sm">{sentence.sentence}</div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : null}
                                 <Button
                                     size="lg"
                                     className="text-lg px-6 py-3"
                                     onClick={() => playCardAudio(
                                         cardWithState.card.id,
-                                        cardWithState.card.isReverse
-                                            ? cardWithState.card.back.text
-                                            : cardWithState.card.front.text,
+                                        isReversed(cardWithState.card)
+                                            ? getBackText(cardWithState.card)
+                                            : getFrontText(cardWithState.card),
                                         "de"
                                     )}
                                     disabled={cardWithState.disabled}

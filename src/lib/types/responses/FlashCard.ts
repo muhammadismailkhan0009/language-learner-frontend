@@ -1,17 +1,20 @@
+import { Sentence } from "./Sentence";
+
 export type FlashCard = {
   id: string;
-  front:Front;
+  front: Front;
   back: Back;
-  isReverse: boolean;
+  isReverse?: boolean;
+  isReversed?: boolean;
   isRevision: boolean;
-  relatedTo: string | null;
-  scenario: string;
+  note?: string;
 };
 
-export type Front ={
-    text: string;
-}
+export type Front = {
+  wordOrChunk: string;
+};
 
-export type Back ={
-    text: string;
-}
+export type Back = {
+  wordOrChunk: string;
+  sentences?: Sentence[];
+};

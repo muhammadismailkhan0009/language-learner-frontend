@@ -22,12 +22,13 @@ export default function AudioComprehensionCardView(props: AudioComprehensionCard
         props.output.emit(action);
     };
 
-    const frontText = props.input.card.isReverse 
-        ? props.input.card.back.text 
-        : props.input.card.front.text;
-    const backText = props.input.card.isReverse 
-        ? props.input.card.front.text 
-        : props.input.card.back.text;
+    const isReversed = props.input.card.isReverse ?? props.input.card.isReversed ?? false;
+    const frontText = isReversed
+        ? props.input.card.back.wordOrChunk
+        : props.input.card.front.wordOrChunk;
+    const backText = isReversed
+        ? props.input.card.front.wordOrChunk
+        : props.input.card.back.wordOrChunk;
 
     return (
         <div className="w-full px-4 flex justify-center">
@@ -96,4 +97,3 @@ export default function AudioComprehensionCardView(props: AudioComprehensionCard
         </div>
     )
 }
-

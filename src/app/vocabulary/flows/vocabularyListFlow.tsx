@@ -2,6 +2,7 @@ import { defineFlow } from "@myriadcodelabs/uiflow";
 import fetchVocabulariesAction from "../_server_actions/fetchVocabulariesAction";
 import fetchPublicVocabulariesAction from "../_server_actions/fetchPublicVocabulariesAction";
 import publishVocabularyAction from "../_server_actions/publishVocabularyAction";
+import createVocabularyFlashcardsAction from "../_server_actions/createVocabularyFlashcardsAction";
 import VocabularyListView, { VocabularyListViewOutput } from "../_client_components/VocabularyListView";
 import { PublicVocabularyListItem, ScreenMode, VocabularyListItem } from "../types";
 
@@ -16,12 +17,18 @@ interface VocabularyListInternalData {
             vocabularyId: string | null;
             adminKey: string;
         };
+        flashcardRequest: {
+            vocabularyId: string | null;
+        };
         ui: {
             isLoading: boolean;
             isPublishing: boolean;
+            isAddingToFlashcards: boolean;
             error: string | null;
             publishError: string | null;
             publishSuccess: string | null;
+            addToFlashcardsError: string | null;
+            addToFlashcardsSuccess: string | null;
         };
     };
 }
@@ -36,12 +43,18 @@ function createVocabularyListInternalData(): VocabularyListInternalData {
                 vocabularyId: null,
                 adminKey: "",
             },
+            flashcardRequest: {
+                vocabularyId: null,
+            },
             ui: {
                 isLoading: false,
                 isPublishing: false,
+                isAddingToFlashcards: false,
                 error: null,
                 publishError: null,
                 publishSuccess: null,
+                addToFlashcardsError: null,
+                addToFlashcardsSuccess: null,
             },
         },
     };
@@ -118,6 +131,9 @@ export const vocabularyListFlow = defineFlow<VocabularyListDomainData, Vocabular
             isPublishing: internal.flowData.ui.isPublishing,
             publishError: internal.flowData.ui.publishError,
             publishSuccess: internal.flowData.ui.publishSuccess,
+            isAddingToFlashcards: internal.flowData.ui.isAddingToFlashcards,
+            addToFlashcardsError: internal.flowData.ui.addToFlashcardsError,
+            addToFlashcardsSuccess: internal.flowData.ui.addToFlashcardsSuccess,
         }),
         view: VocabularyListView,
         onOutput: (_domain, internal, output: VocabularyListViewOutput, events) => {
@@ -138,6 +154,8 @@ export const vocabularyListFlow = defineFlow<VocabularyListDomainData, Vocabular
             if (output.type === "clearPublishStatus") {
                 internal.flowData.ui.publishError = null;
                 internal.flowData.ui.publishSuccess = null;
+                internal.flowData.ui.addToFlashcardsError = null;
+                internal.flowData.ui.addToFlashcardsSuccess = null;
                 return "displayList";
             }
 
@@ -145,7 +163,23 @@ export const vocabularyListFlow = defineFlow<VocabularyListDomainData, Vocabular
                 internal.flowData.selectedVocabularyId = output.vocabularyId;
                 internal.flowData.ui.publishError = null;
                 internal.flowData.ui.publishSuccess = null;
+                internal.flowData.ui.addToFlashcardsError = null;
+                internal.flowData.ui.addToFlashcardsSuccess = null;
                 return "displayList";
+            }
+
+            if (output.type === "addToFlashcards") {
+                if (internal.flowData.ui.isAddingToFlashcards) {
+                    return "displayList";
+                }
+
+                internal.flowData.flashcardRequest = {
+                    vocabularyId: output.vocabularyId,
+                };
+                internal.flowData.ui.isAddingToFlashcards = true;
+                internal.flowData.ui.addToFlashcardsError = null;
+                internal.flowData.ui.addToFlashcardsSuccess = null;
+                return "addToFlashcards";
             }
 
             if (output.type === "publishVocabulary") {
@@ -209,6 +243,39 @@ export const vocabularyListFlow = defineFlow<VocabularyListDomainData, Vocabular
         },
         render: { mode: "preserve-previous" },
         onOutput: () => "fetchVocabularies",
+    },
+    addToFlashcards: {
+        input: (_domain, internal) => ({
+            vocabularyId: internal.flowData.flashcardRequest.vocabularyId,
+        }),
+        action: async ({ vocabularyId }: { vocabularyId: string | null }, _domain, internal) => {
+            if (!vocabularyId) {
+                internal.flowData.ui.addToFlashcardsError = "Missing selected vocabulary";
+                internal.flowData.ui.isAddingToFlashcards = false;
+                return { ok: true };
+            }
+
+            const vocabulary = internal.flowData.vocabularies.find((item) => item.id === vocabularyId);
+            const label = vocabulary?.surface ?? "Vocabulary entry";
+
+            try {
+                const ok = await createVocabularyFlashcardsAction(vocabularyId);
+                if (!ok) {
+                    throw new Error("Failed to add vocabulary to flashcards");
+                }
+
+                internal.flowData.ui.addToFlashcardsSuccess = `Added "${label}" to flashcards`;
+            } catch (err) {
+                internal.flowData.ui.addToFlashcardsError =
+                    err instanceof Error ? err.message : "Failed to add vocabulary to flashcards";
+            } finally {
+                internal.flowData.ui.isAddingToFlashcards = false;
+            }
+
+            return { ok: true };
+        },
+        render: { mode: "preserve-previous" },
+        onOutput: () => "displayList",
     },
 }, {
     start: "fetchVocabularies",

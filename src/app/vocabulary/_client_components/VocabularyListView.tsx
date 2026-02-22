@@ -19,6 +19,7 @@ export type VocabularyListViewOutput =
     | { type: "clearPublishStatus" }
     | { type: "setSelectedVocabulary"; vocabularyId: string }
     | { type: "openEdit"; vocabularyId: string }
+    | { type: "addToFlashcards"; vocabularyId: string }
     | { type: "publishVocabulary"; vocabularyId: string; adminKey: string };
 
 type VocabularyListViewProps = {
@@ -30,14 +31,29 @@ type VocabularyListViewProps = {
         error: string | null;
         isLoading: boolean;
         isPublishing: boolean;
+        isAddingToFlashcards: boolean;
         publishError: string | null;
         publishSuccess: string | null;
+        addToFlashcardsError: string | null;
+        addToFlashcardsSuccess: string | null;
     };
     output: OutputHandle<VocabularyListViewOutput>;
 };
 
 export default function VocabularyListView({ input, output }: VocabularyListViewProps) {
-    const { mode, vocabularies, publicVocabularies, error, isLoading, isPublishing, publishError, publishSuccess } = input;
+    const {
+        mode,
+        vocabularies,
+        publicVocabularies,
+        error,
+        isLoading,
+        isPublishing,
+        isAddingToFlashcards,
+        publishError,
+        publishSuccess,
+        addToFlashcardsError,
+        addToFlashcardsSuccess,
+    } = input;
     const [showPrivate, setShowPrivate] = useState(true);
     const [showPublic, setShowPublic] = useState(false);
     const [hasInitializedSelection, setHasInitializedSelection] = useState(false);
@@ -185,8 +201,17 @@ export default function VocabularyListView({ input, output }: VocabularyListView
                         <div className="text-sm text-muted-foreground">{row.translation}</div>
                     </div>
 
-                    {isPrivateRow ? (
+                {isPrivateRow ? (
                         <div className="flex w-full sm:w-auto flex-wrap items-center gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size={compact ? "sm" : "default"}
+                                onClick={() => output.emit({ type: "addToFlashcards", vocabularyId: row.id })}
+                                disabled={isAddingToFlashcards}
+                            >
+                                {isAddingToFlashcards ? "Adding..." : "Add to Flashcards"}
+                            </Button>
                             <Button
                                 type="button"
                                 variant="outline"
@@ -211,10 +236,12 @@ export default function VocabularyListView({ input, output }: VocabularyListView
                     ) : null}
                 </div>
 
-                {isPrivateRow && (publishError || publishSuccess) ? (
+                {isPrivateRow && (publishError || publishSuccess || addToFlashcardsError || addToFlashcardsSuccess) ? (
                     <div className="space-y-1">
                         {publishError ? <div className="text-sm text-red-600">{publishError}</div> : null}
                         {publishSuccess ? <div className="text-sm text-green-600">{publishSuccess}</div> : null}
+                        {addToFlashcardsError ? <div className="text-sm text-red-600">{addToFlashcardsError}</div> : null}
+                        {addToFlashcardsSuccess ? <div className="text-sm text-green-600">{addToFlashcardsSuccess}</div> : null}
                     </div>
                 ) : null}
 

@@ -9,6 +9,7 @@ import { CardRating } from "@/lib/types/requests/CardRating";
 import { SentenceGroup } from "@/lib/types/responses/Sentence";
 import { WordToListenToResponse } from "@/lib/types/responses/WordToListenToResponse";
 import { WordToListenToRequest } from "@/lib/types/requests/WordToListenToRequest";
+import { isVocabularyDeckId } from "./flashcards/flashcardApiUtils";
 
 export async function sendGenerateFlashCardsRequest(scenario: string): Promise<AxiosResponse<ApiResponse<void>>> {
 
@@ -44,9 +45,11 @@ export async function reviewStudiedCard(deckId: string, cardId: string, rating: 
     const cardRating: CardRating = { rating: rating };
     const request: ApiRequest<CardRating> = { payload: cardRating };
 
-    // Axios call (typed)
-    const response = await api.post<ApiResponse<void>>
-        (`/api/decks/${deckId}/cards/${cardId}/review/v1`, request);
+    const endpoint = isVocabularyDeckId(deckId)
+        ? `/api/v1/vocabulary-flashcards/cards/${cardId}/review/v1`
+        : `/api/decks/${deckId}/cards/${cardId}/review/v1`;
+
+    const response = await api.post<ApiResponse<void>>(endpoint, request);
 
     return response;
 
