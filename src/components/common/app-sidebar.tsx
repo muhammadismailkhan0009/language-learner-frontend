@@ -65,6 +65,11 @@ export function AppSidebar() {
                                             <a href="/listen">Words</a>
                                         </SidebarMenuSubButton>
                                     </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton asChild>
+                                            <a href="/listen/scenarios">Scenarios</a>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
                                 </SidebarMenuSub>
                             </details>
                         </SidebarMenuItem>
