@@ -65,6 +65,22 @@ export default function NotesRichTextEditor({
 
     const toolbarButtonClass = "h-8 w-8";
 
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+        if (event.key !== "Enter") {
+            return;
+        }
+
+        event.preventDefault();
+        const editor = editorRef.current;
+        if (!editor) {
+            return;
+        }
+
+        editor.focus();
+        document.execCommand("insertLineBreak");
+        syncEditorValue();
+    };
+
     return (
         <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-1 rounded-md border p-1">
@@ -126,6 +142,7 @@ export default function NotesRichTextEditor({
                     suppressContentEditableWarning
                     className="min-h-[120px] rounded-md border px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-ring"
                     onInput={syncEditorValue}
+                    onKeyDown={handleKeyDown}
                     onBlur={() => {
                         setIsFocused(false);
                         syncEditorValue();
