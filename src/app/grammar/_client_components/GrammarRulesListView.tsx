@@ -116,7 +116,10 @@ export default function GrammarRulesListView({ input, output }: GrammarRulesList
                                                 ) : (
                                                     <div className="space-y-2">
                                                         {visibleExplanationParagraphs.map((paragraph, index) => (
-                                                            <p key={`${selectedRule.id}-explanation-${index}`} className="text-sm leading-relaxed text-muted-foreground">
+                                                            <p
+                                                                key={`${selectedRule.id}-explanation-${index}`}
+                                                                className="text-sm leading-relaxed text-muted-foreground whitespace-pre-line"
+                                                            >
                                                                 {paragraph}
                                                             </p>
                                                         ))}
@@ -126,7 +129,9 @@ export default function GrammarRulesListView({ input, output }: GrammarRulesList
 
                                             <div className="space-y-2">
                                                 <div className="text-sm font-medium">Scenario Description</div>
-                                                <p className="text-sm text-muted-foreground leading-relaxed">{selectedRule.scenarioDescription || "No scenario description."}</p>
+                                                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                                                    {selectedRule.scenarioDescription || "No scenario description."}
+                                                </p>
                                             </div>
 
                                             <div className="space-y-2">
