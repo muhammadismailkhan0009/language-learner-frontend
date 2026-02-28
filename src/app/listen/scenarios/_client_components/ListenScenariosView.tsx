@@ -48,7 +48,7 @@ async function playScenarioSequence(
     playbackRate: number
 ) {
     await playTextAudio(scenario.nature, "en", playbackRate, signal);
-    await sleep(10000, signal);
+    await sleep(20000, signal);
 
     for (const sentence of scenario.sentences ?? []) {
         if (signal.aborted) {
@@ -59,7 +59,7 @@ async function playScenarioSequence(
             continue;
         }
         await playTextAudio(cleaned, scenario.targetLanguage, playbackRate, signal);
-        await sleep(10000, signal);
+        await sleep(30000, signal);
     }
 
     if (signal.aborted) {
