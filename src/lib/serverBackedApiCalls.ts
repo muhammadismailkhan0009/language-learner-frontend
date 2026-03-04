@@ -434,3 +434,18 @@ export async function deleteReadingPracticeSession(sessionId: string): Promise<A
     });
     return response;
 }
+
+export async function detachReadingPracticeFlashcard(
+    sessionId: string,
+    flashcardId: string
+): Promise<AxiosResponse<void>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const response = await api.delete<void>(`/api/v1/reading-practice/sessions/${sessionId}/flashcards/${flashcardId}`, {
+        params: { userId },
+    });
+    return response;
+}

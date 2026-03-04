@@ -7,6 +7,7 @@ import getReadingPracticeSessionAction from "../_server_actions/getReadingPracti
 import createReadingPracticeSessionAction from "../_server_actions/createReadingPracticeSessionAction";
 import deleteReadingPracticeSessionAction from "../_server_actions/deleteReadingPracticeSessionAction";
 import reviewReadingFlashcardAction from "../_server_actions/reviewReadingFlashcardAction";
+import detachReadingFlashcardAction from "../_server_actions/detachReadingFlashcardAction";
 import ReadingPracticeView, { ReadingPracticeViewOutput } from "../_client_components/ReadingPracticeView";
 
 type ReadingPracticeDomainData = Record<string, never>;
@@ -184,7 +185,17 @@ export const readingPracticeFlow = defineFlow<ReadingPracticeDomainData, Reading
                 internal.flowData.ui.error = null;
 
                 try {
-                    await reviewReadingFlashcardAction(cardId, rating);
+                    void reviewReadingFlashcardAction(cardId, rating);
+
+                    if (rating === Rating.GOOD || rating === Rating.EASY) {
+                        const sessionId = internal.flowData.selectedSession?.sessionId;
+                        if (sessionId) {
+                            void detachReadingFlashcardAction(sessionId, cardId);
+                        }
+                    }
+                } catch (error) {
+                    internal.flowData.ui.error = error instanceof Error ? error.message : "Failed to rate flashcard";
+                } finally {
                     if (!internal.flowData.flashcardReview.ratedCardIds.includes(cardId)) {
                         internal.flowData.flashcardReview.ratedCardIds.push(cardId);
                     }
@@ -203,9 +214,6 @@ export const readingPracticeFlow = defineFlow<ReadingPracticeDomainData, Reading
                         internal.flowData.flashcardReview.currentIndex = 0;
                     }
                     internal.flowData.flashcardReview.isCurrentCardFlipped = false;
-                } catch (error) {
-                    internal.flowData.ui.error = error instanceof Error ? error.message : "Failed to rate flashcard";
-                } finally {
                     internal.flowData.ui.isRatingFlashcard = false;
                     internal.flowData.flashcardReview.pendingReview.cardId = null;
                     internal.flowData.flashcardReview.pendingReview.rating = null;
