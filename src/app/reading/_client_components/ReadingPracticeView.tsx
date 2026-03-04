@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { OutputHandle } from "@myriadcodelabs/uiflow";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,7 +21,8 @@ export type ReadingPracticeViewOutput =
     | { type: "nextFlashcard" }
     | { type: "previousFlashcard" }
     | { type: "resetFlashcards" }
-    | { type: "clearError" };
+    | { type: "clearError" }
+    | { type: "clearInfo" };
 
 type ReadingPracticeViewProps = {
     input: {
@@ -38,6 +40,7 @@ type ReadingPracticeViewProps = {
         isDeletingSession: boolean;
         isRatingFlashcard: boolean;
         error: string | null;
+        infoMessage: string | null;
     };
     output: OutputHandle<ReadingPracticeViewOutput>;
 };
@@ -67,7 +70,26 @@ export default function ReadingPracticeView({ input, output }: ReadingPracticeVi
         isDeletingSession,
         isRatingFlashcard,
         error,
+        infoMessage,
     } = input;
+
+    const [isInfoFading, setIsInfoFading] = useState(false);
+
+    useEffect(() => {
+        if (!infoMessage) {
+            setIsInfoFading(false);
+            return;
+        }
+
+        setIsInfoFading(false);
+        const fadeTimer = window.setTimeout(() => setIsInfoFading(true), 4500);
+        const clearTimer = window.setTimeout(() => output.emit({ type: "clearInfo" }), 5000);
+
+        return () => {
+            window.clearTimeout(fadeTimer);
+            window.clearTimeout(clearTimer);
+        };
+    }, [infoMessage, output]);
 
     const remainingCards = selectedSession
         ? selectedSession.vocabFlashcards.filter((card) => !flashcardReview.ratedCardIds.includes(card.id))
@@ -229,6 +251,14 @@ export default function ReadingPracticeView({ input, output }: ReadingPracticeVi
                         </CardContent>
                     </Card>
                 )}
+
+                {infoMessage ? (
+                    <div
+                        className={`flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 transition-opacity duration-500 ${isInfoFading ? "opacity-0" : "opacity-100"}`}
+                    >
+                        <span>{infoMessage}</span>
+                    </div>
+                ) : null}
 
                 {error ? (
                     <div className="flex items-center gap-2 text-sm text-red-600">

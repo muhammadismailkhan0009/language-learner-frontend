@@ -32,6 +32,7 @@ type ReadingPracticeInternalData = {
             isDeletingSession: boolean;
             isRatingFlashcard: boolean;
             error: string | null;
+            infoMessage: string | null;
         };
     };
 };
@@ -58,6 +59,7 @@ function createInternalData(): ReadingPracticeInternalData {
                 isDeletingSession: false,
                 isRatingFlashcard: false,
                 error: null,
+                infoMessage: null,
             },
         },
     };
@@ -86,12 +88,13 @@ export const readingPracticeFlow = defineFlow<ReadingPracticeDomainData, Reading
 
         createSession: {
             input: () => ({}),
-            action: async (_input, _domain, internal) => {
+            action: (_input, _domain, internal) => {
                 internal.flowData.ui.isCreatingSession = true;
                 internal.flowData.ui.error = null;
+                internal.flowData.ui.infoMessage = "You'll see content in list when done.";
 
                 try {
-                    await createReadingPracticeSessionAction();
+                    void createReadingPracticeSessionAction();
                 } catch (error) {
                     internal.flowData.ui.error = error instanceof Error ? error.message : "Failed to create reading session";
                 } finally {
@@ -224,6 +227,7 @@ export const readingPracticeFlow = defineFlow<ReadingPracticeDomainData, Reading
                 isDeletingSession: internal.flowData.ui.isDeletingSession,
                 isRatingFlashcard: internal.flowData.ui.isRatingFlashcard,
                 error: internal.flowData.ui.error,
+                infoMessage: internal.flowData.ui.infoMessage,
             }),
             view: ReadingPracticeView,
             onOutput: (_domain, internal, output: ReadingPracticeViewOutput) => {
@@ -314,6 +318,12 @@ export const readingPracticeFlow = defineFlow<ReadingPracticeDomainData, Reading
                     internal.flowData.ui.error = null;
                     return "showSessions";
                 }
+
+                if (output.type === "clearInfo") {
+                    internal.flowData.ui.infoMessage = null;
+                    return "showSessions";
+                }
+
             },
         },
     },
