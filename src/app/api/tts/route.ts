@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import googleTTS from "google-tts-api";
 
+function resolveGoogleTtsHost(lang: string): string {
+    const normalizedLang = lang.trim().toLowerCase();
+    const isGerman = normalizedLang === "de" || normalizedLang.startsWith("de-");
+    return isGerman ? "https://translate.google.de" : "https://translate.google.com";
+}
+
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const text = searchParams.get("q") ?? "";
@@ -12,7 +18,7 @@ export async function GET(req: Request) {
         const base64 = await googleTTS.getAudioBase64(text, {
             lang,
             slow,
-            host: "https://translate.google.com",
+            host: resolveGoogleTtsHost(lang),
             timeout: 10000,
         });
 
