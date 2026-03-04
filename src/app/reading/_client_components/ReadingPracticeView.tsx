@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { OutputHandle } from "@myriadcodelabs/uiflow";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ReadingPracticeSessionSummaryResponse } from "@/lib/types/responses/ReadingPracticeSessionSummaryResponse";
 import { ReadingPracticeSessionResponse } from "@/lib/types/responses/ReadingPracticeSessionResponse";
 import { Rating } from "@/lib/types/Rating";
+import { AudioSpeed, getPlaybackRate, playTextAudio } from "@/lib/ttsGoogle";
 import ReadingFlashcardReview from "./ReadingFlashcardReview";
 
 export type ReadingPracticeViewOutput =
@@ -69,6 +71,44 @@ export default function ReadingPracticeView({ input, output }: ReadingPracticeVi
         error,
     } = input;
 
+    const [audioSpeed, setAudioSpeed] = useState<AudioSpeed>("normal");
+    const [isReadingAudioPlaying, setIsReadingAudioPlaying] = useState(false);
+    const playbackControllerRef = useRef<AbortController | null>(null);
+
+    const stopReadingAudio = () => {
+        playbackControllerRef.current?.abort();
+        playbackControllerRef.current = null;
+        setIsReadingAudioPlaying(false);
+    };
+
+    const playReadingAudio = async (readingText: string) => {
+        stopReadingAudio();
+        const controller = new AbortController();
+        playbackControllerRef.current = controller;
+        setIsReadingAudioPlaying(true);
+
+        try {
+            await playTextAudio(readingText, "de", getPlaybackRate(audioSpeed), controller.signal);
+        } finally {
+            if (playbackControllerRef.current === controller) {
+                playbackControllerRef.current = null;
+                setIsReadingAudioPlaying(false);
+            }
+        }
+    };
+
+    useEffect(() => {
+        return () => {
+            playbackControllerRef.current?.abort();
+        };
+    }, []);
+
+    useEffect(() => {
+        playbackControllerRef.current?.abort();
+        playbackControllerRef.current = null;
+        setIsReadingAudioPlaying(false);
+    }, [selectedSession?.sessionId]);
+
     const remainingCards = selectedSession
         ? selectedSession.vocabFlashcards.filter((card) => !flashcardReview.ratedCardIds.includes(card.id))
         : [];
@@ -97,6 +137,34 @@ export default function ReadingPracticeView({ input, output }: ReadingPracticeVi
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="text-xs text-muted-foreground">Created {formatDate(selectedSession.createdAt)}</div>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <select
+                                    aria-label="Reading audio speed"
+                                    value={audioSpeed}
+                                    onChange={(e) => setAudioSpeed(e.target.value as AudioSpeed)}
+                                    className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                >
+                                    <option value="slow">Slow</option>
+                                    <option value="normal">Normal</option>
+                                    <option value="fast">Fast</option>
+                                </select>
+                                {isReadingAudioPlaying ? (
+                                    <Button type="button" variant="destructive" size="sm" onClick={stopReadingAudio}>
+                                        Stop Audio
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                            void playReadingAudio(selectedSession.readingText);
+                                        }}
+                                    >
+                                        Play Reading Audio
+                                    </Button>
+                                )}
+                            </div>
                             <div className="whitespace-pre-wrap rounded-md border p-4 text-sm leading-6">
                                 {selectedSession.readingText}
                             </div>
