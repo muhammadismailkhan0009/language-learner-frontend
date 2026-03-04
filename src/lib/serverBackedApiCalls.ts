@@ -22,6 +22,9 @@ import { UpdateVocabularyRequest } from "./types/requests/UpdateVocabularyReques
 import { PublicVocabularyResponse } from "./types/responses/PublicVocabularyResponse";
 import { PublishPublicVocabularyRequest } from "./types/requests/PublishPublicVocabularyRequest";
 import { isRevisionDeckId, isVocabularyDeckId } from "./flashcards/flashcardApiUtils";
+import { CreateReadingPracticeSessionRequest } from "./types/requests/CreateReadingPracticeSessionRequest";
+import { ReadingPracticeSessionSummaryResponse } from "./types/responses/ReadingPracticeSessionSummaryResponse";
+import { ReadingPracticeSessionResponse } from "./types/responses/ReadingPracticeSessionResponse";
 
 export async function callRegisterUserApi(email: string, password: string): Promise<AxiosResponse<ApiResponse<UserInfoResponse>>> {
 
@@ -181,6 +184,14 @@ export async function reviewAudioCard(cardId: string, rating: Rating): Promise<A
 
     return response;
 
+}
+
+export async function reviewVocabularyFlashcard(cardId: string, rating: Rating): Promise<AxiosResponse<ApiResponse<void>>> {
+    const cardRating: CardRating = { rating };
+    const request: ApiRequest<CardRating> = { payload: cardRating };
+
+    const response = await api.post<ApiResponse<void>>(`/api/v1/vocabulary-flashcards/cards/${cardId}/review/v1`, request);
+    return response;
 }
 
 export async function fetchScenarios(): Promise<AxiosResponse<ApiResponse<ScenarioResponse[]>>> {
@@ -370,5 +381,56 @@ export async function addPublicVocabularyToPrivate(
         { params: { userId } }
     );
 
+    return response;
+}
+
+export async function listReadingPracticeSessions(): Promise<AxiosResponse<ApiResponse<ReadingPracticeSessionSummaryResponse[]>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const response = await api.get<ApiResponse<ReadingPracticeSessionSummaryResponse[]>>("/api/v1/reading-practice/sessions", {
+        params: { userId },
+    });
+
+    return response;
+}
+
+export async function createReadingPracticeSession(): Promise<AxiosResponse<void>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const requestBody: CreateReadingPracticeSessionRequest = { userId };
+
+    const response = await api.post<void>("/api/v1/reading-practice/sessions", requestBody);
+    return response;
+}
+
+export async function getReadingPracticeSession(
+    sessionId: string
+): Promise<AxiosResponse<ApiResponse<ReadingPracticeSessionResponse>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const response = await api.get<ApiResponse<ReadingPracticeSessionResponse>>(`/api/v1/reading-practice/sessions/${sessionId}`, {
+        params: { userId },
+    });
+    return response;
+}
+
+export async function deleteReadingPracticeSession(sessionId: string): Promise<AxiosResponse<void>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const response = await api.delete<void>(`/api/v1/reading-practice/sessions/${sessionId}`, {
+        params: { userId },
+    });
     return response;
 }

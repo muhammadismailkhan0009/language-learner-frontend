@@ -91,6 +91,15 @@ export function AppSidebar() {
                                 </a>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
+
+                        <SidebarMenuItem>
+                            <SidebarMenuButton asChild>
+                                <a href="/reading">
+                                    <BookOpenText />
+                                    <span>Reading</span>
+                                </a>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
                     </SidebarMenu>
                 </SidebarGroupContent>
             </SidebarGroup>
