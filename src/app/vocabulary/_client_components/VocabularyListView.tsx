@@ -19,7 +19,6 @@ export type VocabularyListViewOutput =
     | { type: "clearPublishStatus" }
     | { type: "setSelectedVocabulary"; vocabularyId: string }
     | { type: "openEdit"; vocabularyId: string }
-    | { type: "addToFlashcards"; vocabularyId: string }
     | { type: "addPublicToPrivate"; publicVocabularyId: string }
     | { type: "publishVocabulary"; vocabularyId: string; adminKey: string };
 
@@ -32,12 +31,9 @@ type VocabularyListViewProps = {
         error: string | null;
         isLoading: boolean;
         isPublishing: boolean;
-        isAddingToFlashcards: boolean;
         isAddingPublicToPrivate: boolean;
         publishError: string | null;
         publishSuccess: string | null;
-        addToFlashcardsError: string | null;
-        addToFlashcardsSuccess: string | null;
     };
     output: OutputHandle<VocabularyListViewOutput>;
 };
@@ -50,12 +46,9 @@ export default function VocabularyListView({ input, output }: VocabularyListView
         error,
         isLoading,
         isPublishing,
-        isAddingToFlashcards,
         isAddingPublicToPrivate,
         publishError,
         publishSuccess,
-        addToFlashcardsError,
-        addToFlashcardsSuccess,
     } = input;
     const [showPrivate, setShowPrivate] = useState(true);
     const [showPublic, setShowPublic] = useState(false);
@@ -64,6 +57,7 @@ export default function VocabularyListView({ input, output }: VocabularyListView
     const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
     const [publishAdminKey, setPublishAdminKey] = useState("");
     const [selectedRowKey, setSelectedRowKey] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState("");
 
     const currentRows = useMemo(() => {
         const rows: Array<{
@@ -109,7 +103,28 @@ export default function VocabularyListView({ input, output }: VocabularyListView
         return rows;
     }, [showPrivate, showPublic, vocabularies, publicVocabularies]);
 
-    const selectedRow = currentRows.find((row) => row.key === selectedRowKey) ?? currentRows[0] ?? null;
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    const visibleRows = useMemo(() => {
+        if (!normalizedQuery) {
+            return currentRows;
+        }
+
+        return currentRows.filter((row) => {
+            const combined = [
+                row.surface,
+                row.translation,
+                row.notes,
+                ...row.exampleSentences.map((sentence) => sentence.sentence),
+                ...row.exampleSentences.map((sentence) => sentence.translation),
+            ]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase();
+            return combined.includes(normalizedQuery);
+        });
+    }, [currentRows, normalizedQuery]);
+
+    const selectedRow = visibleRows.find((row) => row.key === selectedRowKey) ?? visibleRows[0] ?? null;
     const selectedPrivateVocabulary = selectedRow?.source === "private" ? selectedRow : null;
     const selectedVocabulary = selectedRow;
 
@@ -139,16 +154,16 @@ export default function VocabularyListView({ input, output }: VocabularyListView
     }, [hasInitializedSelection, vocabularies.length, publicVocabularies.length]);
 
     useEffect(() => {
-        if (currentRows.length === 0) {
+        if (visibleRows.length === 0) {
             setSelectedRowKey(null);
             return;
         }
 
-        const hasCurrent = !!selectedRowKey && currentRows.some((row) => row.key === selectedRowKey);
+        const hasCurrent = !!selectedRowKey && visibleRows.some((row) => row.key === selectedRowKey);
         if (!hasCurrent) {
-            setSelectedRowKey(currentRows[0].key);
+            setSelectedRowKey(visibleRows[0].key);
         }
-    }, [currentRows, selectedRowKey]);
+    }, [visibleRows, selectedRowKey]);
 
     if (mode !== "list") {
         return null;
@@ -160,6 +175,7 @@ export default function VocabularyListView({ input, output }: VocabularyListView
         : showPublic && !showPrivate
             ? "No public vocabulary entries found."
             : "No vocabulary entries found for selected sources.";
+    const noResultsLabel = normalizedQuery ? "No matches found." : emptyLabel;
 
     const renderDetailsContent = (row: {
         key: string;
@@ -213,15 +229,6 @@ export default function VocabularyListView({ input, output }: VocabularyListView
 
                 {isPrivateRow ? (
                         <div className="flex w-full sm:w-auto flex-wrap items-center gap-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size={compact ? "sm" : "default"}
-                                onClick={() => output.emit({ type: "addToFlashcards", vocabularyId: row.id })}
-                                disabled={isAddingToFlashcards}
-                            >
-                                {isAddingToFlashcards ? "Adding..." : "Add to Flashcards"}
-                            </Button>
                             {!isAlreadyPublished ? (
                                 <Button
                                     type="button"
@@ -260,12 +267,10 @@ export default function VocabularyListView({ input, output }: VocabularyListView
                     ) : null}
                 </div>
 
-                {isPrivateRow && (publishError || publishSuccess || addToFlashcardsError || addToFlashcardsSuccess) ? (
+                {isPrivateRow && (publishError || publishSuccess) ? (
                     <div className="space-y-1">
                         {publishError ? <div className="text-sm text-red-600">{publishError}</div> : null}
                         {publishSuccess ? <div className="text-sm text-green-600">{publishSuccess}</div> : null}
-                        {addToFlashcardsError ? <div className="text-sm text-red-600">{addToFlashcardsError}</div> : null}
-                        {addToFlashcardsSuccess ? <div className="text-sm text-green-600">{addToFlashcardsSuccess}</div> : null}
                     </div>
                 ) : null}
 
@@ -368,6 +373,14 @@ export default function VocabularyListView({ input, output }: VocabularyListView
                     <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                         <CardTitle>Vocabulary</CardTitle>
                         <div className="flex w-full sm:w-auto flex-wrap items-center gap-2">
+                            <div className="w-full sm:w-64">
+                                <Input
+                                    value={searchQuery}
+                                    onChange={(event) => setSearchQuery(event.target.value)}
+                                    placeholder="Search vocabulary"
+                                    aria-label="Search vocabulary"
+                                />
+                            </div>
                             <label
                                 className={`flex cursor-pointer items-center gap-2 rounded-md border px-3 py-1.5 text-sm ${
                                     showPrivate ? "border-primary bg-primary/10" : "border-input"
@@ -426,11 +439,13 @@ export default function VocabularyListView({ input, output }: VocabularyListView
                             </div>
                         ) : null}
 
-                        {!error && currentRows.length === 0 ? (
-                            <div className="text-sm text-muted-foreground">{isLoading ? "Loading vocabulary entries..." : emptyLabel}</div>
+                        {!error && (currentRows.length === 0 || visibleRows.length === 0) ? (
+                            <div className="text-sm text-muted-foreground">
+                                {isLoading ? "Loading vocabulary entries..." : noResultsLabel}
+                            </div>
                         ) : null}
 
-                        {currentRows.length > 0 ? (
+                        {visibleRows.length > 0 ? (
                             <div className="grid gap-4 lg:grid-cols-[minmax(320px,420px)_1fr]">
                                 <div className="rounded-md border overflow-hidden">
                                     <div className="max-h-[520px] overflow-auto">
@@ -442,7 +457,7 @@ export default function VocabularyListView({ input, output }: VocabularyListView
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
-                                                {currentRows.map((item) => {
+                                                {visibleRows.map((item) => {
                                                     const isSelected = selectedRowKey === item.key;
                                                     return (
                                                         <Fragment key={item.key}>
