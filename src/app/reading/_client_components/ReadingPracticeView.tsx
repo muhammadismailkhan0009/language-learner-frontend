@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { OutputHandle } from "@myriadcodelabs/uiflow";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ReadingPracticeSessionSummaryResponse } from "@/lib/types/responses/ReadingPracticeSessionSummaryResponse";
 import { ReadingPracticeSessionResponse } from "@/lib/types/responses/ReadingPracticeSessionResponse";
 import { Rating } from "@/lib/types/Rating";
+import { AudioSpeed, getPlaybackRate, playTextAudio } from "@/lib/ttsGoogle";
 import ReadingFlashcardReview from "./ReadingFlashcardReview";
 
 export type ReadingPracticeViewOutput =
@@ -58,6 +59,25 @@ function formatDate(dateValue: string): string {
     return parsed.toLocaleString();
 }
 
+async function sleep(ms: number, signal?: AbortSignal) {
+    if (signal?.aborted) {
+        return;
+    }
+    await new Promise<void>((resolve) => {
+        const id = window.setTimeout(() => resolve(), ms);
+        if (signal) {
+            signal.addEventListener(
+                "abort",
+                () => {
+                    window.clearTimeout(id);
+                    resolve();
+                },
+                { once: true }
+            );
+        }
+    });
+}
+
 export default function ReadingPracticeView({ input, output }: ReadingPracticeViewProps) {
     const {
         sessions,
@@ -74,6 +94,10 @@ export default function ReadingPracticeView({ input, output }: ReadingPracticeVi
     } = input;
 
     const [isInfoFading, setIsInfoFading] = useState(false);
+    const [audioSpeed, setAudioSpeed] = useState<AudioSpeed>("normal");
+    const [pauseSeconds, setPauseSeconds] = useState(2);
+    const [isPlayingReading, setIsPlayingReading] = useState(false);
+    const controllerRef = useRef<AbortController | null>(null);
 
     useEffect(() => {
         if (!infoMessage) {
@@ -94,6 +118,61 @@ export default function ReadingPracticeView({ input, output }: ReadingPracticeVi
     const remainingCards = selectedSession
         ? selectedSession.vocabFlashcards.filter((card) => !flashcardReview.ratedCardIds.includes(card.id))
         : [];
+
+    const readingParagraphs = selectedSession?.readingParagraphs ?? [];
+    const fallbackReadingText = selectedSession?.readingText?.trim() ?? "";
+    const sentenceAudioQueue = readingParagraphs.flatMap((paragraph) => paragraph.sentences ?? []).filter(Boolean);
+    const hasSentenceAudio = sentenceAudioQueue.length > 0;
+
+    const stopReadingPlayback = () => {
+        controllerRef.current?.abort();
+        controllerRef.current = null;
+        setIsPlayingReading(false);
+    };
+
+    useEffect(() => {
+        return () => {
+            controllerRef.current?.abort();
+        };
+    }, []);
+
+    useEffect(() => {
+        stopReadingPlayback();
+    }, [selectedSession?.sessionId]);
+
+    const handlePlayReading = async () => {
+        if (!hasSentenceAudio) {
+            return;
+        }
+
+        stopReadingPlayback();
+        const controller = new AbortController();
+        controllerRef.current = controller;
+        setIsPlayingReading(true);
+        const playbackRate = getPlaybackRate(audioSpeed);
+        const pauseMs = Math.max(0, pauseSeconds) * 1000;
+
+        try {
+            for (const sentence of sentenceAudioQueue) {
+                if (controller.signal.aborted) {
+                    return;
+                }
+                const cleaned = sentence.trim();
+                if (!cleaned) {
+                    continue;
+                }
+                await playTextAudio(cleaned, "de", playbackRate, controller.signal);
+                if (pauseMs > 0) {
+                    await sleep(pauseMs, controller.signal);
+                }
+            }
+        } finally {
+            if (controllerRef.current === controller) {
+                controllerRef.current = null;
+                setIsPlayingReading(false);
+            }
+        }
+    };
 
     return (
         <div className="w-full min-h-screen py-6 px-4">
@@ -118,9 +197,62 @@ export default function ReadingPracticeView({ input, output }: ReadingPracticeVi
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
+                            <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border bg-muted/40 px-3 py-2">
+                                <div className="text-xs text-muted-foreground">
+                                    {hasSentenceAudio
+                                        ? `${sentenceAudioQueue.length} sentence${sentenceAudioQueue.length === 1 ? "" : "s"}`
+                                        : "No sentence audio available"}
+                                </div>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <select
+                                        aria-label="Audio speed"
+                                        value={audioSpeed}
+                                        onChange={(e) => setAudioSpeed(e.target.value as AudioSpeed)}
+                                        className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                        disabled={!hasSentenceAudio || isPlayingReading}
+                                    >
+                                        <option value="slow">Slow</option>
+                                        <option value="normal">Normal</option>
+                                        <option value="fast">Fast</option>
+                                    </select>
+                                    <select
+                                        aria-label="Pause duration"
+                                        value={pauseSeconds}
+                                        onChange={(e) => setPauseSeconds(Number(e.target.value))}
+                                        className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                        disabled={!hasSentenceAudio || isPlayingReading}
+                                    >
+                                        <option value={0}>No pause</option>
+                                        <option value={1}>1s pause</option>
+                                        <option value={2}>2s pause</option>
+                                        <option value={3}>3s pause</option>
+                                        <option value={5}>5s pause</option>
+                                    </select>
+                                    {isPlayingReading ? (
+                                        <Button type="button" size="sm" variant="destructive" onClick={stopReadingPlayback}>
+                                            Stop audio
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            onClick={handlePlayReading}
+                                            disabled={!hasSentenceAudio}
+                                            title={hasSentenceAudio ? "Listen to reading text" : "Audio unavailable (no sentences)"}
+                                        >
+                                            Listen
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
                             <div className="text-xs text-muted-foreground">Created {formatDate(selectedSession.createdAt)}</div>
                             <div className="whitespace-pre-wrap rounded-md border p-4 text-sm leading-6">
-                                {selectedSession.readingText}
+                                {readingParagraphs.length > 0
+                                    ? readingParagraphs
+                                          .map((paragraph) => paragraph.paragraphText)
+                                          .filter((text) => text && text.trim().length > 0)
+                                          .join("\n\n")
+                                    : fallbackReadingText || "No reading text available yet."}
                             </div>
 
                             <div className="space-y-2">
