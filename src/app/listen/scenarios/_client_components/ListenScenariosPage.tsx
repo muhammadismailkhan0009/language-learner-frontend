@@ -1,7 +1,7 @@
 "use client";
 
 import { FlowRunner } from "@myriadcodelabs/uiflow";
-import { listenScenariosFlow } from "../flows/listenScenariosFlow";
+import { listenScenariosFlow } from "../_flows/listenScenariosFlow";
 
 export default function ListenScenariosPage() {
     return (

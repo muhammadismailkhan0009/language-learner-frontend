@@ -48,7 +48,7 @@ async function playScenarioSequence(
     playbackRate: number
 ) {
     await playTextAudio(scenario.nature, "en", playbackRate, signal);
-    await sleep(20000, signal);
+    await sleep(2000, signal);
 
     for (const sentence of scenario.sentences ?? []) {
         if (signal.aborted) {
@@ -58,8 +58,15 @@ async function playScenarioSequence(
         if (!cleaned) {
             continue;
         }
+        // play once to parse and understand
         await playTextAudio(cleaned, scenario.targetLanguage, playbackRate, signal);
-        await sleep(30000, signal);
+        await sleep(3000, signal);
+
+        // play twice to shadow speak
+        await playTextAudio(cleaned, scenario.targetLanguage, playbackRate, signal);
+        const wordCount = cleaned.split(/\s+/).filter(Boolean).length;
+        const shadowSpeakPauseMs = wordCount * 0.8 * 1000;
+        await sleep(shadowSpeakPauseMs, signal);
     }
 
     if (signal.aborted) {
@@ -69,7 +76,7 @@ async function playScenarioSequence(
     await playTextAudio("Next", "en", playbackRate, signal);
 
     if (delayAfterNext) {
-        await sleep(3000, signal);
+        await sleep(1000, signal);
     }
 }
 
