@@ -1,7 +1,7 @@
 "use client";
 
 import { FlowRunner } from "@myriadcodelabs/uiflow";
-import { sentencesFlow } from "../flows/sentencesFlow";
+import { sentencesFlow } from "../_flows/sentencesFlow";
 
 export function SentencesListView() {
     return (

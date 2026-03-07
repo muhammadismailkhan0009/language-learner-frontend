@@ -2,9 +2,9 @@
 
 import { useMemo } from "react";
 import { createFlowChannel, FlowRunner } from "@myriadcodelabs/uiflow";
-import { scenariosListFlow } from "../flows/scenariosListFlow";
-import { addScenarioFlow } from "../flows/addScenarioFlow";
-import { editScenarioFlow } from "../flows/editScenarioFlow";
+import { scenariosListFlow } from "../_flows/scenariosListFlow";
+import { addScenarioFlow } from "../_flows/addScenarioFlow";
+import { editScenarioFlow } from "../_flows/editScenarioFlow";
 import { ScreenMode } from "../types";
 
 export default function ScenariosPageClient() {

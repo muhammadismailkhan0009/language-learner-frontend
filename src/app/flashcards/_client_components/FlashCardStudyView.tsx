@@ -1,8 +1,8 @@
 "use client";
 
 import { createFlowChannel, FlowRunner } from "@myriadcodelabs/uiflow";
-import { studyFlashCard } from "../flows/studyFlashCard";
-import { studyCounterFlow } from "../flows/studyCounterFlow";
+import { studyFlashCard } from "../_flows/studyFlashCard";
+import { studyCounterFlow } from "../_flows/studyCounterFlow";
 
 type FlashCardStudyViewProps = {
     deckId: string;

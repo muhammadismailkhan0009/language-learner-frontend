@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { OutputHandle } from "@myriadcodelabs/uiflow";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { isVocabularyDraftValid } from "../flows/vocabularyDraftOps";
+import { isVocabularyDraftValid } from "../_flows/vocabularyDraftOps";
 import { ScreenMode, VocabularyDraft } from "../types";
 import VocabularyForm from "./VocabularyForm";
 

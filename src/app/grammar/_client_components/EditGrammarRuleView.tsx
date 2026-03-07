@@ -5,7 +5,7 @@ import { OutputHandle } from "@myriadcodelabs/uiflow";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import GrammarRuleForm from "./GrammarRuleForm";
-import { isDraftValid } from "../flows/grammarRuleDraftOps";
+import { isDraftValid } from "../_flows/grammarRuleDraftOps";
 import { GrammarRuleDraft, ScreenMode } from "../types";
 
 export type EditGrammarRuleViewOutput =

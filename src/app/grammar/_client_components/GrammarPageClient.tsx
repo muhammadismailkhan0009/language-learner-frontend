@@ -3,9 +3,9 @@
 import { useMemo } from "react";
 import { createFlowChannel, FlowRunner } from "@myriadcodelabs/uiflow";
 import { ScreenMode } from "../types";
-import { grammarRulesListFlow } from "../flows/grammarRulesListFlow";
-import { addGrammarRuleFlow } from "../flows/addGrammarRuleFlow";
-import { editGrammarRuleFlow } from "../flows/editGrammarRuleFlow";
+import { grammarRulesListFlow } from "../_flows/grammarRulesListFlow";
+import { addGrammarRuleFlow } from "../_flows/addGrammarRuleFlow";
+import { editGrammarRuleFlow } from "../_flows/editGrammarRuleFlow";
 
 export default function GrammarPageClient() {
     const screenMode = useMemo(() => createFlowChannel<ScreenMode>("list"), []);

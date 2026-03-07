@@ -2,8 +2,8 @@
 
 import { useMemo } from "react";
 import { createFlowChannel, FlowRunner } from "@myriadcodelabs/uiflow";
-import { addWordFlow } from "../flows/addWordFlow";
-import { wordsListFlow } from "../flows/wordsListFlow";
+import { addWordFlow } from "../_flows/addWordFlow";
+import { wordsListFlow } from "../_flows/wordsListFlow";
 
 export default function ListenPageFlows() {
     const wordsRefresh = useMemo(() => createFlowChannel<number>(0), []);

@@ -1,7 +1,7 @@
 'use client'
 import { FlowRunner } from "@myriadcodelabs/uiflow";
 import { FlashCardMode } from "@/lib/types/requests/FlashCardMode";
-import { deckListFlow } from "./flows/deckListFlow";
+import { deckListFlow } from "./_flows/deckListFlow";
 
 export default function DecksPage() {
     return (

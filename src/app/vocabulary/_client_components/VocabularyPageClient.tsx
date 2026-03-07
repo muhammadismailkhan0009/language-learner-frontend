@@ -3,9 +3,9 @@
 import { useMemo } from "react";
 import { createFlowChannel, FlowRunner } from "@myriadcodelabs/uiflow";
 import { ScreenMode } from "../types";
-import { vocabularyListFlow } from "../flows/vocabularyListFlow";
-import { addVocabularyFlow } from "../flows/addVocabularyFlow";
-import { editVocabularyFlow } from "../flows/editVocabularyFlow";
+import { vocabularyListFlow } from "../_flows/vocabularyListFlow";
+import { addVocabularyFlow } from "../_flows/addVocabularyFlow";
+import { editVocabularyFlow } from "../_flows/editVocabularyFlow";
 
 export default function VocabularyPageClient() {
     const screenMode = useMemo(() => createFlowChannel<ScreenMode>("list"), []);
