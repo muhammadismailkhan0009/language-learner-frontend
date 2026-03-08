@@ -44,4 +44,3 @@ next-env.d.ts
 .idea/inspectionProfiles/Project_Default.xml
 .vscode/launch.json
 .idea/inspectionProfiles/Project_Default.xml
-src/lib/apiClient.ts

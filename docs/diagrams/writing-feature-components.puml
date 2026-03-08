@@ -1,0 +1,92 @@
+@startuml
+title Writing Practice Component and Action Diagram
+left to right direction
+skinparam componentStyle rectangle
+
+package "App Shell" {
+  [WritingPageClient]
+}
+
+package "Flow" {
+  [writingPracticeFlow]
+}
+
+package "View Layer" {
+  [WritingPracticeView]
+  [SessionsList]
+  [WritingEditorPanel]
+  [SubmissionReviewPanel]
+  [WritingFlashcardReview]
+}
+
+package "Server Actions" {
+  [listWritingPracticeSessionsAction]
+  [createWritingPracticeSessionAction]
+  [getWritingPracticeSessionAction]
+  [submitWritingPracticeAnswerAction]
+  [deleteWritingPracticeSessionAction]
+  [reviewWritingFlashcardAction]
+  [detachWritingFlashcardAction]
+}
+
+package "Backend API" {
+  [/GET sessions/]
+  [/POST session create/]
+  [/GET session detail/]
+  [/POST answer submission/]
+  [/DELETE session/]
+  [/POST flashcard review/]
+  [/DELETE flashcard detach/]
+}
+
+[WritingPageClient] --> [writingPracticeFlow]
+[writingPracticeFlow] --> [WritingPracticeView]
+
+[WritingPracticeView] --> [SessionsList]
+[WritingPracticeView] --> [WritingEditorPanel]
+[WritingPracticeView] --> [SubmissionReviewPanel]
+[WritingPracticeView] --> [WritingFlashcardReview]
+
+[writingPracticeFlow] --> [listWritingPracticeSessionsAction]
+[writingPracticeFlow] --> [createWritingPracticeSessionAction]
+[writingPracticeFlow] --> [getWritingPracticeSessionAction]
+[writingPracticeFlow] --> [submitWritingPracticeAnswerAction]
+[writingPracticeFlow] --> [deleteWritingPracticeSessionAction]
+[writingPracticeFlow] --> [reviewWritingFlashcardAction]
+[writingPracticeFlow] --> [detachWritingFlashcardAction]
+
+[listWritingPracticeSessionsAction] --> [/GET sessions/]
+[createWritingPracticeSessionAction] --> [/POST session create/]
+[getWritingPracticeSessionAction] --> [/GET session detail/]
+[submitWritingPracticeAnswerAction] --> [/POST answer submission/]
+[deleteWritingPracticeSessionAction] --> [/DELETE session/]
+[reviewWritingFlashcardAction] --> [/POST flashcard review/]
+[detachWritingFlashcardAction] --> [/DELETE flashcard detach/]
+
+note right of [WritingEditorPanel]
+Draft mode only:
+- show prompt
+- collect answer
+- show review count only
+- hide flashcard cards
+end note
+
+note right of [SubmissionReviewPanel]
+Submitted mode:
+- show submitted answer
+- show reference German text
+- enable flashcard review
+end note
+
+note bottom of [writingPracticeFlow]
+Suggested steps:
+- loadSessions
+- showSessions
+- createSession
+- loadSessionDetail
+- submitAnswer
+- rateFlashcard
+- deleteSession
+end note
+
+@enduml

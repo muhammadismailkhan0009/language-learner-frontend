@@ -100,6 +100,15 @@ export function AppSidebar() {
                                 </a>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
+
+                        <SidebarMenuItem>
+                            <SidebarMenuButton asChild>
+                                <a href="/writing">
+                                    <NotebookPen />
+                                    <span>Writing</span>
+                                </a>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
                     </SidebarMenu>
                 </SidebarGroupContent>
             </SidebarGroup>

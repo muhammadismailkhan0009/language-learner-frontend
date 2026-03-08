@@ -1,0 +1,72 @@
+@startuml
+title Writing Practice Flow
+
+start
+
+:Writing page mounts;
+:loadSessions;
+:GET /api/v1/writing-practice/sessions?userId=...;
+:Show sessions list;
+
+if (User action?) then (Create session)
+  :createSession;
+  :POST /api/v1/writing-practice/sessions;
+  :loadSessions;
+  :GET /api/v1/writing-practice/sessions?userId=...;
+  :Show sessions list;
+elseif (Open session)
+  :loadSessionDetail;
+  :GET /api/v1/writing-practice/sessions/{sessionId}?userId=...;
+  :Show session detail;
+
+  if (submittedAnswer exists?) then (No)
+    :Draft mode;
+    :Show topic and English paragraph;
+    :Show answer textarea;
+    :Show cards-to-review count only;
+    :Do not show review cards;
+
+    if (Submit answer?) then (Yes)
+      :submitAnswer;
+      :POST /api/v1/writing-practice/sessions/{sessionId}/submission;
+      :loadSessionDetail;
+      :GET /api/v1/writing-practice/sessions/{sessionId}?userId=...;
+      :Show submitted mode;
+    else (No)
+    endif
+  else (Yes)
+    :Submitted mode;
+    :Show submitted answer;
+    :Show German paragraph and sentence pairs;
+    :Show flashcard review UI;
+  endif
+
+  if (Rate flashcard?) then (Yes)
+    :reviewFlashcard;
+    :POST /api/v1/vocabulary-flashcards/cards/{cardId}/review/v1;
+
+    if (Rating is GOOD or EASY?) then (Yes)
+      :detachWritingFlashcard;
+      :DELETE /api/v1/writing-practice/sessions/{sessionId}/flashcards/{flashcardId};
+    else (No)
+    endif
+
+    :Show next review state;
+  else (No)
+  endif
+
+  if (Delete session?) then (Yes)
+    :deleteSession;
+    :DELETE /api/v1/writing-practice/sessions/{sessionId}?userId=...;
+    :loadSessions;
+    :GET /api/v1/writing-practice/sessions?userId=...;
+    :Show sessions list;
+  else (No)
+    :Back to sessions list;
+  endif
+else (Refresh / idle)
+  :Remain on sessions list;
+endif
+
+stop
+@enduml

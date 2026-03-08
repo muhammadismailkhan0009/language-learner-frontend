@@ -23,8 +23,12 @@ import { PublicVocabularyResponse } from "./types/responses/PublicVocabularyResp
 import { PublishPublicVocabularyRequest } from "./types/requests/PublishPublicVocabularyRequest";
 import { isRevisionDeckId, isVocabularyDeckId } from "./flashcards/flashcardApiUtils";
 import { CreateReadingPracticeSessionRequest } from "./types/requests/CreateReadingPracticeSessionRequest";
+import { CreateWritingPracticeSessionRequest } from "./types/requests/CreateWritingPracticeSessionRequest";
+import { SubmitWritingPracticeAnswerRequest } from "./types/requests/SubmitWritingPracticeAnswerRequest";
 import { ReadingPracticeSessionSummaryResponse } from "./types/responses/ReadingPracticeSessionSummaryResponse";
 import { ReadingPracticeSessionResponse } from "./types/responses/ReadingPracticeSessionResponse";
+import { WritingPracticeSessionSummaryResponse } from "./types/responses/WritingPracticeSessionSummaryResponse";
+import { WritingPracticeSessionResponse } from "./types/responses/WritingPracticeSessionResponse";
 
 export async function callRegisterUserApi(email: string, password: string): Promise<AxiosResponse<ApiResponse<UserInfoResponse>>> {
 
@@ -445,6 +449,90 @@ export async function detachReadingPracticeFlashcard(
     }
 
     const response = await api.delete<void>(`/api/v1/reading-practice/sessions/${sessionId}/flashcards/${flashcardId}`, {
+        params: { userId },
+    });
+    return response;
+}
+
+export async function listWritingPracticeSessions(): Promise<AxiosResponse<ApiResponse<WritingPracticeSessionSummaryResponse[]>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const response = await api.get<ApiResponse<WritingPracticeSessionSummaryResponse[]>>("/api/v1/writing-practice/sessions", {
+        params: { userId },
+    });
+
+    return response;
+}
+
+export async function createWritingPracticeSession(): Promise<AxiosResponse<void>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const requestBody: CreateWritingPracticeSessionRequest = { userId };
+
+    const response = await api.post<void>("/api/v1/writing-practice/sessions", requestBody);
+    return response;
+}
+
+export async function getWritingPracticeSession(
+    sessionId: string
+): Promise<AxiosResponse<ApiResponse<WritingPracticeSessionResponse>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const response = await api.get<ApiResponse<WritingPracticeSessionResponse>>(`/api/v1/writing-practice/sessions/${sessionId}`, {
+        params: { userId },
+    });
+    return response;
+}
+
+export async function submitWritingPracticeAnswer(
+    sessionId: string,
+    submittedAnswer: string
+): Promise<AxiosResponse<void>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const requestBody: SubmitWritingPracticeAnswerRequest = {
+        userId,
+        submittedAnswer,
+    };
+
+    const response = await api.post<void>(`/api/v1/writing-practice/sessions/${sessionId}/submission`, requestBody);
+    return response;
+}
+
+export async function deleteWritingPracticeSession(sessionId: string): Promise<AxiosResponse<void>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const response = await api.delete<void>(`/api/v1/writing-practice/sessions/${sessionId}`, {
+        params: { userId },
+    });
+    return response;
+}
+
+export async function detachWritingPracticeFlashcard(
+    sessionId: string,
+    flashcardId: string
+): Promise<AxiosResponse<void>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const response = await api.delete<void>(`/api/v1/writing-practice/sessions/${sessionId}/flashcards/${flashcardId}`, {
         params: { userId },
     });
     return response;
