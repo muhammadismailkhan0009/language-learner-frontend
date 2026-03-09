@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { OutputHandle } from "@myriadcodelabs/uiflow";
 import { Info as CircleInfo, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { playCardAudio } from "@/lib/ttsGoogle";
+import { playCardAudio, playTextAudio } from "@/lib/ttsGoogle";
 import { PublicVocabularyListItem, ScreenMode, VocabularyListItem } from "../types";
 import { sanitizeNotesHtml } from "../notesHtml";
 
@@ -38,6 +38,26 @@ type VocabularyListViewProps = {
     output: OutputHandle<VocabularyListViewOutput>;
 };
 
+async function sleep(ms: number, signal?: AbortSignal) {
+    if (signal?.aborted) {
+        return;
+    }
+
+    await new Promise<void>((resolve) => {
+        const timeoutId = window.setTimeout(() => resolve(), ms);
+        if (signal) {
+            signal.addEventListener(
+                "abort",
+                () => {
+                    window.clearTimeout(timeoutId);
+                    resolve();
+                },
+                { once: true }
+            );
+        }
+    });
+}
+
 export default function VocabularyListView({ input, output }: VocabularyListViewProps) {
     const {
         mode,
@@ -58,6 +78,8 @@ export default function VocabularyListView({ input, output }: VocabularyListView
     const [publishAdminKey, setPublishAdminKey] = useState("");
     const [selectedRowKey, setSelectedRowKey] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
+    const [isListening, setIsListening] = useState(false);
+    const listenControllerRef = useRef<AbortController | null>(null);
 
     const currentRows = useMemo(() => {
         const rows: Array<{
@@ -153,17 +175,76 @@ export default function VocabularyListView({ input, output }: VocabularyListView
         }
     }, [visibleRows, selectedRowKey]);
 
+    useEffect(() => {
+        return () => {
+            listenControllerRef.current?.abort();
+        };
+    }, []);
+
     if (mode !== "list") {
         return null;
     }
 
     const playbackLanguage = "de";
+    const translationLanguage = "en";
     const emptyLabel = showPrivate && !showPublic
         ? "No vocabulary entries found."
         : showPublic && !showPrivate
             ? "No public vocabulary entries found."
             : "No vocabulary entries found for selected sources.";
     const noResultsLabel = normalizedQuery ? "No matches found." : emptyLabel;
+
+    const handleListenAll = () => {
+        if (isListening) {
+            listenControllerRef.current?.abort();
+            listenControllerRef.current = null;
+            setIsListening(false);
+            return;
+        }
+
+        if (visibleRows.length === 0) {
+            return;
+        }
+
+        const controller = new AbortController();
+        listenControllerRef.current?.abort();
+        listenControllerRef.current = controller;
+        setIsListening(true);
+
+        const runPlayback = async () => {
+            try {
+                for (const row of visibleRows) {
+                    if (controller.signal.aborted) {
+                        return;
+                    }
+
+                    const surface = row.surface.trim();
+                    const translation = row.translation.trim();
+
+                    if (surface) {
+                        await playTextAudio(surface, playbackLanguage, 1, controller.signal);
+                    }
+                    await sleep(3000, controller.signal);
+
+                    if (controller.signal.aborted) {
+                        return;
+                    }
+
+                    if (translation) {
+                        await playTextAudio(translation, translationLanguage, 1, controller.signal);
+                    }
+                    await sleep(2000, controller.signal);
+                }
+            } finally {
+                if (listenControllerRef.current === controller) {
+                    listenControllerRef.current = null;
+                }
+                setIsListening(false);
+            }
+        };
+
+        void runPlayback();
+    };
 
     const renderDetailsContent = (row: {
         key: string;
@@ -409,6 +490,15 @@ export default function VocabularyListView({ input, output }: VocabularyListView
                             </label>
                             <Button type="button" variant="outline" size="sm" onClick={() => output.emit({ type: "reload" })} disabled={isLoading}>
                                 {isLoading ? "Refreshing..." : "Refresh"}
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={handleListenAll}
+                                disabled={visibleRows.length === 0}
+                            >
+                                {isListening ? "Stop" : "Listen"}
                             </Button>
                             {showPrivate ? (
                                 <Button type="button" size="sm" onClick={() => output.emit({ type: "openCreate" })}>
