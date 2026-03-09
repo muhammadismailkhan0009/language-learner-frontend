@@ -109,19 +109,7 @@ export default function VocabularyListView({ input, output }: VocabularyListView
             return currentRows;
         }
 
-        return currentRows.filter((row) => {
-            const combined = [
-                row.surface,
-                row.translation,
-                row.notes,
-                ...row.exampleSentences.map((sentence) => sentence.sentence),
-                ...row.exampleSentences.map((sentence) => sentence.translation),
-            ]
-                .filter(Boolean)
-                .join(" ")
-                .toLowerCase();
-            return combined.includes(normalizedQuery);
-        });
+        return currentRows.filter((row) => row.surface.toLowerCase().includes(normalizedQuery));
     }, [currentRows, normalizedQuery]);
 
     const selectedRow = visibleRows.find((row) => row.key === selectedRowKey) ?? visibleRows[0] ?? null;
