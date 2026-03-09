@@ -58,6 +58,10 @@ async function sleep(ms: number, signal?: AbortSignal) {
     });
 }
 
+function getSpokenTranslation(text: string) {
+    return text.replace(/\s*\([^)]*\)\s*/g, " ").replace(/\s+/g, " ").trim();
+}
+
 export default function VocabularyListView({ input, output }: VocabularyListViewProps) {
     const {
         mode,
@@ -219,7 +223,7 @@ export default function VocabularyListView({ input, output }: VocabularyListView
                     }
 
                     const surface = row.surface.trim();
-                    const translation = row.translation.trim();
+                    const translation = getSpokenTranslation(row.translation);
 
                     if (surface) {
                         await playTextAudio(surface, playbackLanguage, 1, controller.signal);
