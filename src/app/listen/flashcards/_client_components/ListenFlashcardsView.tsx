@@ -9,6 +9,7 @@ import { DeckView } from "@/lib/types/responses/DeckView";
 import fetchNextRevisionCardAction from "../_server_actions/fetchNextRevisionCardAction";
 import { FlashCard } from "@/lib/types/responses/FlashCard";
 import { AudioSpeed, getPlaybackRate, playTextAudio } from "@/lib/ttsGoogle";
+import { getFlashCardBackText, getFlashCardBackTranslation } from "@/lib/flashcards/flashCardText";
 export type ListenFlashcardsViewOutput =
     | { type: "reload" }
     | { type: "selectDeck"; deckId: string }
@@ -54,33 +55,34 @@ async function playCardSequence(card: FlashCard, playbackRate: number, signal?: 
         return;
     }
 
-    const sentences = card.back?.sentences ?? [];
+    const answerText = getFlashCardBackText(card).trim();
+    const englishTranslation = getFlashCardBackTranslation(card).trim();
 
-    for (const sentence of sentences) {
-        if (signal?.aborted) {
-            return;
-        }
-
-        const german = sentence.sentence.trim();
-        const translation = sentence.translation.trim();
-
-        if (!german) {
-            continue;
-        }
-
-        await playTextAudio(german, "de", playbackRate, signal);
-
-        if (signal?.aborted) {
-            return;
-        }
-
-        if (translation) {
-            await sleep(1000, signal);
-            await playTextAudio(translation, "en", playbackRate, signal);
-        }
-
-        await sleep(1500, signal);
+    if (!answerText) {
+        return;
     }
+
+    await playTextAudio(answerText, "de", playbackRate, signal);
+
+    if (signal?.aborted) {
+        return;
+    }
+
+    await sleep(5000, signal);
+
+    if (signal?.aborted) {
+        return;
+    }
+
+    if (englishTranslation) {
+        await playTextAudio(englishTranslation, "en", playbackRate, signal);
+    }
+
+    if (signal?.aborted) {
+        return;
+    }
+
+    await sleep(3000, signal);
 }
 
 export default function ListenFlashcardsView({ input, output }: ListenFlashcardsViewProps) {
@@ -136,7 +138,7 @@ export default function ListenFlashcardsView({ input, output }: ListenFlashcards
                 <CardTitle>Listen to Flashcards</CardTitle>
                 <div className="text-sm text-muted-foreground space-y-1">
                     <div>1. Select a deck to review.</div>
-                    <div>2. Press Listen to hear each card&apos;s full sentence and translation.</div>
+                    <div>2. Press Listen to hear each card&apos;s answer text, then its English translation.</div>
                     <div>3. The review moves to the next card automatically after playback.</div>
                     <div>4. This is active recall via listening — focus on retrieval during the pauses.</div>
                     <div>5. Press Stop to pause listening at any time.</div>
