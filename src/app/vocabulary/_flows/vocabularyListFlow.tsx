@@ -3,8 +3,10 @@ import fetchVocabulariesAction from "../_server_actions/fetchVocabulariesAction"
 import fetchPublicVocabulariesAction from "../_server_actions/fetchPublicVocabulariesAction";
 import publishVocabularyAction from "../_server_actions/publishVocabularyAction";
 import addPublicVocabularyToPrivateAction from "../_server_actions/addPublicVocabularyToPrivateAction";
+import generateVocabularyClozeSentencesAction from "../_server_actions/generateVocabularyClozeSentencesAction";
 import VocabularyListView, { VocabularyListViewOutput } from "../_client_components/VocabularyListView";
 import { PublicVocabularyListItem, ScreenMode, VocabularyListItem } from "../types";
+import { mapVocabularyResponseToListItem } from "./vocabularyDraftOps";
 
 type VocabularyListDomainData = Record<string, never>;
 
@@ -24,7 +26,9 @@ interface VocabularyListInternalData {
             isLoading: boolean;
             isPublishing: boolean;
             isAddingPublicToPrivate: boolean;
+            isGeneratingCloze: boolean;
             error: string | null;
+            clozeStatus: string | null;
             publishError: string | null;
             publishSuccess: string | null;
         };
@@ -48,7 +52,9 @@ function createVocabularyListInternalData(): VocabularyListInternalData {
                 isLoading: false,
                 isPublishing: false,
                 isAddingPublicToPrivate: false,
+                isGeneratingCloze: false,
                 error: null,
+                clozeStatus: null,
                 publishError: null,
                 publishSuccess: null,
             },
@@ -70,18 +76,7 @@ export const vocabularyListFlow = defineFlow<VocabularyListDomainData, Vocabular
                 ]);
                 const privateVocabularyList = vocabularies ?? [];
 
-                internal.flowData.vocabularies = privateVocabularyList.map((item) => ({
-                    id: item.id,
-                    surface: item.surface ?? "",
-                    translation: item.translation ?? "",
-                    entryKind: item.entryKind ?? "WORD",
-                    notes: item.notes ?? "",
-                    exampleSentences: (item.exampleSentences ?? []).map((sentence) => ({
-                        id: sentence.id,
-                        sentence: sentence.sentence ?? "",
-                        translation: sentence.translation ?? "",
-                    })),
-                }));
+                internal.flowData.vocabularies = privateVocabularyList.map(mapVocabularyResponseToListItem);
 
                 internal.flowData.publicVocabularies = (publicVocabularies ?? []).map((item) => ({
                     publicVocabularyId: item.publicVocabularyId,
@@ -125,6 +120,8 @@ export const vocabularyListFlow = defineFlow<VocabularyListDomainData, Vocabular
             isLoading: internal.flowData.ui.isLoading,
             publicVocabularies: internal.flowData.publicVocabularies,
             isPublishing: internal.flowData.ui.isPublishing,
+            isGeneratingCloze: internal.flowData.ui.isGeneratingCloze,
+            clozeStatus: internal.flowData.ui.clozeStatus,
             publishError: internal.flowData.ui.publishError,
             publishSuccess: internal.flowData.ui.publishSuccess,
             isAddingPublicToPrivate: internal.flowData.ui.isAddingPublicToPrivate,
@@ -137,6 +134,11 @@ export const vocabularyListFlow = defineFlow<VocabularyListDomainData, Vocabular
 
             if (output.type === "clearError") {
                 internal.flowData.ui.error = null;
+                return "displayList";
+            }
+
+            if (output.type === "clearClozeStatus") {
+                internal.flowData.ui.clozeStatus = null;
                 return "displayList";
             }
 
@@ -153,9 +155,21 @@ export const vocabularyListFlow = defineFlow<VocabularyListDomainData, Vocabular
 
             if (output.type === "setSelectedVocabulary") {
                 internal.flowData.selectedVocabularyId = output.vocabularyId;
+                internal.flowData.ui.clozeStatus = null;
                 internal.flowData.ui.publishError = null;
                 internal.flowData.ui.publishSuccess = null;
                 return "displayList";
+            }
+
+            if (output.type === "generateClozeSentences") {
+                if (internal.flowData.ui.isGeneratingCloze) {
+                    return "displayList";
+                }
+
+                internal.flowData.ui.error = null;
+                internal.flowData.ui.clozeStatus = null;
+                internal.flowData.ui.isGeneratingCloze = true;
+                return "generateClozeSentences";
             }
 
             if (output.type === "addPublicToPrivate") {
@@ -211,6 +225,30 @@ export const vocabularyListFlow = defineFlow<VocabularyListDomainData, Vocabular
         },
     },
 
+    generateClozeSentences: {
+        input: () => ({}),
+        action: async (_input, _domain, internal) => {
+            try {
+                const response = await generateVocabularyClozeSentencesAction();
+                if (!response) {
+                    throw new Error("Failed to generate cloze sentences");
+                }
+
+                const refreshedVocabularies = await fetchVocabulariesAction();
+                internal.flowData.vocabularies = (refreshedVocabularies ?? []).map(mapVocabularyResponseToListItem);
+                internal.flowData.ui.clozeStatus = `Generated ${response.generatedCount} cloze sentence${response.generatedCount === 1 ? "" : "s"}.`;
+            } catch (err) {
+                internal.flowData.ui.error = err instanceof Error ? err.message : "Failed to generate cloze sentences";
+            } finally {
+                internal.flowData.ui.isGeneratingCloze = false;
+            }
+
+            return { ok: true };
+        },
+        render: { mode: "preserve-previous" },
+        onOutput: () => "displayList",
+    },
+
     publishVocabulary: {
         input: (_domain, internal) => ({
             publishRequest: internal.flowData.publishRequest,
@@ -264,18 +302,7 @@ export const vocabularyListFlow = defineFlow<VocabularyListDomainData, Vocabular
                 const exists = internal.flowData.vocabularies.some((item) => item.id === response.id);
                 if (!exists) {
                     internal.flowData.vocabularies = [
-                        {
-                            id: response.id,
-                            surface: response.surface ?? "",
-                            translation: response.translation ?? "",
-                            entryKind: response.entryKind ?? "WORD",
-                            notes: response.notes ?? "",
-                            exampleSentences: (response.exampleSentences ?? []).map((sentence) => ({
-                                id: sentence.id,
-                                sentence: sentence.sentence ?? "",
-                                translation: sentence.translation ?? "",
-                            })),
-                        },
+                        mapVocabularyResponseToListItem(response),
                         ...internal.flowData.vocabularies,
                     ];
 

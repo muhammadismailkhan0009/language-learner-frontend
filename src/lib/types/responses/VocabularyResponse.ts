@@ -1,4 +1,5 @@
 import { VocabularyEntryKind } from "../requests/AddVocabularyRequest";
+import { ClozeSentenceResponse } from "./ClozeSentenceResponse";
 import { ExampleSentenceResponse } from "./ExampleSentenceResponse";
 
 export type VocabularyResponse = {
@@ -9,4 +10,5 @@ export type VocabularyResponse = {
     entryKind: VocabularyEntryKind;
     notes: string;
     exampleSentences: ExampleSentenceResponse[];
+    clozeSentence?: ClozeSentenceResponse;
 };

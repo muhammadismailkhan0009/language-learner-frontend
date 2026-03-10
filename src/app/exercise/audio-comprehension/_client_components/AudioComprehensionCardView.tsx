@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { playCardAudio } from "@/lib/ttsGoogle";
 import { OutputHandle } from "@myriadcodelabs/uiflow";
 import AudioComprehensionActions, { AudioComprehensionOutput } from "./AudioComprehensionActions";
+import { getFlashCardBackText, getFlashCardFrontText } from "@/lib/flashcards/flashCardText";
 
 type AudioComprehensionCardViewProps = {
     input: {
@@ -24,11 +25,11 @@ export default function AudioComprehensionCardView(props: AudioComprehensionCard
 
     const isReversed = props.input.card.isReverse ?? props.input.card.isReversed ?? false;
     const frontText = isReversed
-        ? props.input.card.back.wordOrChunk
-        : props.input.card.front.wordOrChunk;
+        ? getFlashCardBackText(props.input.card)
+        : getFlashCardFrontText(props.input.card);
     const backText = isReversed
-        ? props.input.card.front.wordOrChunk
-        : props.input.card.back.wordOrChunk;
+        ? getFlashCardFrontText(props.input.card)
+        : getFlashCardBackText(props.input.card);
 
     return (
         <div className="w-full px-4 flex justify-center">

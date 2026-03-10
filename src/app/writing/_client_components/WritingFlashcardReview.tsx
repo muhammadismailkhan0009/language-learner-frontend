@@ -1,11 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import FlashCardActions, { CardActionWithoutId } from "@/app/flashcards/_client_components/FlashCardActions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { playCardAudio } from "@/lib/ttsGoogle";
 import { Rating } from "@/lib/types/Rating";
 import { WritingVocabularyFlashCardView } from "@/lib/types/responses/WritingVocabularyFlashCardView";
+import { Info } from "lucide-react";
+import { getFlashCardBackAnswerWords, getFlashCardBackNotes, getFlashCardBackText, getFlashCardBackTranslation, getFlashCardFrontHint, getFlashCardFrontText } from "@/lib/flashcards/flashCardText";
 
 type WritingFlashcardReviewProps = {
     card: WritingVocabularyFlashCardView | null;
@@ -20,14 +23,6 @@ type WritingFlashcardReviewProps = {
     onReset: () => void;
 };
 
-function getFrontText(card: WritingVocabularyFlashCardView) {
-    return card.front?.wordOrChunk ?? "";
-}
-
-function getBackText(card: WritingVocabularyFlashCardView) {
-    return card.back?.wordOrChunk ?? "";
-}
-
 export default function WritingFlashcardReview({
     card,
     currentIndex,
@@ -40,6 +35,8 @@ export default function WritingFlashcardReview({
     onPrevious,
     onReset,
 }: WritingFlashcardReviewProps) {
+    const [showNotes, setShowNotes] = useState(false);
+
     if (!card) {
         return <div className="text-sm text-muted-foreground">All cards in this session are rated.</div>;
     }
@@ -73,9 +70,47 @@ export default function WritingFlashcardReview({
 
             <Card>
                 <CardContent className="flex flex-col items-center gap-4 px-4 py-6 sm:p-6">
-                    <div className="text-center text-xl font-normal leading-relaxed break-words sm:text-2xl">
-                        {flipped ? getBackText(card) : getFrontText(card)}
-                    </div>
+                    {!flipped ? (
+                        <div className="text-center text-xl font-normal leading-relaxed break-words sm:text-2xl">
+                            {getFlashCardFrontText(card)}
+                        </div>
+                    ) : null}
+                    {!flipped && getFlashCardFrontHint(card) ? (
+                        <div className="text-sm text-muted-foreground text-center">Hint: {getFlashCardFrontHint(card)}</div>
+                    ) : null}
+                    {flipped ? (
+                        <div className="w-full space-y-3">
+                            {getFlashCardBackAnswerWords(card).length > 0 ? (
+                                <div className="flex flex-wrap justify-center gap-2">
+                                    {getFlashCardBackAnswerWords(card).map((word) => (
+                                        <span key={`${card.id}-${word}`} className="rounded-full border px-3 py-1 text-sm">
+                                            {word}
+                                        </span>
+                                    ))}
+                                </div>
+                            ) : null}
+                            {getFlashCardBackText(card) ? (
+                                <div className="text-center text-xl font-normal leading-relaxed break-words sm:text-2xl">
+                                    {getFlashCardBackText(card)}
+                                </div>
+                            ) : null}
+                            {getFlashCardBackTranslation(card) ? (
+                                <div className="text-sm text-muted-foreground text-center">{getFlashCardBackTranslation(card)}</div>
+                            ) : null}
+                            {getFlashCardBackNotes(card) ? (
+                                <div className="flex justify-center">
+                                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowNotes((v) => !v)}>
+                                        <Info className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            ) : null}
+                            {showNotes && getFlashCardBackNotes(card) ? (
+                                <div className="rounded-md border bg-muted/30 p-2 text-sm text-muted-foreground">
+                                    {getFlashCardBackNotes(card)}
+                                </div>
+                            ) : null}
+                        </div>
+                    ) : null}
 
                     <Button
                         type="button"
@@ -84,7 +119,7 @@ export default function WritingFlashcardReview({
                         onClick={() =>
                             playCardAudio(
                                 card.id,
-                                card.isReversed ? getBackText(card) : getFrontText(card),
+                                card.isReversed ? getFlashCardBackText(card) : getFlashCardFrontText(card),
                                 "de"
                             )
                         }
@@ -104,7 +139,6 @@ export default function WritingFlashcardReview({
                     ))}
                 </div>
             ) : null}
-
             <FlashCardActions
                 input={{
                     flipped,

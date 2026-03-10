@@ -29,6 +29,31 @@ import { ReadingPracticeSessionSummaryResponse } from "./types/responses/Reading
 import { ReadingPracticeSessionResponse } from "./types/responses/ReadingPracticeSessionResponse";
 import { WritingPracticeSessionSummaryResponse } from "./types/responses/WritingPracticeSessionSummaryResponse";
 import { WritingPracticeSessionResponse } from "./types/responses/WritingPracticeSessionResponse";
+import { GenerateVocabularyClozeSentencesResponse } from "./types/responses/GenerateVocabularyClozeSentencesResponse";
+import { VocabularyFlashCardView } from "./types/responses/VocabularyFlashCardView";
+
+const VOCABULARY_REVISION_BATCH_SIZE = 100;
+
+function mapVocabularyFlashCardViewToFlashCard(card: VocabularyFlashCardView): FlashCard {
+    return {
+        id: card.id,
+        front: {
+            clozeText: card.front.clozeText,
+            hint: card.front.hint,
+            wordOrChunk: card.front.clozeText,
+        },
+        back: {
+            answerWords: card.back.answerWords,
+            answerText: card.back.answerText,
+            answerTranslation: card.back.answerTranslation,
+            notes: card.back.notes,
+            wordOrChunk: card.back.answerText,
+        },
+        isReversed: card.isReversed,
+        isRevision: card.isRevision,
+        note: card.back.notes,
+    };
+}
 
 export async function callRegisterUserApi(email: string, password: string): Promise<AxiosResponse<ApiResponse<UserInfoResponse>>> {
 
@@ -57,7 +82,7 @@ export async function fetchNextFlashCardToStudy(deckId: string): Promise<AxiosRe
 
     const userId = (await cookies()).get("userId")?.value;
     const response = isVocabularyDeckId(deckId)
-        ? await api.get<ApiResponse<FlashCard[]>>(`/api/v1/vocabulary-flashcards/cards/next/v1`, {
+        ? await api.get<ApiResponse<VocabularyFlashCardView[]>>(`/api/v1/vocabulary-flashcards/cards/next/v1`, {
             params: { userId },
         })
         : await api.get<ApiResponse<FlashCard>>(`/api/decks/${deckId}/cards/next/v1`, {
@@ -65,9 +90,9 @@ export async function fetchNextFlashCardToStudy(deckId: string): Promise<AxiosRe
         });
 
     if (isVocabularyDeckId(deckId)) {
-        const data = response.data.response as FlashCard[];
+        const data = (response.data.response as VocabularyFlashCardView[]).map(mapVocabularyFlashCardViewToFlashCard);
         return {
-            ...(response as AxiosResponse<ApiResponse<FlashCard[]>>),
+            ...(response as AxiosResponse<ApiResponse<VocabularyFlashCardView[]>>),
             data: {
                 ...response.data,
                 response: data[0] ?? null,
@@ -96,13 +121,26 @@ export async function fetchNextAudioCardToStudy(): Promise<AxiosResponse<ApiResp
 export async function fetchNextFlashCardToRevise(deckId: string): Promise<AxiosResponse<ApiResponse<FlashCard | null>>> {
 
     const userId = (await cookies()).get("userId")?.value;
-    const response = isVocabularyDeckId(deckId)
-        ? await api.get<ApiResponse<FlashCard>>(`/api/v1/vocabulary-flashcards/cards/revision/next/v1`, {
+    if (isVocabularyDeckId(deckId)) {
+        const response = await api.get<ApiResponse<VocabularyFlashCardView | null>>(
+            `/api/v1/vocabulary-flashcards/cards/revision/next/v1`,
+            {
+                params: { userId },
+            }
+        );
+
+        return {
+            ...(response as AxiosResponse<ApiResponse<VocabularyFlashCardView | null>>),
+            data: {
+                ...response.data,
+                response: response.data.response ? mapVocabularyFlashCardViewToFlashCard(response.data.response) : null,
+            },
+        } as AxiosResponse<ApiResponse<FlashCard | null>>;
+    }
+
+    const response = await api.get<ApiResponse<FlashCard>>(`/api/decks/${deckId}/cards/revision/next/v1`, {
             params: { userId },
-        })
-        : await api.get<ApiResponse<FlashCard>>(`/api/decks/${deckId}/cards/revision/next/v1`, {
-            params: { userId },
-        });
+    });
 
     return response as AxiosResponse<ApiResponse<FlashCard | null>>;
 
@@ -115,14 +153,20 @@ export async function fetchFlashCardsList(deckId: string): Promise<AxiosResponse
 
     if (isVocabularyDeckId(deckId)) {
         const response = isRevision
-            ? await api.get<ApiResponse<FlashCard[]>>(`/api/v1/vocabulary-flashcards/cards/revision/v1`, {
-                params: { userId },
+            ? await api.get<ApiResponse<VocabularyFlashCardView[]>>(`/api/v1/vocabulary-flashcards/cards/revision/v1`, {
+                params: { userId, count: VOCABULARY_REVISION_BATCH_SIZE },
             })
-            : await api.get<ApiResponse<FlashCard[]>>(`/api/v1/vocabulary-flashcards/cards/next/v1`, {
+            : await api.get<ApiResponse<VocabularyFlashCardView[]>>(`/api/v1/vocabulary-flashcards/cards/next/v1`, {
                 params: { userId },
             });
 
-        return response as AxiosResponse<ApiResponse<FlashCard[]>>;
+        return {
+            ...(response as AxiosResponse<ApiResponse<VocabularyFlashCardView[]>>),
+            data: {
+                ...response.data,
+                response: (response.data.response as VocabularyFlashCardView[]).map(mapVocabularyFlashCardViewToFlashCard),
+            },
+        } as AxiosResponse<ApiResponse<FlashCard[]>>;
     }
 
     if (isRevision) {
@@ -346,6 +390,24 @@ export async function createVocabularyFlashcards(
     const response = await api.post<void>(`/api/v1/vocabularies/${vocabularyId}/flashcards/v1`, undefined, {
         params: { userId },
     });
+
+    return response;
+}
+
+export async function generateVocabularyClozeSentences(
+): Promise<AxiosResponse<ApiResponse<GenerateVocabularyClozeSentencesResponse>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const response = await api.post<ApiResponse<GenerateVocabularyClozeSentencesResponse>>(
+        "/api/v1/vocabularies/cloze-sentences/v1",
+        undefined,
+        {
+            params: { userId },
+        }
+    );
 
     return response;
 }

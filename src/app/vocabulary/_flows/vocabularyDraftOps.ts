@@ -1,5 +1,5 @@
 import { VocabularyResponse } from "@/lib/types/responses/VocabularyResponse";
-import { VocabularyDraft } from "../types";
+import { VocabularyDraft, VocabularyListItem } from "../types";
 import { normalizeNotesHtml } from "../notesHtml";
 
 export function createInitialVocabularyDraft(): VocabularyDraft {
@@ -48,5 +48,21 @@ export function mapVocabularyResponseToDraft(vocabulary: VocabularyResponse): Vo
         entryKind: vocabulary.entryKind ?? "WORD",
         notes: vocabulary.notes ?? "",
         exampleSentences: exampleSentences.length > 0 ? exampleSentences : [{ sentence: "", translation: "" }],
+    };
+}
+
+export function mapVocabularyResponseToListItem(vocabulary: VocabularyResponse): VocabularyListItem {
+    return {
+        id: vocabulary.id,
+        surface: vocabulary.surface ?? "",
+        translation: vocabulary.translation ?? "",
+        entryKind: vocabulary.entryKind ?? "WORD",
+        notes: vocabulary.notes ?? "",
+        exampleSentences: (vocabulary.exampleSentences ?? []).map((sentence) => ({
+            id: sentence.id,
+            sentence: sentence.sentence ?? "",
+            translation: sentence.translation ?? "",
+        })),
+        clozeSentence: vocabulary.clozeSentence,
     };
 }

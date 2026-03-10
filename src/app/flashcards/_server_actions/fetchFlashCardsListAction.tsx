@@ -9,6 +9,7 @@ export default async function fetchFlashCardsListAction(deckId: string): Promise
     const response = await fetchFlashCardsList(deckId);
 
     if (response.status === 200) {
+        console.log(response.data.response) 
         return response.data.response;
     }
     return null;

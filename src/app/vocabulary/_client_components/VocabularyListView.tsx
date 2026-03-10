@@ -16,7 +16,9 @@ import { filterVocabularyRows } from "./vocabularySearch";
 export type VocabularyListViewOutput =
     | { type: "reload" }
     | { type: "clearError" }
+    | { type: "clearClozeStatus" }
     | { type: "openCreate" }
+    | { type: "generateClozeSentences" }
     | { type: "clearPublishStatus" }
     | { type: "setSelectedVocabulary"; vocabularyId: string }
     | { type: "openEdit"; vocabularyId: string }
@@ -32,7 +34,9 @@ type VocabularyListViewProps = {
         error: string | null;
         isLoading: boolean;
         isPublishing: boolean;
+        isGeneratingCloze: boolean;
         isAddingPublicToPrivate: boolean;
+        clozeStatus: string | null;
         publishError: string | null;
         publishSuccess: string | null;
     };
@@ -71,7 +75,9 @@ export default function VocabularyListView({ input, output }: VocabularyListView
         error,
         isLoading,
         isPublishing,
+        isGeneratingCloze,
         isAddingPublicToPrivate,
+        clozeStatus,
         publishError,
         publishSuccess,
     } = input;
@@ -96,6 +102,7 @@ export default function VocabularyListView({ input, output }: VocabularyListView
             translation: string;
             notes: string;
             exampleSentences: { id?: string; sentence: string; translation: string }[];
+            clozeSentence?: VocabularyListItem["clozeSentence"];
         }> = [];
 
         if (showPrivate) {
@@ -108,6 +115,7 @@ export default function VocabularyListView({ input, output }: VocabularyListView
                     translation: item.translation,
                     notes: item.notes,
                     exampleSentences: item.exampleSentences,
+                    clozeSentence: item.clozeSentence,
                 }))
             );
         }
@@ -255,6 +263,7 @@ export default function VocabularyListView({ input, output }: VocabularyListView
         translation: string;
         notes: string;
         exampleSentences: { id?: string; sentence: string; translation: string }[];
+        clozeSentence?: VocabularyListItem["clozeSentence"];
     }, compact: boolean) => {
         const isPrivateRow = row.source === "private";
         const isPublicRow = row.source === "public";
@@ -358,6 +367,24 @@ export default function VocabularyListView({ input, output }: VocabularyListView
                         )}
                     </div>
                 ) : null}
+
+                <div className="space-y-2">
+                    <div className="text-sm font-medium">Cloze Sentence</div>
+                    {row.clozeSentence ? (
+                        <div className="rounded-md border bg-background p-3 space-y-2">
+                            <div className="text-sm leading-relaxed">{row.clozeSentence.clozeText}</div>
+                            {row.clozeSentence.hint ? (
+                                <div className="text-sm text-muted-foreground">Hint: {row.clozeSentence.hint}</div>
+                            ) : null}
+                            <div className="text-sm text-muted-foreground">
+                                Answer: {row.clozeSentence.answerText}
+                                {row.clozeSentence.answerTranslation ? ` (${row.clozeSentence.answerTranslation})` : ""}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="text-sm text-muted-foreground">No cloze sentence generated yet.</div>
+                    )}
+                </div>
 
                 <div className="space-y-2">
                     <div className="text-sm font-medium">Example Sentences</div>
@@ -495,6 +522,15 @@ export default function VocabularyListView({ input, output }: VocabularyListView
                                 type="button"
                                 variant="outline"
                                 size="sm"
+                                onClick={() => output.emit({ type: "generateClozeSentences" })}
+                                disabled={isGeneratingCloze || vocabularies.length === 0}
+                            >
+                                {isGeneratingCloze ? "Generating..." : "Generate Cloze"}
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
                                 onClick={handleListenAll}
                                 disabled={visibleRows.length === 0}
                             >
@@ -512,6 +548,15 @@ export default function VocabularyListView({ input, output }: VocabularyListView
                             <div className="flex flex-wrap items-center gap-2 text-sm text-red-600">
                                 <span>{error}</span>
                                 <Button type="button" variant="outline" size="sm" onClick={() => output.emit({ type: "clearError" })}>
+                                    Dismiss
+                                </Button>
+                            </div>
+                        ) : null}
+
+                        {clozeStatus ? (
+                            <div className="flex flex-wrap items-center gap-2 text-sm text-green-600">
+                                <span>{clozeStatus}</span>
+                                <Button type="button" variant="outline" size="sm" onClick={() => output.emit({ type: "clearClozeStatus" })}>
                                     Dismiss
                                 </Button>
                             </div>

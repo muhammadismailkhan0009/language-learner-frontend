@@ -6,15 +6,21 @@ export type FlashCard = {
   back: Back;
   isReverse?: boolean;
   isReversed?: boolean;
-  isRevision: boolean;
+  isRevision?: boolean;
   note?: string;
 };
 
 export type Front = {
-  wordOrChunk: string;
+  wordOrChunk?: string;
+  clozeText?: string;
+  hint?: string;
 };
 
 export type Back = {
-  wordOrChunk: string;
+  wordOrChunk?: string;
   sentences?: Sentence[];
+  answerWords?: string[];
+  answerText?: string;
+  answerTranslation?: string;
+  notes?: string;
 };

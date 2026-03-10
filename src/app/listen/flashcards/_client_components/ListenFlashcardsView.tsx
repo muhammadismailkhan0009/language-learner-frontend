@@ -9,6 +9,7 @@ import { DeckView } from "@/lib/types/responses/DeckView";
 import fetchNextRevisionCardAction from "../_server_actions/fetchNextRevisionCardAction";
 import { FlashCard } from "@/lib/types/responses/FlashCard";
 import { AudioSpeed, getPlaybackRate, playTextAudio } from "@/lib/ttsGoogle";
+import { getFlashCardBackText, getFlashCardBackTranslation, getFlashCardFrontText } from "@/lib/flashcards/flashCardText";
 
 export type ListenFlashcardsViewOutput =
     | { type: "reload" }
@@ -39,10 +40,11 @@ type CardLanguagePair = {
 
 function getCardLanguagePair(card: FlashCard): CardLanguagePair {
     const isReversed = card.isReverse ?? card.isReversed ?? false;
-    const frontText = card.front?.wordOrChunk ?? "";
-    const backText = card.back?.wordOrChunk ?? "";
+    const frontText = getFlashCardFrontText(card);
+    const backText = getFlashCardBackText(card);
+    const backTranslation = getFlashCardBackTranslation(card);
     const german = isReversed ? backText : frontText;
-    const english = isReversed ? frontText : backText;
+    const english = isReversed ? frontText : backTranslation || backText;
     const germanSentences = (card.back?.sentences ?? []).map((sentence) => sentence.sentence);
 
     return {

@@ -1,4 +1,5 @@
 import { VocabularyEntryKind } from "@/lib/types/requests/AddVocabularyRequest";
+import { ClozeSentenceResponse } from "@/lib/types/responses/ClozeSentenceResponse";
 
 export type ScreenMode = "list" | "create" | "edit";
 
@@ -23,6 +24,7 @@ export type VocabularyListItem = {
     entryKind: VocabularyEntryKind;
     notes: string;
     exampleSentences: VocabularyExampleSentenceDraft[];
+    clozeSentence?: ClozeSentenceResponse;
 };
 
 export type PublicVocabularyListItem = {
