@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { playCardAudio, playTextAudio } from "@/lib/ttsGoogle";
 import { PublicVocabularyListItem, ScreenMode, VocabularyListItem } from "../types";
 import { sanitizeNotesHtml } from "../notesHtml";
+import { filterVocabularyRows } from "./vocabularySearch";
 
 export type VocabularyListViewOutput =
     | { type: "reload" }
@@ -129,14 +130,9 @@ export default function VocabularyListView({ input, output }: VocabularyListView
         return rows;
     }, [showPrivate, showPublic, vocabularies, publicVocabularies]);
 
-    const normalizedQuery = searchQuery.trim().toLowerCase();
     const visibleRows = useMemo(() => {
-        if (!normalizedQuery) {
-            return currentRows;
-        }
-
-        return currentRows.filter((row) => row.surface.toLowerCase().includes(normalizedQuery));
-    }, [currentRows, normalizedQuery]);
+        return filterVocabularyRows(currentRows, searchQuery);
+    }, [currentRows, searchQuery]);
 
     const selectedRow = visibleRows.find((row) => row.key === selectedRowKey) ?? visibleRows[0] ?? null;
     const selectedPrivateVocabulary = selectedRow?.source === "private" ? selectedRow : null;
@@ -196,7 +192,7 @@ export default function VocabularyListView({ input, output }: VocabularyListView
         : showPublic && !showPrivate
             ? "No public vocabulary entries found."
             : "No vocabulary entries found for selected sources.";
-    const noResultsLabel = normalizedQuery ? "No matches found." : emptyLabel;
+    const noResultsLabel = searchQuery.trim() ? "No matches found." : emptyLabel;
 
     const handleListenAll = () => {
         if (isListening) {
