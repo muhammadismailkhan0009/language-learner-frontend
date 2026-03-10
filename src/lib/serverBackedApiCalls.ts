@@ -32,7 +32,7 @@ import { WritingPracticeSessionResponse } from "./types/responses/WritingPractic
 import { GenerateVocabularyClozeSentencesResponse } from "./types/responses/GenerateVocabularyClozeSentencesResponse";
 import { VocabularyFlashCardView } from "./types/responses/VocabularyFlashCardView";
 
-const VOCABULARY_REVISION_BATCH_SIZE = 100;
+const VOCABULARY_REVISION_BATCH_SIZE = 1;
 
 function mapVocabularyFlashCardViewToFlashCard(card: VocabularyFlashCardView): FlashCard {
     return {
