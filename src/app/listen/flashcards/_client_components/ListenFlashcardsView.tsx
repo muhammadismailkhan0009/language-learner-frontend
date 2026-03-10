@@ -9,8 +9,6 @@ import { DeckView } from "@/lib/types/responses/DeckView";
 import fetchNextRevisionCardAction from "../_server_actions/fetchNextRevisionCardAction";
 import { FlashCard } from "@/lib/types/responses/FlashCard";
 import { AudioSpeed, getPlaybackRate, playTextAudio } from "@/lib/ttsGoogle";
-import { getFlashCardBackText, getFlashCardBackTranslation, getFlashCardFrontText } from "@/lib/flashcards/flashCardText";
-
 export type ListenFlashcardsViewOutput =
     | { type: "reload" }
     | { type: "selectDeck"; deckId: string }
@@ -31,28 +29,6 @@ type ListenFlashcardsViewProps = {
     };
     output: OutputHandle<ListenFlashcardsViewOutput>;
 };
-
-type CardLanguagePair = {
-    german: string;
-    english: string;
-    germanSentences: string[];
-};
-
-function getCardLanguagePair(card: FlashCard): CardLanguagePair {
-    const isReversed = card.isReverse ?? card.isReversed ?? false;
-    const frontText = getFlashCardFrontText(card);
-    const backText = getFlashCardBackText(card);
-    const backTranslation = getFlashCardBackTranslation(card);
-    const german = isReversed ? backText : frontText;
-    const english = isReversed ? frontText : backTranslation || backText;
-    const germanSentences = (card.back?.sentences ?? []).map((sentence) => sentence.sentence);
-
-    return {
-        german,
-        english,
-        germanSentences,
-    };
-}
 
 async function sleep(ms: number, signal?: AbortSignal) {
     if (signal?.aborted) {
@@ -78,31 +54,32 @@ async function playCardSequence(card: FlashCard, playbackRate: number, signal?: 
         return;
     }
 
-    const { german, english, germanSentences } = getCardLanguagePair(card);
+    const sentences = card.back?.sentences ?? [];
 
-    if (german.trim()) {
-        await playTextAudio(german, "de", playbackRate, signal);
-    }
-    await sleep(8000, signal);
-    if (signal?.aborted) {
-        return;
-    }
-
-    if (english.trim()) {
-        await playTextAudio(english, "en", playbackRate, signal);
-    }
-    await sleep(3000, signal);
-
-    for (const sentence of germanSentences) {
+    for (const sentence of sentences) {
         if (signal?.aborted) {
             return;
         }
-        const cleaned = sentence.trim();
-        if (!cleaned) {
+
+        const german = sentence.sentence.trim();
+        const translation = sentence.translation.trim();
+
+        if (!german) {
             continue;
         }
-        await playTextAudio(cleaned, "de", playbackRate, signal);
-        await sleep(3000, signal);
+
+        await playTextAudio(german, "de", playbackRate, signal);
+
+        if (signal?.aborted) {
+            return;
+        }
+
+        if (translation) {
+            await sleep(1000, signal);
+            await playTextAudio(translation, "en", playbackRate, signal);
+        }
+
+        await sleep(1500, signal);
     }
 }
 
@@ -153,16 +130,14 @@ export default function ListenFlashcardsView({ input, output }: ListenFlashcards
         };
     }, [input.isListening, input.selectedDeckId, input.audioSpeed, output]);
 
-    const hasDecks = input.decks.length > 0;
-
     return (
         <Card>
             <CardHeader className="space-y-2">
                 <CardTitle>Listen to Flashcards</CardTitle>
                 <div className="text-sm text-muted-foreground space-y-1">
                     <div>1. Select a deck to review.</div>
-                    <div>2. Press Listen to hear the next card and example sentences.</div>
-                    <div>3. Use each delay to actively recall the translation before it plays.</div>
+                    <div>2. Press Listen to hear each card&apos;s full sentence and translation.</div>
+                    <div>3. The review moves to the next card automatically after playback.</div>
                     <div>4. This is active recall via listening — focus on retrieval during the pauses.</div>
                     <div>5. Press Stop to pause listening at any time.</div>
                 </div>
