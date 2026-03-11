@@ -105,7 +105,7 @@ async function getAudioUrlForCacheKey(cacheKey: string, text: string, lang: stri
     const cachedIndexed = await getFromIndexedDB(cacheKey);
     if (cachedIndexed) return cachedIndexed;
 
-    const response = await fetch(`/api/tts?q=${encodeURIComponent(text)}&lang=${lang}`);
+    const response = await fetch(`/api/tts?q=${encodeURIComponent(text)}&lang=${lang}&slow=true`);
     if (!response.ok) throw new Error("TTS fetch failed");
 
     const blob = await response.blob();
