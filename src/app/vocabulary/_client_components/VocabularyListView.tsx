@@ -90,6 +90,7 @@ export default function VocabularyListView({ input, output }: VocabularyListView
     const [selectedRowKey, setSelectedRowKey] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [isListening, setIsListening] = useState(false);
+    const [listenReverse, setListenReverse] = useState(false);
     const listenControllerRef = useRef<AbortController | null>(null);
 
     const currentRows = useMemo(() => {
@@ -228,9 +229,13 @@ export default function VocabularyListView({ input, output }: VocabularyListView
 
                     const surface = row.surface.trim();
                     const translation = getSpokenTranslation(row.translation);
+                    const firstText = listenReverse ? translation : surface;
+                    const firstLanguage = listenReverse ? translationLanguage : playbackLanguage;
+                    const secondText = listenReverse ? surface : translation;
+                    const secondLanguage = listenReverse ? playbackLanguage : translationLanguage;
 
-                    if (surface) {
-                        await playTextAudio(surface, playbackLanguage, 1, controller.signal);
+                    if (firstText) {
+                        await playTextAudio(firstText, firstLanguage, 1, controller.signal);
                     }
                     await sleep(3000, controller.signal);
 
@@ -238,8 +243,8 @@ export default function VocabularyListView({ input, output }: VocabularyListView
                         return;
                     }
 
-                    if (translation) {
-                        await playTextAudio(translation, translationLanguage, 1, controller.signal);
+                    if (secondText) {
+                        await playTextAudio(secondText, secondLanguage, 1, controller.signal);
                     }
                     await sleep(2000, controller.signal);
                 }
@@ -536,6 +541,19 @@ export default function VocabularyListView({ input, output }: VocabularyListView
                             >
                                 {isListening ? "Stop" : "Listen"}
                             </Button>
+                            <label
+                                className={`flex cursor-pointer items-center gap-2 rounded-md border px-3 py-1.5 text-sm ${
+                                    listenReverse ? "border-primary bg-primary/10" : "border-input"
+                                }`}
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={listenReverse}
+                                    onChange={(event) => setListenReverse(event.target.checked)}
+                                    className="h-4 w-4"
+                                />
+                                <span>Listen Reverse</span>
+                            </label>
                             {showPrivate ? (
                                 <Button type="button" size="sm" onClick={() => output.emit({ type: "openCreate" })}>
                                     New Entry
