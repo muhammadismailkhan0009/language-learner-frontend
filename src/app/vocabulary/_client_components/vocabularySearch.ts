@@ -14,11 +14,9 @@ export function filterVocabularyRows<T extends SearchableVocabularyRow>(rows: T[
     }
 
     return rows.filter((row) => {
-        const haystack = normalizeSearchText([
-            row.surface,
-            row.translation,
-        ].join(" "));
+        const normalizedSurface = normalizeSearchText(row.surface);
+        const normalizedTranslation = normalizeSearchText(row.translation);
 
-        return haystack.includes(normalizedQuery);
+        return normalizedSurface.includes(normalizedQuery) || normalizedTranslation.includes(normalizedQuery);
     });
 }

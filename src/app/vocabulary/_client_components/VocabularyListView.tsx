@@ -478,8 +478,8 @@ export default function VocabularyListView({ input, output }: VocabularyListView
                                 <Input
                                     value={searchQuery}
                                     onChange={(event) => setSearchQuery(event.target.value)}
-                                    placeholder="Search vocabulary"
-                                    aria-label="Search vocabulary"
+                                    placeholder="Search German or translation"
+                                    aria-label="Search German words or translations"
                                 />
                             </div>
                             <label
