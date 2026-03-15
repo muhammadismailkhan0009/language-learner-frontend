@@ -135,9 +135,8 @@ export async function deleteAudioCacheForCard(cardId: string, lang = "en"): Prom
     await deleteFromIndexedDB(cacheKey);
 }
 
-export async function getAudioUrlForCard(cardId: string, text: string, lang = "en") {
-    const cacheKey = `tts_${lang}_${cardId}`;
-    return getAudioUrlForCacheKey(cacheKey, text, lang);
+export async function getAudioUrlForCard(_cardId: string, text: string, lang = "en") {
+    return getAudioUrlForText(text, lang);
 }
 
 export async function getAudioUrlForText(text: string, lang = "en") {
