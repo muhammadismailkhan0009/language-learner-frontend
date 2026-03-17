@@ -30,6 +30,9 @@ export const config = {
         "/scenarios/:path*",
         "/grammar/:path*",
         "/listen/:path*",
-        "/vocabulary/:path*"
+        "/vocabulary/:path*",
+        "/reading/:path*",
+        "/writing/:path*"
+
     ],
 };
