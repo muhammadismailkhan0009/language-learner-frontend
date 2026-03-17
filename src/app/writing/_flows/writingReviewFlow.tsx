@@ -131,6 +131,9 @@ export const writingReviewFlow = defineFlow<WritingReviewDomainData, WritingRevi
                     return "displayReview";
                 }
 
+                // Unflip immediately before async rating starts so the next card never
+                // briefly inherits back-side visibility during transition.
+                internal.flowData.flashcardReview.isCurrentCardFlipped = false;
                 internal.flowData.flashcardReview.pendingReview.cardId = currentCard.id;
                 internal.flowData.flashcardReview.pendingReview.rating = output.rating;
                 return "rateFlashcard";
