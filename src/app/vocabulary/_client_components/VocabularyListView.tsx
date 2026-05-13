@@ -17,8 +17,11 @@ export type VocabularyListViewOutput =
     | { type: "reload" }
     | { type: "clearError" }
     | { type: "clearClozeStatus" }
+    | { type: "clearSongsStatus" }
     | { type: "openCreate" }
     | { type: "generateClozeSentences" }
+    | { type: "generateSongsSelection" }
+    | { type: "setSongsSelectionLimit"; limit: number }
     | { type: "clearPublishStatus" }
     | { type: "setSelectedVocabulary"; vocabularyId: string }
     | { type: "openEdit"; vocabularyId: string }
@@ -35,8 +38,12 @@ type VocabularyListViewProps = {
         isLoading: boolean;
         isPublishing: boolean;
         isGeneratingCloze: boolean;
+        isGeneratingSongsSelection: boolean;
         isAddingPublicToPrivate: boolean;
         clozeStatus: string | null;
+        songsStatus: string | null;
+        songsSelectionLimit: number;
+        songsSelection: VocabularyListItem[];
         publishError: string | null;
         publishSuccess: string | null;
     };
@@ -76,8 +83,12 @@ export default function VocabularyListView({ input, output }: VocabularyListView
         isLoading,
         isPublishing,
         isGeneratingCloze,
+        isGeneratingSongsSelection,
         isAddingPublicToPrivate,
         clozeStatus,
+        songsStatus,
+        songsSelectionLimit,
+        songsSelection,
         publishError,
         publishSuccess,
     } = input;
@@ -202,6 +213,8 @@ export default function VocabularyListView({ input, output }: VocabularyListView
             ? "No public vocabulary entries found."
             : "No vocabulary entries found for selected sources.";
     const noResultsLabel = searchQuery.trim() ? "No matches found." : emptyLabel;
+    const songsSelectionCommaText = songsSelection.map((item) => item.surface).join(", ");
+    const songsSelectionLineText = songsSelection.map((item) => item.surface).join("\n");
 
     const handleListenAll = () => {
         if (isListening) {
@@ -532,6 +545,34 @@ export default function VocabularyListView({ input, output }: VocabularyListView
                             >
                                 {isGeneratingCloze ? "Generating..." : "Generate Cloze"}
                             </Button>
+                            <div className="flex items-center gap-2 rounded-md border px-2 py-1">
+                                <span className="text-xs text-muted-foreground">Songs</span>
+                                <Input
+                                    type="number"
+                                    value={songsSelectionLimit}
+                                    min={1}
+                                    max={300}
+                                    className="h-8 w-20"
+                                    onChange={(event) => {
+                                        const parsed = Number.parseInt(event.target.value, 10);
+                                        if (Number.isNaN(parsed)) {
+                                            output.emit({ type: "setSongsSelectionLimit", limit: 50 });
+                                            return;
+                                        }
+                                        const clamped = Math.max(1, Math.min(300, parsed));
+                                        output.emit({ type: "setSongsSelectionLimit", limit: clamped });
+                                    }}
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => output.emit({ type: "generateSongsSelection" })}
+                                    disabled={isGeneratingSongsSelection || vocabularies.length === 0}
+                                >
+                                    {isGeneratingSongsSelection ? "Selecting..." : "Select"}
+                                </Button>
+                            </div>
                             <Button
                                 type="button"
                                 variant="outline"
@@ -577,6 +618,42 @@ export default function VocabularyListView({ input, output }: VocabularyListView
                                 <Button type="button" variant="outline" size="sm" onClick={() => output.emit({ type: "clearClozeStatus" })}>
                                     Dismiss
                                 </Button>
+                            </div>
+                        ) : null}
+                        {songsStatus ? (
+                            <div className="flex flex-wrap items-center gap-2 text-sm text-green-600">
+                                <span>{songsStatus}</span>
+                                <Button type="button" variant="outline" size="sm" onClick={() => output.emit({ type: "clearSongsStatus" })}>
+                                    Dismiss
+                                </Button>
+                            </div>
+                        ) : null}
+                        {songsSelection.length > 0 ? (
+                            <div className="space-y-2 rounded-md border p-3">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <div className="text-sm font-medium">Songs Selection ({songsSelection.length})</div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => void navigator.clipboard.writeText(songsSelectionCommaText)}
+                                        >
+                                            Copy Comma
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => void navigator.clipboard.writeText(songsSelectionLineText)}
+                                        >
+                                            Copy Lines
+                                        </Button>
+                                    </div>
+                                </div>
+                                <div className="text-sm text-muted-foreground">
+                                    {songsSelectionCommaText}
+                                </div>
                             </div>
                         ) : null}
 

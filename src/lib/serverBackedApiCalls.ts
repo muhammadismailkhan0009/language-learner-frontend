@@ -335,6 +335,21 @@ export async function fetchVocabularies(): Promise<AxiosResponse<ApiResponse<Voc
     return response;
 }
 
+export async function fetchSongVocabularies(
+    limit?: number
+): Promise<AxiosResponse<ApiResponse<VocabularyResponse[]>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const response = await api.get<ApiResponse<VocabularyResponse[]>>("/api/v1/vocabularies/songs-selection/v1", {
+        params: { userId, limit },
+    });
+
+    return response;
+}
+
 export async function fetchVocabulary(vocabularyId: string): Promise<AxiosResponse<ApiResponse<VocabularyResponse>>> {
     const userId = (await cookies()).get("userId")?.value;
     if (!userId) {

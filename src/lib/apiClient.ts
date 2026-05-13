@@ -5,8 +5,9 @@ export const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+// FIXME: added in ignored file. removed from gitignore if any changes made in here in future
 function getApiBaseUrl() {
-  const isLive: boolean = true;
+  const isLive: boolean = false;
   if (isLive) {
     // SSR fallback – keep predictable
     console.log("it is fallback")

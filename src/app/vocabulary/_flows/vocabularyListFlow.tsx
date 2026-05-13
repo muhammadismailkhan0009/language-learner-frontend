@@ -1,5 +1,6 @@
 import { defineFlow } from "@myriadcodelabs/uiflow";
 import fetchVocabulariesAction from "../_server_actions/fetchVocabulariesAction";
+import fetchSongVocabulariesAction from "../_server_actions/fetchSongVocabulariesAction";
 import fetchPublicVocabulariesAction from "../_server_actions/fetchPublicVocabulariesAction";
 import publishVocabularyAction from "../_server_actions/publishVocabularyAction";
 import addPublicVocabularyToPrivateAction from "../_server_actions/addPublicVocabularyToPrivateAction";
@@ -27,11 +28,15 @@ interface VocabularyListInternalData {
             isPublishing: boolean;
             isAddingPublicToPrivate: boolean;
             isGeneratingCloze: boolean;
+            isGeneratingSongsSelection: boolean;
             error: string | null;
             clozeStatus: string | null;
+            songsStatus: string | null;
             publishError: string | null;
             publishSuccess: string | null;
         };
+        songsSelectionLimit: number;
+        songsSelection: VocabularyListItem[];
     };
 }
 
@@ -53,11 +58,15 @@ function createVocabularyListInternalData(): VocabularyListInternalData {
                 isPublishing: false,
                 isAddingPublicToPrivate: false,
                 isGeneratingCloze: false,
+                isGeneratingSongsSelection: false,
                 error: null,
                 clozeStatus: null,
+                songsStatus: null,
                 publishError: null,
                 publishSuccess: null,
             },
+            songsSelectionLimit: 50,
+            songsSelection: [],
         },
     };
 }
@@ -121,7 +130,11 @@ export const vocabularyListFlow = defineFlow<VocabularyListDomainData, Vocabular
             publicVocabularies: internal.flowData.publicVocabularies,
             isPublishing: internal.flowData.ui.isPublishing,
             isGeneratingCloze: internal.flowData.ui.isGeneratingCloze,
+            isGeneratingSongsSelection: internal.flowData.ui.isGeneratingSongsSelection,
             clozeStatus: internal.flowData.ui.clozeStatus,
+            songsStatus: internal.flowData.ui.songsStatus,
+            songsSelectionLimit: internal.flowData.songsSelectionLimit,
+            songsSelection: internal.flowData.songsSelection,
             publishError: internal.flowData.ui.publishError,
             publishSuccess: internal.flowData.ui.publishSuccess,
             isAddingPublicToPrivate: internal.flowData.ui.isAddingPublicToPrivate,
@@ -139,6 +152,16 @@ export const vocabularyListFlow = defineFlow<VocabularyListDomainData, Vocabular
 
             if (output.type === "clearClozeStatus") {
                 internal.flowData.ui.clozeStatus = null;
+                return "displayList";
+            }
+
+            if (output.type === "clearSongsStatus") {
+                internal.flowData.ui.songsStatus = null;
+                return "displayList";
+            }
+
+            if (output.type === "setSongsSelectionLimit") {
+                internal.flowData.songsSelectionLimit = output.limit;
                 return "displayList";
             }
 
@@ -170,6 +193,17 @@ export const vocabularyListFlow = defineFlow<VocabularyListDomainData, Vocabular
                 internal.flowData.ui.clozeStatus = null;
                 internal.flowData.ui.isGeneratingCloze = true;
                 return "generateClozeSentences";
+            }
+
+            if (output.type === "generateSongsSelection") {
+                if (internal.flowData.ui.isGeneratingSongsSelection) {
+                    return "displayList";
+                }
+
+                internal.flowData.ui.error = null;
+                internal.flowData.ui.songsStatus = null;
+                internal.flowData.ui.isGeneratingSongsSelection = true;
+                return "generateSongsSelection";
             }
 
             if (output.type === "addPublicToPrivate") {
@@ -241,6 +275,30 @@ export const vocabularyListFlow = defineFlow<VocabularyListDomainData, Vocabular
                 internal.flowData.ui.error = err instanceof Error ? err.message : "Failed to generate cloze sentences";
             } finally {
                 internal.flowData.ui.isGeneratingCloze = false;
+            }
+
+            return { ok: true };
+        },
+        render: { mode: "preserve-previous" },
+        onOutput: () => "displayList",
+    },
+
+    generateSongsSelection: {
+        input: (_domain, internal) => ({
+            limit: internal.flowData.songsSelectionLimit,
+        }),
+        action: async ({ limit }: { limit: number }, _domain, internal) => {
+            try {
+                const selected = await fetchSongVocabulariesAction(limit);
+                if (!selected) {
+                    throw new Error("Failed to fetch songs vocabulary selection");
+                }
+                internal.flowData.songsSelection = selected.map(mapVocabularyResponseToListItem);
+                internal.flowData.ui.songsStatus = `Selected ${selected.length} vocabulary item${selected.length === 1 ? "" : "s"} for songs.`;
+            } catch (err) {
+                internal.flowData.ui.error = err instanceof Error ? err.message : "Failed to fetch songs vocabulary selection";
+            } finally {
+                internal.flowData.ui.isGeneratingSongsSelection = false;
             }
 
             return { ok: true };
