@@ -97,7 +97,8 @@ export const readingParagraphClozeFlow = defineFlow<Domain, Internal>({
                 if (updated) {
                     internal.session = updated;
                 }
-                if (!internal.ratedFlashcardIds.includes(flashcardId)) {
+                const shouldDiscard = rating === Rating.GOOD || rating === Rating.EASY;
+                if (shouldDiscard && !internal.ratedFlashcardIds.includes(flashcardId)) {
                     internal.ratedFlashcardIds.push(flashcardId);
                 }
                 const remainingAfterRate =
