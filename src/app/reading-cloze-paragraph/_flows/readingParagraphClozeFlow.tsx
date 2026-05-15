@@ -12,6 +12,7 @@ type Internal = {
     session: ReadingParagraphClozeSessionResponse | null;
     limit: number;
     currentCardIndex: number;
+    ratedFlashcardIds: string[];
     isCardFlipped: boolean;
     isLoading: boolean;
     isCreating: boolean;
@@ -25,6 +26,7 @@ function createInternalData(): Internal {
         session: null,
         limit: 50,
         currentCardIndex: 0,
+        ratedFlashcardIds: [],
         isCardFlipped: false,
         isLoading: false,
         isCreating: false,
@@ -43,6 +45,7 @@ export const readingParagraphClozeFlow = defineFlow<Domain, Internal>({
             try {
                 internal.session = await getActiveReadingParagraphClozeSessionAction();
                 internal.currentCardIndex = 0;
+                internal.ratedFlashcardIds = [];
                 internal.isCardFlipped = false;
             } catch (error) {
                 internal.error = error instanceof Error ? error.message : "Failed to load active session";
@@ -63,6 +66,7 @@ export const readingParagraphClozeFlow = defineFlow<Domain, Internal>({
             try {
                 internal.session = await createReadingParagraphClozeSessionAction(limit);
                 internal.currentCardIndex = 0;
+                internal.ratedFlashcardIds = [];
                 internal.isCardFlipped = false;
             } catch (error) {
                 internal.error = error instanceof Error ? error.message : "Failed to create session";
@@ -93,6 +97,16 @@ export const readingParagraphClozeFlow = defineFlow<Domain, Internal>({
                 if (updated) {
                     internal.session = updated;
                 }
+                if (!internal.ratedFlashcardIds.includes(flashcardId)) {
+                    internal.ratedFlashcardIds.push(flashcardId);
+                }
+                const remainingAfterRate =
+                    internal.session?.cards.filter((card) => !internal.ratedFlashcardIds.includes(card.flashcardId)) ?? [];
+                if (remainingAfterRate.length === 0) {
+                    internal.currentCardIndex = 0;
+                } else {
+                    internal.currentCardIndex = Math.min(internal.currentCardIndex, remainingAfterRate.length - 1);
+                }
                 internal.isCardFlipped = false;
             } catch (error) {
                 internal.error = error instanceof Error ? error.message : "Failed to rate card";
@@ -108,11 +122,14 @@ export const readingParagraphClozeFlow = defineFlow<Domain, Internal>({
 
     show: {
         input: (_domain, internal) => {
-            const cards = internal.session?.cards ?? [];
+            const cards = (internal.session?.cards ?? []).filter(
+                (card) => !internal.ratedFlashcardIds.includes(card.flashcardId)
+            );
             const normalizedIndex = cards.length === 0 ? 0 : Math.min(internal.currentCardIndex, cards.length - 1);
             const currentCard = cards[normalizedIndex] ?? null;
             return {
                 session: internal.session,
+                visibleCardsCount: cards.length,
                 limit: internal.limit,
                 currentCard,
                 currentCardIndex: normalizedIndex,
@@ -145,17 +162,20 @@ export const readingParagraphClozeFlow = defineFlow<Domain, Internal>({
 
             if (output.type === "nextCard") {
                 const total = internal.session?.cards.length ?? 0;
-                if (total > 0) {
-                    internal.currentCardIndex = internal.currentCardIndex >= total - 1 ? 0 : internal.currentCardIndex + 1;
+                const visibleTotal =
+                    internal.session?.cards.filter((card) => !internal.ratedFlashcardIds.includes(card.flashcardId)).length ?? 0;
+                if (total > 0 && visibleTotal > 0) {
+                    internal.currentCardIndex = internal.currentCardIndex >= visibleTotal - 1 ? 0 : internal.currentCardIndex + 1;
                     internal.isCardFlipped = false;
                 }
                 return "show";
             }
 
             if (output.type === "previousCard") {
-                const total = internal.session?.cards.length ?? 0;
-                if (total > 0) {
-                    internal.currentCardIndex = internal.currentCardIndex <= 0 ? total - 1 : internal.currentCardIndex - 1;
+                const visibleTotal =
+                    internal.session?.cards.filter((card) => !internal.ratedFlashcardIds.includes(card.flashcardId)).length ?? 0;
+                if (visibleTotal > 0) {
+                    internal.currentCardIndex = internal.currentCardIndex <= 0 ? visibleTotal - 1 : internal.currentCardIndex - 1;
                     internal.isCardFlipped = false;
                 }
                 return "show";

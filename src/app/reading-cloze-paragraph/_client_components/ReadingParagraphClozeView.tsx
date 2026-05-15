@@ -23,6 +23,7 @@ export type ReadingParagraphClozeViewOutput =
 type Props = {
     input: {
         session: ReadingParagraphClozeSessionResponse | null;
+        visibleCardsCount: number;
         limit: number;
         currentCard: ReadingParagraphClozeSessionCardResponse | null;
         currentCardIndex: number;
@@ -139,7 +140,7 @@ export default function ReadingParagraphClozeView({ input, output }: Props) {
                                 <ReadingFlashcardReview
                                     card={reviewCard}
                                     currentIndex={input.currentCardIndex}
-                                    totalCards={input.session.cards.length}
+                                    totalCards={input.visibleCardsCount}
                                     flipped={input.isCardFlipped}
                                     isRating={input.isRating}
                                     onFlip={() => output.emit({ type: "flipCard" })}
