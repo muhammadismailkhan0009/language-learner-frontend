@@ -103,6 +103,15 @@ export function AppSidebar() {
 
                         <SidebarMenuItem>
                             <SidebarMenuButton asChild>
+                                <a href="/reading-cloze-paragraph">
+                                    <BookOpenText />
+                                    <span>Reading Cloze Paragraph</span>
+                                </a>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+
+                        <SidebarMenuItem>
+                            <SidebarMenuButton asChild>
                                 <a href="/writing">
                                     <NotebookPen />
                                     <span>Writing</span>

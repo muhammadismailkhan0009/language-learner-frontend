@@ -31,6 +31,9 @@ import { WritingPracticeSessionSummaryResponse } from "./types/responses/Writing
 import { WritingPracticeSessionResponse } from "./types/responses/WritingPracticeSessionResponse";
 import { GenerateVocabularyClozeSentencesResponse } from "./types/responses/GenerateVocabularyClozeSentencesResponse";
 import { VocabularyFlashCardView } from "./types/responses/VocabularyFlashCardView";
+import { CreateReadingParagraphClozeSessionRequest } from "./types/requests/CreateReadingParagraphClozeSessionRequest";
+import { RateReadingParagraphClozeCardRequest } from "./types/requests/RateReadingParagraphClozeCardRequest";
+import { ReadingParagraphClozeSessionResponse } from "./types/responses/ReadingParagraphClozeSessionResponse";
 
 const VOCABULARY_REVISION_BATCH_SIZE = 1;
 
@@ -613,4 +616,48 @@ export async function detachWritingPracticeFlashcard(
         params: { userId },
     });
     return response;
+}
+
+export async function createReadingParagraphClozeSession(
+    limit: number
+): Promise<AxiosResponse<ApiResponse<ReadingParagraphClozeSessionResponse>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const requestBody: CreateReadingParagraphClozeSessionRequest = { userId, limit };
+    return await api.post<ApiResponse<ReadingParagraphClozeSessionResponse>>(
+        "/api/v1/reading-cloze-paragraph/sessions",
+        requestBody
+    );
+}
+
+export async function getActiveReadingParagraphClozeSession(): Promise<AxiosResponse<ApiResponse<ReadingParagraphClozeSessionResponse>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    return await api.get<ApiResponse<ReadingParagraphClozeSessionResponse>>(
+        "/api/v1/reading-cloze-paragraph/sessions/active",
+        { params: { userId } }
+    );
+}
+
+export async function rateReadingParagraphClozeCard(
+    sessionId: string,
+    flashcardId: string,
+    rating: Rating
+): Promise<AxiosResponse<ApiResponse<ReadingParagraphClozeSessionResponse>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const requestBody: RateReadingParagraphClozeCardRequest = { userId, flashcardId, rating };
+    return await api.post<ApiResponse<ReadingParagraphClozeSessionResponse>>(
+        `/api/v1/reading-cloze-paragraph/sessions/${sessionId}/ratings`,
+        requestBody
+    );
 }
