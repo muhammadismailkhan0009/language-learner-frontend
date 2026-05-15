@@ -1,4 +1,5 @@
-ignoredBuiltDependencies:
+onlyBuiltDependencies:
+  - '@myriadcodelabs/uiflow'
   - '@tailwindcss/oxide'
   - sharp
   - unrs-resolver
