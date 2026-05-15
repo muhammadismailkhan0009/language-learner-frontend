@@ -107,7 +107,7 @@ export default function ReadingParagraphClozeView({ input, output }: Props) {
                     <>
                         <Card>
                             <CardHeader>
-                                <CardTitle>{input.session.topic}</CardTitle>
+                                <CardTitle>Scenario: {input.session.topic}</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 <div className="text-sm text-muted-foreground">
