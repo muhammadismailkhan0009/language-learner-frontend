@@ -9,7 +9,12 @@ RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Install dependencies
-RUN pnpm config set onlyBuiltDependencies "[@myriadcodelabs/uiflow,@tailwindcss/oxide,sharp,unrs-resolver]"
+RUN printf '%s\n' \
+  'only-built-dependencies[]=@myriadcodelabs/uiflow' \
+  'only-built-dependencies[]=@tailwindcss/oxide' \
+  'only-built-dependencies[]=sharp' \
+  'only-built-dependencies[]=unrs-resolver' \
+  > .npmrc
 RUN pnpm i --frozen-lockfile
 
 # Copy the entire project
