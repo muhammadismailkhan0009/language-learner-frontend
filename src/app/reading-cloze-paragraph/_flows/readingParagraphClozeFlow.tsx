@@ -161,6 +161,12 @@ export const readingParagraphClozeFlow = defineFlow<Domain, Internal>({
                 return "show";
             }
 
+            if (output.type === "resetCards") {
+                internal.currentCardIndex = 0;
+                internal.isCardFlipped = false;
+                return "show";
+            }
+
             if (output.type === "rateCard") {
                 internal.pendingRating.flashcardId = output.flashcardId;
                 internal.pendingRating.rating = output.rating;

@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Rating } from "@/lib/types/Rating";
 import { ReadingParagraphClozeSessionCardResponse, ReadingParagraphClozeSessionResponse } from "@/lib/types/responses/ReadingParagraphClozeSessionResponse";
 import { OutputHandle } from "@myriadcodelabs/uiflow";
+import ReadingFlashcardReview from "@/app/reading/_client_components/ReadingFlashcardReview";
+import { ReadingVocabularyFlashCardView } from "@/lib/types/responses/ReadingVocabularyFlashCardView";
 
 export type ReadingParagraphClozeViewOutput =
     | { type: "refresh" }
@@ -14,6 +16,7 @@ export type ReadingParagraphClozeViewOutput =
     | { type: "flipCard" }
     | { type: "nextCard" }
     | { type: "previousCard" }
+    | { type: "resetCards" }
     | { type: "rateCard"; flashcardId: string; rating: Rating }
     | { type: "clearError" };
 
@@ -35,6 +38,25 @@ type Props = {
 export default function ReadingParagraphClozeView({ input, output }: Props) {
     const canCreate = !input.isCreating && !input.isLoading && !input.isRating;
     const currentCard = input.currentCard;
+    const reviewCard: ReadingVocabularyFlashCardView | null = currentCard
+        ? {
+              id: currentCard.flashcardId,
+              front: {
+                  clozeText: currentCard.blankToken,
+                  hint: currentCard.translation,
+                  wordOrChunk: currentCard.blankToken,
+              },
+              back: {
+                  answerWords: currentCard.answerWords,
+                  answerText: currentCard.surface,
+                  answerTranslation: currentCard.translation,
+                  notes: "",
+                  wordOrChunk: currentCard.surface,
+                  sentences: [],
+              },
+              isReversed: true,
+          }
+        : null;
 
     return (
         <div className="w-full min-h-screen py-6 px-4">
@@ -96,13 +118,13 @@ export default function ReadingParagraphClozeView({ input, output }: Props) {
 
                         <Card>
                             <CardHeader>
-                                <CardTitle>Vocabulary Meanings</CardTitle>
+                                <CardTitle>Hint Meanings (English)</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="grid gap-2 sm:grid-cols-2">
-                                    {input.session.cards.map((card) => (
+                                    {input.session.cards.map((card, index) => (
                                         <div key={card.cardId} className="rounded border p-2 text-sm">
-                                            <span className="font-medium">{card.surface}</span> - {card.translation}
+                                            {index + 1}. {card.translation}
                                         </div>
                                     ))}
                                 </div>
@@ -114,82 +136,23 @@ export default function ReadingParagraphClozeView({ input, output }: Props) {
                                 <CardTitle>Card Review</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                {currentCard ? (
-                                    <>
-                                        <div className="text-xs text-muted-foreground">
-                                            Card {input.currentCardIndex + 1} of {input.session.cards.length}
-                                        </div>
-                                        {!input.isCardFlipped ? (
-                                            <div className="space-y-2">
-                                                <div className="text-sm text-muted-foreground">Fill blank with target word:</div>
-                                                <div className="text-xl font-semibold">{currentCard.blankToken}</div>
-                                                <Button type="button" variant="outline" onClick={() => output.emit({ type: "flipCard" })}>
-                                                    Show Answer
-                                                </Button>
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-2">
-                                                <div className="text-xl font-semibold">{currentCard.surface}</div>
-                                                <div className="text-sm text-muted-foreground">{currentCard.translation}</div>
-                                                {currentCard.answerWords.length > 0 ? (
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {currentCard.answerWords.map((word) => (
-                                                            <span key={`${currentCard.cardId}-${word}`} className="rounded-full border px-2 py-1 text-xs">
-                                                                {word}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                ) : null}
-                                            </div>
-                                        )}
-
-                                        <div className="flex flex-wrap gap-2">
-                                            <Button type="button" size="sm" variant="outline" onClick={() => output.emit({ type: "previousCard" })}>
-                                                Previous
-                                            </Button>
-                                            <Button type="button" size="sm" variant="outline" onClick={() => output.emit({ type: "nextCard" })}>
-                                                Next
-                                            </Button>
-                                            <Button
-                                                type="button"
-                                                size="sm"
-                                                variant="destructive"
-                                                disabled={input.isRating}
-                                                onClick={() => output.emit({ type: "rateCard", flashcardId: currentCard.flashcardId, rating: Rating.AGAIN })}
-                                            >
-                                                Again
-                                            </Button>
-                                            <Button
-                                                type="button"
-                                                size="sm"
-                                                variant="secondary"
-                                                disabled={input.isRating}
-                                                onClick={() => output.emit({ type: "rateCard", flashcardId: currentCard.flashcardId, rating: Rating.HARD })}
-                                            >
-                                                Hard
-                                            </Button>
-                                            <Button
-                                                type="button"
-                                                size="sm"
-                                                disabled={input.isRating}
-                                                onClick={() => output.emit({ type: "rateCard", flashcardId: currentCard.flashcardId, rating: Rating.GOOD })}
-                                            >
-                                                Good
-                                            </Button>
-                                            <Button
-                                                type="button"
-                                                size="sm"
-                                                variant="outline"
-                                                disabled={input.isRating}
-                                                onClick={() => output.emit({ type: "rateCard", flashcardId: currentCard.flashcardId, rating: Rating.EASY })}
-                                            >
-                                                Easy
-                                            </Button>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div className="text-sm text-muted-foreground">No cards available in this session.</div>
-                                )}
+                                <ReadingFlashcardReview
+                                    card={reviewCard}
+                                    currentIndex={input.currentCardIndex}
+                                    totalCards={input.session.cards.length}
+                                    flipped={input.isCardFlipped}
+                                    isRating={input.isRating}
+                                    onFlip={() => output.emit({ type: "flipCard" })}
+                                    onRate={(rating) => {
+                                        if (!currentCard) {
+                                            return;
+                                        }
+                                        output.emit({ type: "rateCard", flashcardId: currentCard.flashcardId, rating });
+                                    }}
+                                    onNext={() => output.emit({ type: "nextCard" })}
+                                    onPrevious={() => output.emit({ type: "previousCard" })}
+                                    onReset={() => output.emit({ type: "resetCards" })}
+                                />
                             </CardContent>
                         </Card>
                     </>
