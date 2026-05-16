@@ -93,30 +93,37 @@ export function AppSidebar() {
                         </SidebarMenuItem>
 
                         <SidebarMenuItem>
-                            <SidebarMenuButton asChild>
-                                <a href="/reading">
-                                    <BookOpenText />
-                                    <span>Reading</span>
-                                </a>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-
-                        <SidebarMenuItem>
-                            <SidebarMenuButton asChild>
-                                <a href="/reading-cloze-paragraph">
-                                    <BookOpenText />
-                                    <span>Reading Cloze Paragraph</span>
-                                </a>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-
-                        <SidebarMenuItem>
-                            <SidebarMenuButton asChild>
-                                <a href="/writing">
-                                    <NotebookPen />
-                                    <span>Writing</span>
-                                </a>
-                            </SidebarMenuButton>
+                            <details className="group" open>
+                                <SidebarMenuButton asChild>
+                                    <summary className="list-none flex items-center gap-2">
+                                        <NotebookPen />
+                                        <span>Practice</span>
+                                        <ChevronDown className="ml-auto size-4 transition-transform group-open:rotate-180" />
+                                    </summary>
+                                </SidebarMenuButton>
+                                <SidebarMenuSub>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton asChild>
+                                            <a href="/practice">Vocabulary Extraction</a>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton asChild>
+                                            <a href="/reading">Reading</a>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton asChild>
+                                            <a href="/reading-cloze-paragraph">Reading Cloze Paragraph</a>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton asChild>
+                                            <a href="/writing">Writing</a>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                </SidebarMenuSub>
+                            </details>
                         </SidebarMenuItem>
                     </SidebarMenu>
                 </SidebarGroupContent>

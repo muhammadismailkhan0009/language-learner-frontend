@@ -34,6 +34,8 @@ import { VocabularyFlashCardView } from "./types/responses/VocabularyFlashCardVi
 import { CreateReadingParagraphClozeSessionRequest } from "./types/requests/CreateReadingParagraphClozeSessionRequest";
 import { RateReadingParagraphClozeCardRequest } from "./types/requests/RateReadingParagraphClozeCardRequest";
 import { ReadingParagraphClozeSessionResponse } from "./types/responses/ReadingParagraphClozeSessionResponse";
+import { ExtractPracticeVocabularyRequest } from "./types/requests/ExtractPracticeVocabularyRequest";
+import { ExtractPracticeVocabularyResponse } from "./types/responses/ExtractPracticeVocabularyResponse";
 
 const VOCABULARY_REVISION_BATCH_SIZE = 1;
 
@@ -658,6 +660,20 @@ export async function rateReadingParagraphClozeCard(
     const requestBody: RateReadingParagraphClozeCardRequest = { userId, flashcardId, rating };
     return await api.post<ApiResponse<ReadingParagraphClozeSessionResponse>>(
         `/api/v1/reading-cloze-paragraph/sessions/${sessionId}/ratings`,
+        requestBody
+    );
+}
+
+export async function extractPracticeVocabulary(
+    text: string
+): Promise<AxiosResponse<ApiResponse<ExtractPracticeVocabularyResponse>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+    const requestBody: ExtractPracticeVocabularyRequest = { userId, text };
+    return await api.post<ApiResponse<ExtractPracticeVocabularyResponse>>(
+        "/api/v1/practice-vocabulary/extract",
         requestBody
     );
 }
