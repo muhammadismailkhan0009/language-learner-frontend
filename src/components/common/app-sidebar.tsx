@@ -41,6 +41,11 @@ export function AppSidebar() {
                                             <a href="/revision">Decks To Revise</a>
                                         </SidebarMenuSubButton>
                                     </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton asChild>
+                                            <a href="/reading-cloze-paragraph">Cloze Paragraphs</a>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
                                 </SidebarMenuSub>
                             </details>
                         </SidebarMenuItem>
@@ -110,11 +115,6 @@ export function AppSidebar() {
                                     <SidebarMenuSubItem>
                                         <SidebarMenuSubButton asChild>
                                             <a href="/reading">Reading</a>
-                                        </SidebarMenuSubButton>
-                                    </SidebarMenuSubItem>
-                                    <SidebarMenuSubItem>
-                                        <SidebarMenuSubButton asChild>
-                                            <a href="/reading-cloze-paragraph">Reading Cloze Paragraph</a>
                                         </SidebarMenuSubButton>
                                     </SidebarMenuSubItem>
                                     <SidebarMenuSubItem>
