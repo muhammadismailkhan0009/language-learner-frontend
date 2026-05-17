@@ -76,10 +76,7 @@ export default function StudyView({ input, output }: Props) {
                                 <>
                                     <div className="text-lg leading-8">
                                         {showPendingFilledSentence ? (
-                                            <FilledClozeSentence
-                                                clozeSentence={input.session.currentItem.clozeSentence}
-                                                expectedAnswer={input.session.currentItem.expectedAnswer}
-                                            />
+                                            <span>{input.session.currentItem.expectedAnswer}</span>
                                         ) : (
                                             <span>{input.session.currentItem.clozeSentence}</span>
                                         )}
@@ -106,12 +103,7 @@ export default function StudyView({ input, output }: Props) {
                                     <div>
                                         <div className="font-medium mb-1">Correct Sentence</div>
                                         {input.lastReviewedCloze && input.lastReviewedExpected ? (
-                                            <div className="leading-7">
-                                                <FilledClozeSentence
-                                                    clozeSentence={input.lastReviewedCloze}
-                                                    expectedAnswer={input.lastReviewedExpected}
-                                                />
-                                            </div>
+                                            <div className="leading-7">{input.lastReviewedExpected}</div>
                                         ) : (
                                             <div className="text-muted-foreground">No sentence snapshot available.</div>
                                         )}
@@ -130,28 +122,5 @@ export default function StudyView({ input, output }: Props) {
                 )}
             </div>
         </div>
-    );
-}
-
-function FilledClozeSentence({ clozeSentence, expectedAnswer }: { clozeSentence: string; expectedAnswer: string }) {
-    const answerWords = expectedAnswer.trim().split(/\s+/).filter(Boolean);
-    let answerIndex = 0;
-    const parts = clozeSentence.split(/(____)/g);
-
-    return (
-        <>
-            {parts.map((part, index) => {
-                if (part !== "____") {
-                    return <span key={`text-${index}`}>{part}</span>;
-                }
-                const replacement = answerWords[answerIndex] ?? answerWords[answerWords.length - 1] ?? expectedAnswer;
-                answerIndex += 1;
-                return (
-                    <u key={`blank-${index}`} className="underline-offset-4">
-                        {replacement}
-                    </u>
-                );
-            })}
-        </>
     );
 }
