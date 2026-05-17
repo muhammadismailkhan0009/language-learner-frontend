@@ -3,6 +3,7 @@ import { StudySessionResponse } from "@/lib/types/responses/StudySessionResponse
 import createStudySessionAction from "../_server_actions/createStudySessionAction";
 import submitStudyAnswerAction from "../_server_actions/submitStudyAnswerAction";
 import StudyView, { StudyViewOutput } from "../_client_components/StudyView";
+import { normalizeGermanTransliteration } from "@/lib/germanInputNormalize";
 
 type Domain = Record<string, never>;
 
@@ -48,7 +49,7 @@ export const studyFlow = defineFlow<Domain, Internal>({
         input: (_domain, internal) => ({
             sessionId: internal.session?.sessionId ?? null,
             itemId: internal.session?.currentItem?.itemId ?? null,
-            answer: internal.answer.trim(),
+            answer: normalizeGermanTransliteration(internal.answer.trim()),
         }),
         render: { mode: "preserve-previous" },
         action: async ({ sessionId, itemId, answer }, _domain, internal) => {
