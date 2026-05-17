@@ -13,6 +13,8 @@ type Internal = {
     isCreating: boolean;
     isSubmitting: boolean;
     error: string | null;
+    lastReviewedCloze: string | null;
+    lastReviewedExpected: string | null;
 };
 
 function createInternalData(): Internal {
@@ -22,6 +24,8 @@ function createInternalData(): Internal {
         isCreating: false,
         isSubmitting: false,
         error: null,
+        lastReviewedCloze: null,
+        lastReviewedExpected: null,
     };
 }
 
@@ -58,6 +62,8 @@ export const studyFlow = defineFlow<Domain, Internal>({
             }
             internal.isSubmitting = true;
             internal.error = null;
+            internal.lastReviewedCloze = internal.session?.currentItem?.clozeSentence ?? null;
+            internal.lastReviewedExpected = internal.session?.currentItem?.expectedAnswer ?? null;
             try {
                 const updated = await submitStudyAnswerAction(sessionId, itemId, answer);
                 if (updated) {
@@ -81,6 +87,8 @@ export const studyFlow = defineFlow<Domain, Internal>({
             isCreating: internal.isCreating,
             isSubmitting: internal.isSubmitting,
             error: internal.error,
+            lastReviewedCloze: internal.lastReviewedCloze,
+            lastReviewedExpected: internal.lastReviewedExpected,
         }),
         view: StudyView,
         onOutput: (_domain, internal, output: StudyViewOutput) => {

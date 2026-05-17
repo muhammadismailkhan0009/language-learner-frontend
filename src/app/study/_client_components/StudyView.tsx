@@ -19,6 +19,8 @@ type Props = {
         isCreating: boolean;
         isSubmitting: boolean;
         error: string | null;
+        lastReviewedCloze: string | null;
+        lastReviewedExpected: string | null;
     };
     output: OutputHandle<StudyViewOutput>;
 };
@@ -28,15 +30,8 @@ export default function StudyView({ input, output }: Props) {
     const canSubmit = Boolean(input.session?.currentItem && input.answer.trim()) && !input.isSubmitting;
     const currentItem = input.session?.currentItem ?? null;
 
-    const displaySentence = (() => {
-        if (!currentItem) {
-            return "";
-        }
-        if (!input.isSubmitting) {
-            return currentItem.clozeSentence;
-        }
-        return fillClozeWithExpectedAnswer(currentItem.clozeSentence, currentItem.expectedAnswer);
-    })();
+    const showPendingFilledSentence = input.isSubmitting && currentItem;
+    const showFeedbackBlock = Boolean(input.session?.feedback);
 
     return (
         <div className="w-full min-h-screen py-6 px-4">
@@ -79,7 +74,16 @@ export default function StudyView({ input, output }: Props) {
 
                             {input.session.currentItem ? (
                                 <>
-                                    <p className="text-lg leading-8">{displaySentence}</p>
+                                    <div className="text-lg leading-8">
+                                        {showPendingFilledSentence ? (
+                                            <FilledClozeSentence
+                                                clozeSentence={input.session.currentItem.clozeSentence}
+                                                expectedAnswer={input.session.currentItem.expectedAnswer}
+                                            />
+                                        ) : (
+                                            <span>{input.session.currentItem.clozeSentence}</span>
+                                        )}
+                                    </div>
                                     <p className="text-sm text-muted-foreground">Hint: {input.session.currentItem.hint}</p>
                                     <div className="flex flex-col gap-2 sm:flex-row">
                                         <Input
@@ -97,13 +101,28 @@ export default function StudyView({ input, output }: Props) {
                                 <div className="text-sm text-muted-foreground">Session completed. Create a new session to continue.</div>
                             )}
 
-                            {input.session.feedback ? (
-                                <div className="rounded border p-3 text-sm">
-                                    <div className="font-medium">Feedback</div>
-                                    <div>{input.session.feedback}</div>
-                                    {input.session.appliedRating ? (
-                                        <div className="mt-2 text-muted-foreground">Applied rating: {input.session.appliedRating}</div>
-                                    ) : null}
+                            {showFeedbackBlock ? (
+                                <div className="grid gap-3 rounded border p-3 text-sm md:grid-cols-2">
+                                    <div>
+                                        <div className="font-medium mb-1">Correct Sentence</div>
+                                        {input.lastReviewedCloze && input.lastReviewedExpected ? (
+                                            <div className="leading-7">
+                                                <FilledClozeSentence
+                                                    clozeSentence={input.lastReviewedCloze}
+                                                    expectedAnswer={input.lastReviewedExpected}
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div className="text-muted-foreground">No sentence snapshot available.</div>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <div className="font-medium mb-1">Feedback</div>
+                                        <div>{input.session?.feedback}</div>
+                                        {input.session?.appliedRating ? (
+                                            <div className="mt-2 text-muted-foreground">Applied rating: {input.session.appliedRating}</div>
+                                        ) : null}
+                                    </div>
                                 </div>
                             ) : null}
                         </CardContent>
@@ -114,13 +133,25 @@ export default function StudyView({ input, output }: Props) {
     );
 }
 
-function fillClozeWithExpectedAnswer(clozeSentence: string, expectedAnswer: string): string {
+function FilledClozeSentence({ clozeSentence, expectedAnswer }: { clozeSentence: string; expectedAnswer: string }) {
     const answerWords = expectedAnswer.trim().split(/\s+/).filter(Boolean);
     let answerIndex = 0;
+    const parts = clozeSentence.split(/(____)/g);
 
-    return clozeSentence.replace(/____/g, () => {
-        const replacement = answerWords[answerIndex] ?? answerWords[answerWords.length - 1] ?? expectedAnswer;
-        answerIndex += 1;
-        return replacement;
-    });
+    return (
+        <>
+            {parts.map((part, index) => {
+                if (part !== "____") {
+                    return <span key={`text-${index}`}>{part}</span>;
+                }
+                const replacement = answerWords[answerIndex] ?? answerWords[answerWords.length - 1] ?? expectedAnswer;
+                answerIndex += 1;
+                return (
+                    <u key={`blank-${index}`} className="underline-offset-4">
+                        {replacement}
+                    </u>
+                );
+            })}
+        </>
+    );
 }
