@@ -122,6 +122,11 @@ export function AppSidebar() {
                                             <a href="/writing">Writing</a>
                                         </SidebarMenuSubButton>
                                     </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton asChild>
+                                            <a href="/study">Study</a>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
                                 </SidebarMenuSub>
                             </details>
                         </SidebarMenuItem>

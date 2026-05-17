@@ -36,6 +36,9 @@ import { RateReadingParagraphClozeCardRequest } from "./types/requests/RateReadi
 import { ReadingParagraphClozeSessionResponse } from "./types/responses/ReadingParagraphClozeSessionResponse";
 import { ExtractPracticeVocabularyRequest } from "./types/requests/ExtractPracticeVocabularyRequest";
 import { ExtractPracticeVocabularyResponse } from "./types/responses/ExtractPracticeVocabularyResponse";
+import { CreateStudySessionRequest } from "./types/requests/CreateStudySessionRequest";
+import { SubmitStudyAnswerRequest } from "./types/requests/SubmitStudyAnswerRequest";
+import { StudySessionResponse } from "./types/responses/StudySessionResponse";
 
 const VOCABULARY_REVISION_BATCH_SIZE = 1;
 
@@ -674,6 +677,47 @@ export async function extractPracticeVocabulary(
     const requestBody: ExtractPracticeVocabularyRequest = { userId, text };
     return await api.post<ApiResponse<ExtractPracticeVocabularyResponse>>(
         "/api/v1/practice-vocabulary/extract",
+        requestBody
+    );
+}
+
+export async function createStudySession(
+    limit: number
+): Promise<AxiosResponse<ApiResponse<StudySessionResponse>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+    const requestBody: CreateStudySessionRequest = { userId, limit };
+    return await api.post<ApiResponse<StudySessionResponse>>(
+        "/api/v1/study/sessions",
+        requestBody
+    );
+}
+
+export async function getActiveStudySession(): Promise<AxiosResponse<ApiResponse<StudySessionResponse>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+    return await api.get<ApiResponse<StudySessionResponse>>(
+        "/api/v1/study/sessions/active",
+        { params: { userId } }
+    );
+}
+
+export async function submitStudyAnswer(
+    sessionId: string,
+    itemId: string,
+    answer: string
+): Promise<AxiosResponse<ApiResponse<StudySessionResponse>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+    const requestBody: SubmitStudyAnswerRequest = { userId, answer };
+    return await api.post<ApiResponse<StudySessionResponse>>(
+        `/api/v1/study/sessions/${sessionId}/items/${itemId}/answer`,
         requestBody
     );
 }
