@@ -26,6 +26,17 @@ type Props = {
 export default function StudyView({ input, output }: Props) {
     const canCreate = !input.isCreating && !input.isSubmitting;
     const canSubmit = Boolean(input.session?.currentItem && input.answer.trim()) && !input.isSubmitting;
+    const currentItem = input.session?.currentItem ?? null;
+
+    const displaySentence = (() => {
+        if (!currentItem) {
+            return "";
+        }
+        if (!input.isSubmitting) {
+            return currentItem.clozeSentence;
+        }
+        return fillClozeWithExpectedAnswer(currentItem.clozeSentence, currentItem.expectedAnswer);
+    })();
 
     return (
         <div className="w-full min-h-screen py-6 px-4">
@@ -68,7 +79,7 @@ export default function StudyView({ input, output }: Props) {
 
                             {input.session.currentItem ? (
                                 <>
-                                    <p className="text-lg leading-8">{input.session.currentItem.clozeSentence}</p>
+                                    <p className="text-lg leading-8">{displaySentence}</p>
                                     <p className="text-sm text-muted-foreground">Hint: {input.session.currentItem.hint}</p>
                                     <div className="flex flex-col gap-2 sm:flex-row">
                                         <Input
@@ -101,4 +112,15 @@ export default function StudyView({ input, output }: Props) {
             </div>
         </div>
     );
+}
+
+function fillClozeWithExpectedAnswer(clozeSentence: string, expectedAnswer: string): string {
+    const answerWords = expectedAnswer.trim().split(/\s+/).filter(Boolean);
+    let answerIndex = 0;
+
+    return clozeSentence.replace(/____/g, () => {
+        const replacement = answerWords[answerIndex] ?? answerWords[answerWords.length - 1] ?? expectedAnswer;
+        answerIndex += 1;
+        return replacement;
+    });
 }
