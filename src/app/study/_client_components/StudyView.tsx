@@ -7,8 +7,6 @@ import { OutputHandle } from "@myriadcodelabs/uiflow";
 import { StudySessionResponse } from "@/lib/types/responses/StudySessionResponse";
 
 export type StudyViewOutput =
-    | { type: "refresh" }
-    | { type: "updateLimit"; limit: number }
     | { type: "createSession" }
     | { type: "updateAnswer"; answer: string }
     | { type: "submitAnswer" }
@@ -17,9 +15,7 @@ export type StudyViewOutput =
 type Props = {
     input: {
         session: StudySessionResponse | null;
-        limit: number;
         answer: string;
-        isLoading: boolean;
         isCreating: boolean;
         isSubmitting: boolean;
         error: string | null;
@@ -28,7 +24,7 @@ type Props = {
 };
 
 export default function StudyView({ input, output }: Props) {
-    const canCreate = !input.isLoading && !input.isCreating && !input.isSubmitting;
+    const canCreate = !input.isCreating && !input.isSubmitting;
     const canSubmit = Boolean(input.session?.currentItem && input.answer.trim()) && !input.isSubmitting;
 
     return (
@@ -39,25 +35,10 @@ export default function StudyView({ input, output }: Props) {
                         <CardTitle>Study</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                            <div className="w-full sm:w-48 space-y-1">
-                                <div className="text-sm text-muted-foreground">Session size (1-50)</div>
-                                <Input
-                                    type="number"
-                                    min={1}
-                                    max={50}
-                                    value={input.limit}
-                                    onChange={(event) => output.emit({ type: "updateLimit", limit: Number(event.target.value) || 1 })}
-                                />
-                            </div>
-                            <div className="flex gap-2">
-                                <Button type="button" variant="outline" onClick={() => output.emit({ type: "refresh" })} disabled={!canCreate}>
-                                    {input.isLoading ? "Loading..." : "Load Active"}
-                                </Button>
-                                <Button type="button" onClick={() => output.emit({ type: "createSession" })} disabled={!canCreate}>
-                                    {input.isCreating ? "Creating..." : "Create Session"}
-                                </Button>
-                            </div>
+                        <div className="flex gap-2">
+                            <Button type="button" onClick={() => output.emit({ type: "createSession" })} disabled={!canCreate}>
+                                {input.isCreating ? "Creating..." : "Get Next Card"}
+                            </Button>
                         </div>
 
                         {input.error ? (
@@ -71,9 +52,9 @@ export default function StudyView({ input, output }: Props) {
                     </CardContent>
                 </Card>
 
-                {!input.session ? (
+                                {!input.session ? (
                     <Card>
-                        <CardContent className="py-6 text-sm text-muted-foreground">No active study session found.</CardContent>
+                        <CardContent className="py-6 text-sm text-muted-foreground">Click "Get Next Card" to start study.</CardContent>
                     </Card>
                 ) : (
                     <Card>
@@ -121,4 +102,3 @@ export default function StudyView({ input, output }: Props) {
         </div>
     );
 }
-
