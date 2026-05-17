@@ -44,7 +44,7 @@ export default function PracticePageClient() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <p className="text-sm text-muted-foreground">
-                            Paste any text. The app matches it against your vocabulary list and stores only unique references for practice.
+                            Paste any text. Extraction runs in background to avoid long waits/timeouts.
                         </p>
                         <Textarea
                             value={text}
@@ -76,26 +76,10 @@ export default function PracticePageClient() {
                 {result ? (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Extraction Result</CardTitle>
+                            <CardTitle>Extraction Request</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
-                            <div className="text-sm text-muted-foreground">
-                                Added: {result.addedCount} | Existing: {result.existingCount} | Matched: {result.matchedWords.length}
-                            </div>
-                            <div className="space-y-2">
-                                <div className="text-sm font-medium">Matched German words</div>
-                                {result.matchedWords.length === 0 ? (
-                                    <div className="text-sm text-muted-foreground">No vocabulary matched.</div>
-                                ) : (
-                                    <div className="flex flex-wrap gap-2">
-                                        {result.matchedWords.map((word, index) => (
-                                            <span key={`${word}-${index}`} className="rounded border px-2 py-1 text-sm">
-                                                {word}
-                                            </span>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+                            <div className="text-sm text-muted-foreground">{result.message}</div>
                         </CardContent>
                     </Card>
                 ) : null}
