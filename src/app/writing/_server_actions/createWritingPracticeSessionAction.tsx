@@ -2,7 +2,7 @@
 
 import { createWritingPracticeSession } from "@/lib/serverBackedApiCalls";
 
-export default async function createWritingPracticeSessionAction(): Promise<boolean> {
+export default async function createWritingPracticeSessionAction(): Promise<string> {
     const response = await createWritingPracticeSession();
-    return response.status === 200;
+    return response.data.response;
 }

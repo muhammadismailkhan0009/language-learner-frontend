@@ -552,7 +552,7 @@ export async function listWritingPracticeSessions(): Promise<AxiosResponse<ApiRe
     return response;
 }
 
-export async function createWritingPracticeSession(): Promise<AxiosResponse<void>> {
+export async function createWritingPracticeSession(): Promise<AxiosResponse<ApiResponse<string>>> {
     const userId = (await cookies()).get("userId")?.value;
     if (!userId) {
         throw new Error("Missing userId cookie");
@@ -560,7 +560,7 @@ export async function createWritingPracticeSession(): Promise<AxiosResponse<void
 
     const requestBody: CreateWritingPracticeSessionRequest = { userId };
 
-    const response = await api.post<void>("/api/v1/writing-practice/sessions", requestBody);
+    const response = await api.post<ApiResponse<string>>("/api/v1/writing-practice/sessions", requestBody);
     return response;
 }
 

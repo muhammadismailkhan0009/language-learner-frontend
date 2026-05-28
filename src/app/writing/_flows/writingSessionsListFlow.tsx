@@ -61,11 +61,7 @@ export const writingSessionsListFlow = defineFlow<DomainData, InternalData>(
         internal.ui.info = null;
 
         try {
-          const accepted = await createWritingPracticeSessionAction();
-          if (!accepted) {
-            throw new Error("Writing session request was not accepted");
-          }
-          internal.ui.info = "Writing session requested. Refresh if it does not appear immediately.";
+          internal.ui.info = await createWritingPracticeSessionAction();
         } catch (error) {
           internal.ui.error = error instanceof Error ? error.message : "Failed to create writing session";
         } finally {
