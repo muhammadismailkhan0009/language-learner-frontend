@@ -1,16 +1,23 @@
 import { defineFlow } from "@myriadcodelabs/uiflow";
 import fetchGrammarRulesAction from "../_server_actions/fetchGrammarRulesAction";
+import fetchDraftGrammarRulesAction from "../_server_actions/fetchDraftGrammarRulesAction";
+import generateGrammarRuleDraftDetailsAction from "../_server_actions/generateGrammarRuleDraftDetailsAction";
 import GrammarRulesListView, { GrammarRulesListViewOutput } from "../_client_components/GrammarRulesListView";
-import { GrammarRuleListItem, ScreenMode } from "../types";
+import { GeneratedGrammarRuleDraft, GrammarRuleListItem, ScreenMode } from "../types";
 
 type GrammarRulesListDomainData = Record<string, never>;
 
 interface GrammarRulesListInternalData {
     flowData: {
         rules: GrammarRuleListItem[];
+        drafts: GeneratedGrammarRuleDraft[];
         selectedGrammarRuleId: string | null;
         ui: {
             isLoading: boolean;
+            isLoadingDrafts: boolean;
+            isGeneratingDetails: boolean;
+            showDrafts: boolean;
+            draftAdminKey: string;
             error: string | null;
         };
     };
@@ -20,9 +27,14 @@ function createGrammarRulesListInternalData(): GrammarRulesListInternalData {
     return {
         flowData: {
             rules: [],
+            drafts: [],
             selectedGrammarRuleId: null,
             ui: {
                 isLoading: false,
+                isLoadingDrafts: false,
+                isGeneratingDetails: false,
+                showDrafts: false,
+                draftAdminKey: "",
                 error: null,
             },
         },
@@ -73,13 +85,74 @@ export const grammarRulesListFlow = defineFlow<GrammarRulesListDomainData, Gramm
         onOutput: () => "displayList",
     },
 
+    fetchDrafts: {
+        input: (_domain, internal) => ({
+            adminKey: internal.flowData.ui.draftAdminKey,
+        }),
+        action: async ({ adminKey }: { adminKey: string }, _domain, internal) => {
+            if (!internal.flowData.ui.showDrafts) {
+                return { ok: true };
+            }
+            if (!adminKey.trim()) {
+                internal.flowData.drafts = [];
+                return { ok: true };
+            }
+            internal.flowData.ui.isLoadingDrafts = true;
+            try {
+                const drafts = (await fetchDraftGrammarRulesAction(adminKey.trim())) ?? [];
+                internal.flowData.drafts = drafts.map((draft) => ({
+                    id: draft.id,
+                    identifier: draft.identifier,
+                    name: draft.name,
+                    level: draft.level,
+                    targetLanguage: draft.targetLanguage,
+                }));
+            } catch (err) {
+                internal.flowData.ui.error = err instanceof Error ? err.message : "Failed to load grammar drafts";
+            } finally {
+                internal.flowData.ui.isLoadingDrafts = false;
+            }
+            return { ok: true };
+        },
+        onOutput: () => "displayList",
+    },
+
+    generateDraftDetails: {
+        input: (_domain, internal) => ({
+            adminKey: internal.flowData.ui.draftAdminKey,
+            draftId: (internal as GrammarRulesListInternalData & { selectedDraftId?: string }).selectedDraftId,
+        }),
+        action: async ({ adminKey, draftId }: { adminKey: string; draftId?: string }, _domain, internal) => {
+            if (!draftId) {
+                return { ok: true };
+            }
+            internal.flowData.ui.isGeneratingDetails = true;
+            try {
+                await generateGrammarRuleDraftDetailsAction(draftId, { admin_key: adminKey.trim() });
+                internal.flowData.drafts = internal.flowData.drafts.filter((draft) => draft.id !== draftId);
+            } catch (err) {
+                internal.flowData.ui.error = err instanceof Error ? err.message : "Failed to generate draft details";
+            } finally {
+                internal.flowData.ui.isGeneratingDetails = false;
+                (internal as GrammarRulesListInternalData & { selectedDraftId?: string }).selectedDraftId = undefined;
+            }
+            return { ok: true };
+        },
+        onOutput: () => "fetchRules",
+    },
+
     displayList: {
         input: (_domain, internal, events) => ({
             mode: (events?.screenMode?.get() as ScreenMode | undefined) ?? "list",
             rules: internal.flowData.rules,
+            drafts: internal.flowData.drafts,
             selectedGrammarRuleId: internal.flowData.selectedGrammarRuleId,
             error: internal.flowData.ui.error,
             isLoading: internal.flowData.ui.isLoading,
+            isLoadingDrafts: internal.flowData.ui.isLoadingDrafts,
+            isGeneratingDetails: internal.flowData.ui.isGeneratingDetails,
+            showDrafts: internal.flowData.ui.showDrafts,
+            draftAdminKey: internal.flowData.ui.draftAdminKey,
         }),
         view: GrammarRulesListView,
         onOutput: (_domain, internal, output: GrammarRulesListViewOutput, events) => {
@@ -106,6 +179,32 @@ export const grammarRulesListFlow = defineFlow<GrammarRulesListDomainData, Gramm
                 events?.selectedGrammarRuleId.emit(output.grammarRuleId);
                 events?.screenMode.emit("edit");
                 return "displayList";
+            }
+
+            if (output.type === "toggleDrafts") {
+                internal.flowData.ui.showDrafts = !internal.flowData.ui.showDrafts;
+                if (internal.flowData.ui.showDrafts) {
+                    return "fetchDrafts";
+                }
+                return "displayList";
+            }
+
+            if (output.type === "setDraftAdminKey") {
+                internal.flowData.ui.draftAdminKey = output.adminKey;
+                return "displayList";
+            }
+
+            if (output.type === "reloadDrafts") {
+                return "fetchDrafts";
+            }
+
+            if (output.type === "generateDraftDetails") {
+                if (!internal.flowData.ui.draftAdminKey.trim()) {
+                    internal.flowData.ui.error = "Admin key is required to generate draft details";
+                    return "displayList";
+                }
+                (internal as GrammarRulesListInternalData & { selectedDraftId?: string }).selectedDraftId = output.draftId;
+                return "generateDraftDetails";
             }
         },
     },

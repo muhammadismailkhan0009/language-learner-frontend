@@ -3,30 +3,40 @@
 import { OutputHandle } from "@myriadcodelabs/uiflow";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { GrammarRuleListItem, ScreenMode } from "../types";
+import { GeneratedGrammarRuleDraft, GrammarRuleListItem, ScreenMode } from "../types";
 
 export type GrammarRulesListViewOutput =
     | { type: "reload" }
     | { type: "clearError" }
     | { type: "openCreate" }
     | { type: "setSelectedRule"; grammarRuleId: string }
-    | { type: "openEdit"; grammarRuleId: string };
+    | { type: "openEdit"; grammarRuleId: string }
+    | { type: "toggleDrafts" }
+    | { type: "setDraftAdminKey"; adminKey: string }
+    | { type: "reloadDrafts" }
+    | { type: "generateDraftDetails"; draftId: string };
 
 type GrammarRulesListViewProps = {
     input: {
         mode: ScreenMode;
         rules: GrammarRuleListItem[];
+        drafts: GeneratedGrammarRuleDraft[];
         selectedGrammarRuleId: string | null;
         error: string | null;
         isLoading: boolean;
+        isLoadingDrafts: boolean;
+        isGeneratingDetails: boolean;
+        showDrafts: boolean;
+        draftAdminKey: string;
     };
     output: OutputHandle<GrammarRulesListViewOutput>;
 };
 
 export default function GrammarRulesListView({ input, output }: GrammarRulesListViewProps) {
-    const { mode, rules, selectedGrammarRuleId, error, isLoading } = input;
+    const { mode, rules, drafts, selectedGrammarRuleId, error, isLoading, isLoadingDrafts, isGeneratingDetails, showDrafts, draftAdminKey } = input;
 
     if (mode !== "list") {
         return null;
@@ -49,12 +59,55 @@ export default function GrammarRulesListView({ input, output }: GrammarRulesList
                             <Button type="button" variant="outline" size="sm" onClick={() => output.emit({ type: "reload" })} disabled={isLoading}>
                                 {isLoading ? "Refreshing..." : "Refresh"}
                             </Button>
+                            <Button type="button" variant="outline" onClick={() => output.emit({ type: "toggleDrafts" })}>
+                                {showDrafts ? "Hide Drafts" : "Show Drafts"}
+                            </Button>
                             <Button type="button" onClick={() => output.emit({ type: "openCreate" })}>
                                 New Rule
                             </Button>
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-3">
+                        {showDrafts ? (
+                            <div className="rounded-md border p-3 space-y-3">
+                                <div className="text-sm font-medium">Draft Queue</div>
+                                <div className="flex gap-2">
+                                    <Input
+                                        value={draftAdminKey}
+                                        type="password"
+                                        placeholder="Admin key"
+                                        onChange={(e) => output.emit({ type: "setDraftAdminKey", adminKey: e.target.value })}
+                                    />
+                                    <Button type="button" variant="outline" onClick={() => output.emit({ type: "reloadDrafts" })} disabled={isLoadingDrafts}>
+                                        {isLoadingDrafts ? "Loading..." : "Load Drafts"}
+                                    </Button>
+                                </div>
+                                {drafts.length === 0 ? (
+                                    <div className="text-sm text-muted-foreground">No drafts found.</div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {drafts.map((draft) => (
+                                            <div key={draft.id} className="flex items-center justify-between gap-2 rounded border p-2">
+                                                <div>
+                                                    <div className="font-medium text-sm">{draft.name}</div>
+                                                    <div className="text-xs text-muted-foreground">{draft.identifier} • {draft.level}</div>
+                                                </div>
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    variant="outline"
+                                                    disabled={isGeneratingDetails}
+                                                    onClick={() => output.emit({ type: "generateDraftDetails", draftId: draft.id })}
+                                                >
+                                                    {isGeneratingDetails ? "Generating..." : "Generate Details"}
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ) : null}
+
                         {error ? (
                             <div className="flex flex-wrap items-center gap-2 text-sm text-red-600">
                                 <span>{error}</span>
