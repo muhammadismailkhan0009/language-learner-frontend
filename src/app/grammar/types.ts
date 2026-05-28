@@ -19,6 +19,18 @@ export type GrammarRuleDraft = {
     scenario: GrammarScenarioDraft;
 };
 
+export type GrammarDraftRequest = {
+    level: string;
+    adminKey: string;
+};
+
+export type GeneratedGrammarRuleDraft = {
+    identifier: string;
+    name: string;
+    level: string;
+    targetLanguage: string;
+};
+
 export type GrammarRuleListItem = {
     id: string;
     name: string;

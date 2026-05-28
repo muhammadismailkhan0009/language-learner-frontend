@@ -1,5 +1,5 @@
 import { GrammarRuleResponse } from "@/lib/types/responses/GrammarRuleResponse";
-import { GrammarRuleDraft, GrammarSentenceDraft } from "../types";
+import { GrammarDraftRequest, GrammarRuleDraft, GrammarSentenceDraft } from "../types";
 
 export function createEmptySentence(): GrammarSentenceDraft {
     return { sentence: "", translation: "" };
@@ -25,10 +25,10 @@ export function mapGrammarRuleToDraft(rule: GrammarRuleResponse): GrammarRuleDra
         adminKey: "",
         explanationParagraphs: (rule.explanationParagraphs ?? []).length > 0 ? rule.explanationParagraphs : [""],
         scenario: {
-            title: rule.scenario?.title ?? "",
-            description: rule.scenario?.description ?? "",
-            targetLanguage: rule.scenario?.targetLanguage ?? "de",
-            sentences: (rule.scenario?.sentences ?? []).map((item) => ({
+            title: "Explanation examples",
+            description: "Auto-mapped from rule examples",
+            targetLanguage: "de",
+            sentences: (rule.explanationExamples ?? []).map((item) => ({
                 sentence: item.sentence ?? "",
                 translation: item.translation ?? "",
             })),
@@ -72,4 +72,22 @@ export function isDraftValid(draft: GrammarRuleDraft): boolean {
     }
 
     return draft.scenario.sentences.some((item) => item.sentence.trim() && item.translation.trim());
+}
+
+export function createInitialGrammarDraftRequest(): GrammarDraftRequest {
+    return {
+        level: "A1",
+        adminKey: "",
+    };
+}
+
+export function normalizeGrammarDraftRequest(request: GrammarDraftRequest): GrammarDraftRequest {
+    return {
+        level: request.level.trim().toUpperCase(),
+        adminKey: request.adminKey.trim(),
+    };
+}
+
+export function isGrammarDraftRequestValid(request: GrammarDraftRequest): boolean {
+    return request.level.trim().length > 0 && request.adminKey.trim().length > 0;
 }

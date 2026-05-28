@@ -1,17 +1,22 @@
 import { defineFlow } from "@myriadcodelabs/uiflow";
-import createGrammarRuleAction from "../_server_actions/createGrammarRuleAction";
 import AddGrammarRuleView, { AddGrammarRuleViewOutput } from "../_client_components/AddGrammarRuleView";
-import { GrammarRuleDraft, ScreenMode } from "../types";
-import { createInitialDraft, isDraftValid, normalizeDraft } from "./grammarRuleDraftOps";
-import { CreateGrammarRuleRequest } from "@/lib/types/requests/CreateGrammarRuleRequest";
+import { GeneratedGrammarRuleDraft, GrammarDraftRequest, ScreenMode } from "../types";
+import {
+    createInitialGrammarDraftRequest,
+    isGrammarDraftRequestValid,
+    normalizeGrammarDraftRequest,
+} from "./grammarRuleDraftOps";
+import draftGrammarRulesAction from "../_server_actions/draftGrammarRulesAction";
+import { DraftGrammarRulesRequest } from "@/lib/types/requests/DraftGrammarRulesRequest";
 
 type AddGrammarRuleDomainData = Record<string, never>;
 
 interface AddGrammarRuleInternalData {
     flowData: {
-        draft: GrammarRuleDraft;
+        request: GrammarDraftRequest;
+        generatedDrafts: GeneratedGrammarRuleDraft[];
         ui: {
-            isSaving: boolean;
+            isGenerating: boolean;
             error: string | null;
         };
     };
@@ -20,9 +25,10 @@ interface AddGrammarRuleInternalData {
 function createAddGrammarRuleInternalData(): AddGrammarRuleInternalData {
     return {
         flowData: {
-            draft: createInitialDraft(),
+            request: createInitialGrammarDraftRequest(),
+            generatedDrafts: [],
             ui: {
-                isSaving: false,
+                isGenerating: false,
                 error: null,
             },
         },
@@ -33,10 +39,11 @@ export const addGrammarRuleFlow = defineFlow<AddGrammarRuleDomainData, AddGramma
     displayForm: {
         input: (_domain, internal, events) => ({
             mode: (events?.screenMode?.get() as ScreenMode | undefined) ?? "list",
-            draft: internal.flowData.draft,
+            request: internal.flowData.request,
+            generatedDrafts: internal.flowData.generatedDrafts,
             error: internal.flowData.ui.error,
-            isSaving: internal.flowData.ui.isSaving,
-            canSubmit: isDraftValid(internal.flowData.draft),
+            isGenerating: internal.flowData.ui.isGenerating,
+            canSubmit: isGrammarDraftRequestValid(internal.flowData.request),
         }),
         view: AddGrammarRuleView,
         onOutput: (_domain, internal, output: AddGrammarRuleViewOutput, events) => {
@@ -46,20 +53,25 @@ export const addGrammarRuleFlow = defineFlow<AddGrammarRuleDomainData, AddGramma
                 return "displayForm";
             }
 
+            if (output.type === "setRequest") {
+                internal.flowData.request = output.request;
+                return "displayForm";
+            }
+
             if (output.type === "submit") {
-                if (internal.flowData.ui.isSaving) {
+                if (internal.flowData.ui.isGenerating) {
                     return "displayForm";
                 }
 
-                if (!isDraftValid(output.draft)) {
-                    internal.flowData.ui.error = "Complete rule name, admin key, explanation, scenario fields, and one sentence";
+                if (!isGrammarDraftRequestValid(output.request)) {
+                    internal.flowData.ui.error = "Provide CEFR level and admin key";
                     return "displayForm";
                 }
 
-                internal.flowData.draft = output.draft;
+                internal.flowData.request = output.request;
                 internal.flowData.ui.error = null;
-                internal.flowData.ui.isSaving = true;
-                return "saveRule";
+                internal.flowData.ui.isGenerating = true;
+                return "generateDrafts";
             }
 
             if (output.type === "clearError") {
@@ -69,53 +81,53 @@ export const addGrammarRuleFlow = defineFlow<AddGrammarRuleDomainData, AddGramma
         },
     },
 
-    saveRule: {
+    generateDrafts: {
         input: (_domain, internal) => ({
-            draft: normalizeDraft(internal.flowData.draft),
+            request: normalizeGrammarDraftRequest(internal.flowData.request),
         }),
-        action: async ({ draft }: { draft: GrammarRuleDraft }, _domain, internal) => {
+        action: async ({ request }: { request: GrammarDraftRequest }, _domain, internal) => {
             try {
-                const requestBody: CreateGrammarRuleRequest = {
-                    name: draft.name,
-                    explanationParagraphs: draft.explanationParagraphs,
-                    scenario: {
-                        title: draft.scenario.title,
-                        description: draft.scenario.description,
-                        targetLanguage: draft.scenario.targetLanguage,
-                        sentences: draft.scenario.sentences.map((item) => ({
-                            sentence: item.sentence,
-                            translation: item.translation,
-                        })),
-                    },
-                    admin_key: draft.adminKey,
+                const requestBody: DraftGrammarRulesRequest = {
+                    level: request.level,
+                    admin_key: request.adminKey,
                 };
 
-                const createdRule = await createGrammarRuleAction(requestBody);
-                if (!createdRule) {
-                    throw new Error("Failed to create grammar rule");
+                const drafts = await draftGrammarRulesAction(requestBody);
+                if (!drafts) {
+                    throw new Error("Failed to generate grammar drafts");
                 }
+
+                internal.flowData.generatedDrafts = drafts.map((draft) => ({
+                    identifier: draft.identifier,
+                    name: draft.name,
+                    level: draft.level,
+                    targetLanguage: draft.targetLanguage,
+                }));
             } catch (err) {
-                internal.flowData.ui.error = err instanceof Error ? err.message : "Failed to create grammar rule";
+                internal.flowData.generatedDrafts = [];
+                internal.flowData.ui.error = err instanceof Error ? err.message : "Failed to generate grammar drafts";
             } finally {
-                internal.flowData.ui.isSaving = false;
+                internal.flowData.ui.isGenerating = false;
             }
 
             return { ok: true };
         },
         render: { mode: "preserve-previous" },
-        onOutput: (_domain, internal, _output, events) => {
-            if (!internal.flowData.ui.error) {
-                internal.flowData.draft = createInitialDraft();
-                events?.rulesRefresh.emit((count: number) => count + 1);
-                events?.screenMode.emit("list");
-            }
-            return "displayForm";
-        },
+        onOutput: () => "displayForm",
     },
 }, {
     start: "displayForm",
     channelTransitions: {
-        screenMode: () => "displayForm",
+        screenMode: ({ internal, events }) => {
+            const mode = (events?.screenMode?.get() as ScreenMode | undefined) ?? "list";
+            if (mode === "create") {
+                internal.flowData.request = createInitialGrammarDraftRequest();
+                internal.flowData.generatedDrafts = [];
+                internal.flowData.ui.error = null;
+                internal.flowData.ui.isGenerating = false;
+            }
+            return "displayForm";
+        },
     },
     createInternalData: createAddGrammarRuleInternalData,
 });

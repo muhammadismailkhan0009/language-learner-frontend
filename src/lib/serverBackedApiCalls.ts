@@ -16,6 +16,8 @@ import { EditScenarioRequest } from "./types/requests/EditScenarioRequest";
 import { GrammarRuleResponse } from "./types/responses/GrammarRuleResponse";
 import { CreateGrammarRuleRequest } from "./types/requests/CreateGrammarRuleRequest";
 import { EditGrammarRuleRequest } from "./types/requests/EditGrammarRuleRequest";
+import { DraftGrammarRulesRequest } from "./types/requests/DraftGrammarRulesRequest";
+import { GrammarRuleDraftResponse } from "./types/responses/GrammarRuleDraftResponse";
 import { VocabularyResponse } from "./types/responses/VocabularyResponse";
 import { AddVocabularyRequest } from "./types/requests/AddVocabularyRequest";
 import { UpdateVocabularyRequest } from "./types/requests/UpdateVocabularyRequest";
@@ -327,6 +329,13 @@ export async function editGrammarRule(
     requestBody: EditGrammarRuleRequest
 ): Promise<AxiosResponse<ApiResponse<GrammarRuleResponse>>> {
     const response = await api.put<ApiResponse<GrammarRuleResponse>>(`/api/v1/grammar-rules/${grammarRuleId}/v1`, requestBody);
+    return response;
+}
+
+export async function draftGrammarRules(
+    requestBody: DraftGrammarRulesRequest
+): Promise<AxiosResponse<ApiResponse<GrammarRuleDraftResponse[]>>> {
+    const response = await api.post<ApiResponse<GrammarRuleDraftResponse[]>>("/api/v1/grammar-rules/admin/drafts/v1", requestBody);
     return response;
 }
 

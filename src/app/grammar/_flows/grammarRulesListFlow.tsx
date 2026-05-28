@@ -44,12 +44,12 @@ export const grammarRulesListFlow = defineFlow<GrammarRulesListDomainData, Gramm
                     explanationParagraphs: (rule.explanationParagraphs ?? [])
                         .map((paragraph) => paragraph.trim())
                         .filter((paragraph) => paragraph.length > 0),
-                    scenarioTitle: rule.scenario?.title ?? "",
-                    scenarioDescription: rule.scenario?.description ?? "",
-                    targetLanguage: rule.scenario?.targetLanguage ?? "",
-                    sentenceCount: rule.scenario?.sentences?.length ?? 0,
-                    isFixed: !!rule.scenario?.isFixed,
-                    sentences: (rule.scenario?.sentences ?? []).map((item) => ({
+                    scenarioTitle: "Explanation examples",
+                    scenarioDescription: "",
+                    targetLanguage: "de",
+                    sentenceCount: rule.explanationExamples?.length ?? 0,
+                    isFixed: true,
+                    sentences: (rule.explanationExamples ?? []).map((item) => ({
                         sentence: item.sentence,
                         translation: item.translation,
                     })),

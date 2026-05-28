@@ -21,4 +21,3 @@ export type StudySessionResponse = {
     feedback: string | null;
     appliedRating: Rating | null;
 };
-

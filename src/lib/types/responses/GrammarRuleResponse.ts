@@ -1,20 +1,13 @@
-export type GrammarScenarioSentenceResponse = {
+export type GrammarExplanationExampleResponse = {
     sentence: string;
     translation: string;
-};
-
-export type GrammarScenarioResponse = {
-    id: string;
-    title: string;
-    description: string;
-    targetLanguage: string;
-    isFixed: boolean;
-    sentences: GrammarScenarioSentenceResponse[];
+    note?: string | null;
 };
 
 export type GrammarRuleResponse = {
     id: string;
+    identifier?: string;
     name: string;
     explanationParagraphs: string[];
-    scenario: GrammarScenarioResponse;
+    explanationExamples?: GrammarExplanationExampleResponse[];
 };
