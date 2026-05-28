@@ -25,6 +25,7 @@ export type GrammarDraftRequest = {
 };
 
 export type GeneratedGrammarRuleDraft = {
+    id: string;
     identifier: string;
     name: string;
     level: string;

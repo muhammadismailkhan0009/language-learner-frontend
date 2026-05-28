@@ -18,6 +18,8 @@ import { CreateGrammarRuleRequest } from "./types/requests/CreateGrammarRuleRequ
 import { EditGrammarRuleRequest } from "./types/requests/EditGrammarRuleRequest";
 import { DraftGrammarRulesRequest } from "./types/requests/DraftGrammarRulesRequest";
 import { GrammarRuleDraftResponse } from "./types/responses/GrammarRuleDraftResponse";
+import { GenerateGrammarRuleDraftDetailsRequest } from "./types/requests/GenerateGrammarRuleDraftDetailsRequest";
+import { GrammarRuleDraftDetailsResponse } from "./types/responses/GrammarRuleDraftDetailsResponse";
 import { VocabularyResponse } from "./types/responses/VocabularyResponse";
 import { AddVocabularyRequest } from "./types/requests/AddVocabularyRequest";
 import { UpdateVocabularyRequest } from "./types/requests/UpdateVocabularyRequest";
@@ -336,6 +338,24 @@ export async function draftGrammarRules(
     requestBody: DraftGrammarRulesRequest
 ): Promise<AxiosResponse<ApiResponse<GrammarRuleDraftResponse[]>>> {
     const response = await api.post<ApiResponse<GrammarRuleDraftResponse[]>>("/api/v1/grammar-rules/admin/drafts/v1", requestBody);
+    return response;
+}
+
+export async function fetchDraftGrammarRules(adminKey: string): Promise<AxiosResponse<ApiResponse<GrammarRuleDraftResponse[]>>> {
+    const response = await api.get<ApiResponse<GrammarRuleDraftResponse[]>>("/api/v1/grammar-rules/admin/drafts/v1", {
+        params: { admin_key: adminKey },
+    });
+    return response;
+}
+
+export async function generateGrammarRuleDraftDetails(
+    draftId: string,
+    requestBody: GenerateGrammarRuleDraftDetailsRequest
+): Promise<AxiosResponse<ApiResponse<GrammarRuleDraftDetailsResponse>>> {
+    const response = await api.post<ApiResponse<GrammarRuleDraftDetailsResponse>>(
+        `/api/v1/grammar-rules/admin/drafts/${draftId}/details/v1`,
+        requestBody
+    );
     return response;
 }
 

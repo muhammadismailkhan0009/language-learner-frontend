@@ -13,6 +13,7 @@ export type AddGrammarRuleViewOutput =
     | { type: "cancel" }
     | { type: "setRequest"; request: GrammarDraftRequest }
     | { type: "submit"; request: GrammarDraftRequest }
+    | { type: "generateDetails"; draftId: string; adminKey: string; level: string }
     | { type: "clearError" };
 
 type AddGrammarRuleViewProps = {
@@ -22,13 +23,14 @@ type AddGrammarRuleViewProps = {
         generatedDrafts: GeneratedGrammarRuleDraft[];
         error: string | null;
         isGenerating: boolean;
+        isGeneratingDetails: boolean;
         canSubmit: boolean;
     };
     output: OutputHandle<AddGrammarRuleViewOutput>;
 };
 
 export default function AddGrammarRuleView({ input, output }: AddGrammarRuleViewProps) {
-    const { mode, request, generatedDrafts, error, isGenerating } = input;
+    const { mode, request, generatedDrafts, error, isGenerating, isGeneratingDetails } = input;
     const [localRequest, setLocalRequest] = useState<GrammarDraftRequest>(request);
     const localCanSubmit = isGrammarDraftRequestValid(localRequest);
 
@@ -114,6 +116,24 @@ export default function AddGrammarRuleView({ input, output }: AddGrammarRuleView
                                             <div className="font-medium">{draft.name}</div>
                                             <div className="text-xs text-muted-foreground">
                                                 {draft.identifier} • {draft.level} • {draft.targetLanguage}
+                                            </div>
+                                            <div className="mt-2">
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    variant="outline"
+                                                    disabled={isGeneratingDetails || isGenerating}
+                                                    onClick={() =>
+                                                        output.emit({
+                                                            type: "generateDetails",
+                                                            draftId: draft.id,
+                                                            adminKey: localRequest.adminKey,
+                                                            level: localRequest.level,
+                                                        })
+                                                    }
+                                                >
+                                                    {isGeneratingDetails ? "Generating details..." : "Generate details"}
+                                                </Button>
                                             </div>
                                         </div>
                                     ))}
