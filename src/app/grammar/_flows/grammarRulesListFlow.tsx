@@ -19,6 +19,7 @@ interface GrammarRulesListInternalData {
             showDrafts: boolean;
             draftAdminKey: string;
             error: string | null;
+            message: string | null;
         };
     };
 }
@@ -36,6 +37,7 @@ function createGrammarRulesListInternalData(): GrammarRulesListInternalData {
                 showDrafts: false,
                 draftAdminKey: "",
                 error: null,
+                message: null,
             },
         },
     };
@@ -98,6 +100,7 @@ export const grammarRulesListFlow = defineFlow<GrammarRulesListDomainData, Gramm
                 return { ok: true };
             }
             internal.flowData.ui.isLoadingDrafts = true;
+            internal.flowData.ui.message = null;
             try {
                 const drafts = (await fetchDraftGrammarRulesAction(adminKey.trim())) ?? [];
                 internal.flowData.drafts = drafts.map((draft) => ({
@@ -114,6 +117,7 @@ export const grammarRulesListFlow = defineFlow<GrammarRulesListDomainData, Gramm
             }
             return { ok: true };
         },
+        render: { mode: "preserve-previous" },
         onOutput: () => "displayList",
     },
 
@@ -127,18 +131,22 @@ export const grammarRulesListFlow = defineFlow<GrammarRulesListDomainData, Gramm
                 return { ok: true };
             }
             internal.flowData.ui.isGeneratingDetails = true;
+            internal.flowData.ui.message = "Details generation in progress...";
             try {
                 await generateGrammarRuleDraftDetailsAction(draftId, { admin_key: adminKey.trim() });
                 internal.flowData.drafts = internal.flowData.drafts.filter((draft) => draft.id !== draftId);
+                internal.flowData.ui.message = "Details generated successfully.";
             } catch (err) {
                 internal.flowData.ui.error = err instanceof Error ? err.message : "Failed to generate draft details";
+                internal.flowData.ui.message = null;
             } finally {
                 internal.flowData.ui.isGeneratingDetails = false;
                 (internal as GrammarRulesListInternalData & { selectedDraftId?: string }).selectedDraftId = undefined;
             }
             return { ok: true };
         },
-        onOutput: () => "fetchRules",
+        render: { mode: "preserve-previous" },
+        onOutput: () => "displayList",
     },
 
     displayList: {
@@ -148,6 +156,7 @@ export const grammarRulesListFlow = defineFlow<GrammarRulesListDomainData, Gramm
             drafts: internal.flowData.drafts,
             selectedGrammarRuleId: internal.flowData.selectedGrammarRuleId,
             error: internal.flowData.ui.error,
+            message: internal.flowData.ui.message,
             isLoading: internal.flowData.ui.isLoading,
             isLoadingDrafts: internal.flowData.ui.isLoadingDrafts,
             isGeneratingDetails: internal.flowData.ui.isGeneratingDetails,
@@ -162,6 +171,7 @@ export const grammarRulesListFlow = defineFlow<GrammarRulesListDomainData, Gramm
 
             if (output.type === "clearError") {
                 internal.flowData.ui.error = null;
+                internal.flowData.ui.message = null;
                 return "displayList";
             }
 
@@ -183,8 +193,9 @@ export const grammarRulesListFlow = defineFlow<GrammarRulesListDomainData, Gramm
 
             if (output.type === "toggleDrafts") {
                 internal.flowData.ui.showDrafts = !internal.flowData.ui.showDrafts;
+                internal.flowData.ui.message = null;
                 if (internal.flowData.ui.showDrafts) {
-                    return "fetchDrafts";
+                    return "displayList";
                 }
                 return "displayList";
             }

@@ -26,6 +26,7 @@ type GrammarRulesListViewProps = {
         drafts: GeneratedGrammarRuleDraft[];
         selectedGrammarRuleId: string | null;
         error: string | null;
+        message: string | null;
         isLoading: boolean;
         isLoadingDrafts: boolean;
         isGeneratingDetails: boolean;
@@ -36,7 +37,7 @@ type GrammarRulesListViewProps = {
 };
 
 export default function GrammarRulesListView({ input, output }: GrammarRulesListViewProps) {
-    const { mode, rules, drafts, selectedGrammarRuleId, error, isLoading, isLoadingDrafts, isGeneratingDetails, showDrafts, draftAdminKey } = input;
+    const { mode, rules, drafts, selectedGrammarRuleId, error, message, isLoading, isLoadingDrafts, isGeneratingDetails, showDrafts, draftAdminKey } = input;
 
     if (mode !== "list") {
         return null;
@@ -108,6 +109,10 @@ export default function GrammarRulesListView({ input, output }: GrammarRulesList
                             </div>
                         ) : null}
 
+                        {message ? (
+                            <div className="text-sm text-blue-700">{message}</div>
+                        ) : null}
+
                         {error ? (
                             <div className="flex flex-wrap items-center gap-2 text-sm text-red-600">
                                 <span>{error}</span>
@@ -121,7 +126,7 @@ export default function GrammarRulesListView({ input, output }: GrammarRulesList
                             <div className="text-sm text-muted-foreground">{isLoading ? "Loading grammar rules..." : "No grammar rules found."}</div>
                         ) : null}
 
-                        {rules.length > 0 ? (
+                        {!showDrafts && rules.length > 0 ? (
                             <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
                                 <div className="rounded-md border overflow-hidden">
                                     <div className="max-h-[520px] overflow-auto">
