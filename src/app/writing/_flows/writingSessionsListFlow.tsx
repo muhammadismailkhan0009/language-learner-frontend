@@ -5,133 +5,130 @@ import listWritingPracticeSessionsAction from "../_server_actions/listWritingPra
 import WritingSessionsListFlowView, { WritingSessionsListFlowViewOutput } from "../_client_components/WritingSessionsListFlowView";
 import { WritingScreenMode } from "../types";
 
-type WritingSessionsListDomainData = Record<string, never>;
+type DomainData = {};
 
-type WritingSessionsListInternalData = {
-    flowData: {
-        sessions: WritingPracticeSessionSummaryResponse[];
-        activeSessionId: string | null;
-        ui: {
-            isLoadingSessions: boolean;
-            isCreatingSession: boolean;
-            error: string | null;
-            infoMessage: string | null;
-        };
-    };
+type InternalData = {
+  sessions: WritingPracticeSessionSummaryResponse[];
+  activeSessionId: string | null;
+  ui: {
+    loading: boolean;
+    creating: boolean;
+    error: string | null;
+    info: string | null;
+  };
 };
 
-function createWritingSessionsListInternalData(): WritingSessionsListInternalData {
-    return {
-        flowData: {
-            sessions: [],
-            activeSessionId: null,
-            ui: {
-                isLoadingSessions: false,
-                isCreatingSession: false,
-                error: null,
-                infoMessage: null,
-            },
-        },
-    };
+function createInternalData(): InternalData {
+  return {
+    sessions: [],
+    activeSessionId: null,
+    ui: {
+      loading: false,
+      creating: false,
+      error: null,
+      info: null,
+    },
+  };
 }
 
-export const writingSessionsListFlow = defineFlow<WritingSessionsListDomainData, WritingSessionsListInternalData>({
-    loadSessions: {
-        input: () => ({}),
-        action: async (_input, _domain, internal) => {
-            internal.flowData.ui.isLoadingSessions = true;
-            internal.flowData.ui.error = null;
+export const writingSessionsListFlow = defineFlow<DomainData, InternalData>(
+  {
+    load: {
+      input: () => ({}),
+      action: async (_input, _domain, internal) => {
+        internal.ui.loading = true;
+        internal.ui.error = null;
 
-            try {
-                internal.flowData.sessions = await listWritingPracticeSessionsAction();
-            } catch (error) {
-                internal.flowData.ui.error = error instanceof Error ? error.message : "Failed to load writing sessions";
-            } finally {
-                internal.flowData.ui.isLoadingSessions = false;
-            }
+        try {
+          internal.sessions = await listWritingPracticeSessionsAction();
+        } catch (error) {
+          internal.ui.error = error instanceof Error ? error.message : "Failed to load writing sessions";
+        } finally {
+          internal.ui.loading = false;
+        }
 
-            return { ok: true };
-        },
-        onOutput: () => "displayList",
+        return { ok: true };
+      },
+      onOutput: () => "list",
     },
 
-    createSession: {
-        input: () => ({}),
-        render: {
-            mode: "preserve-previous",
-        },
-        action: async (_input, _domain, internal) => {
-            internal.flowData.ui.isCreatingSession = true;
-            internal.flowData.ui.error = null;
-            internal.flowData.ui.infoMessage = null;
+    create: {
+      input: () => ({}),
+      render: { mode: "preserve-previous" },
+      action: async (_input, _domain, internal) => {
+        internal.ui.creating = true;
+        internal.ui.error = null;
+        internal.ui.info = null;
 
-            try {
-                const created = await createWritingPracticeSessionAction();
-                if (!created) {
-                    throw new Error("Writing session request was not accepted");
-                }
-                internal.flowData.ui.infoMessage = "Writing session requested. Refresh if it does not appear immediately.";
-            } catch (error) {
-                internal.flowData.ui.error = error instanceof Error ? error.message : "Failed to create writing session";
-            } finally {
-                internal.flowData.ui.isCreatingSession = false;
-            }
+        try {
+          const accepted = await createWritingPracticeSessionAction();
+          if (!accepted) {
+            throw new Error("Writing session request was not accepted");
+          }
+          internal.ui.info = "Writing session requested. Refresh if it does not appear immediately.";
+        } catch (error) {
+          internal.ui.error = error instanceof Error ? error.message : "Failed to create writing session";
+        } finally {
+          internal.ui.creating = false;
+        }
 
-            return { ok: true };
-        },
-        onOutput: () => "loadSessions",
+        return { ok: true };
+      },
+      onOutput: () => "load",
     },
 
-    displayList: {
-        input: (_domain, internal, events) => ({
-            mode: (events?.screenMode?.get() as WritingScreenMode | undefined) ?? "list",
-            sessions: internal.flowData.sessions,
-            activeSessionId: internal.flowData.activeSessionId,
-            isLoadingSessions: internal.flowData.ui.isLoadingSessions,
-            isLoadingSessionDetail: false,
-            isCreatingSession: internal.flowData.ui.isCreatingSession,
-            isDeletingSession: false,
-            error: internal.flowData.ui.error,
-            infoMessage: internal.flowData.ui.infoMessage,
-        }),
-        view: WritingSessionsListFlowView,
-        onOutput: (_domain, internal, output: WritingSessionsListFlowViewOutput, events) => {
-            if (output.type === "reload") {
-                return "loadSessions";
-            }
+    list: {
+      input: (_domain, internal, events) => ({
+        mode: (events?.screenMode?.get() as WritingScreenMode | undefined) ?? "list",
+        sessions: internal.sessions,
+        activeSessionId: internal.activeSessionId,
+        isLoadingSessions: internal.ui.loading,
+        isLoadingSessionDetail: false,
+        isCreatingSession: internal.ui.creating,
+        isDeletingSession: false,
+        error: internal.ui.error,
+        infoMessage: internal.ui.info,
+      }),
+      view: WritingSessionsListFlowView,
+      onOutput: (_domain, internal, output: WritingSessionsListFlowViewOutput, events) => {
+        if (output.type === "reload") {
+          return "load";
+        }
 
-            if (output.type === "create") {
-                return "createSession";
-            }
+        if (output.type === "create") {
+          return "create";
+        }
 
-            if (output.type === "openSession") {
-                internal.flowData.activeSessionId = output.sessionId;
-                events?.selectedWritingSessionId.emit(output.sessionId);
-                events?.screenMode.emit("detail");
-                return "displayList";
-            }
+        if (output.type === "openSession") {
+          internal.activeSessionId = output.sessionId;
+          events?.selectedWritingSessionId.emit(output.sessionId);
+          events?.screenMode.emit("detail");
+          return "list";
+        }
 
-            if (output.type === "clearError") {
-                internal.flowData.ui.error = null;
-                return "displayList";
-            }
+        if (output.type === "clearError") {
+          internal.ui.error = null;
+          return "list";
+        }
 
-            if (output.type === "clearInfo") {
-                internal.flowData.ui.infoMessage = null;
-                return "displayList";
-            }
-        },
+        if (output.type === "clearInfo") {
+          internal.ui.info = null;
+          return "list";
+        }
+      },
     },
-}, {
-    start: "loadSessions",
+  },
+  {
+    start: "load",
     channelTransitions: {
-        writingSessionsRefresh: () => "loadSessions",
-        screenMode: ({ events }) => {
-            const mode = (events?.screenMode?.get() as WritingScreenMode | undefined) ?? "list";
-            if (mode === "list") {
-                return "displayList";
-            }
-        },
+      writingSessionsRefresh: () => "load",
+      screenMode: ({ events }) => {
+        const mode = (events?.screenMode?.get() as WritingScreenMode | undefined) ?? "list";
+        if (mode === "list") {
+          return "list";
+        }
+      },
     },
-    createInternalData: createWritingSessionsListInternalData,
-});
+    createInternalData,
+  }
+);

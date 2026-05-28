@@ -8,6 +8,8 @@ export type WritingPracticeSessionResponse = {
     germanParagraph: string;
     submittedAnswer: string;
     submittedAt: string;
+    feedbackText: string;
+    feedbackGeneratedAt: string;
     sentencePairs: WritingSentencePairResponse[];
     vocabFlashcards: WritingVocabularyFlashCardView[];
     createdAt: string;

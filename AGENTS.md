@@ -9,15 +9,3 @@
    - `Loaded uiflow guidelines: yes`
 5. Treat any violation of these rules as a blocker, not a preference.
 
-## Frontend Architecture Gate (Mandatory)
-
-1. Before frontend implementation or refactor, read all files in `codebase-architecture-guidelines/frontend/`:
-   - `Architecture-Patterns.md`
-   - `Dependency-Boundaries.md`
-   - `Module-Boundaries.md`
-   - `Test.md`
-   - `Refactoring.md`
-   - `FrontEnd.md`
-2. In the first progress update for frontend work, explicitly confirm:
-   - `Loaded architecture guidelines: yes`
-3. Treat architecture-guideline violations as blockers, not preferences.

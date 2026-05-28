@@ -7,245 +7,226 @@ import reviewWritingFlashcardAction from "../_server_actions/reviewWritingFlashc
 import WritingReviewFlowView, { WritingReviewFlowViewOutput } from "../_client_components/WritingReviewFlowView";
 import { WritingScreenMode } from "../types";
 
-type WritingReviewDomainData = Record<string, never>;
+type DomainData = {};
 
-type WritingReviewInternalData = {
-    flowData: {
-        flashcardReview: {
-            currentIndex: number;
-            isCurrentCardFlipped: boolean;
-            ratedCardIds: string[];
-            pendingReview: {
-                cardId: string | null;
-                rating: Rating | null;
-            };
-        };
-        ui: {
-            isRatingFlashcard: boolean;
-            error: string | null;
-            infoMessage: string | null;
-        };
-    };
+type InternalData = {
+  currentIndex: number;
+  flipped: boolean;
+  ratedCardIds: string[];
+  pending: {
+    cardId: string | null;
+    rating: Rating | null;
+  };
+  ui: {
+    rating: boolean;
+    error: string | null;
+    info: string | null;
+  };
 };
 
-function createWritingReviewInternalData(): WritingReviewInternalData {
-    return {
-        flowData: {
-            flashcardReview: {
-                currentIndex: 0,
-                isCurrentCardFlipped: false,
-                ratedCardIds: [],
-                pendingReview: {
-                    cardId: null,
-                    rating: null,
-                },
-            },
-            ui: {
-                isRatingFlashcard: false,
-                error: null,
-                infoMessage: null,
-            },
+function createInternalData(): InternalData {
+  return {
+    currentIndex: 0,
+    flipped: false,
+    ratedCardIds: [],
+    pending: {
+      cardId: null,
+      rating: null,
+    },
+    ui: {
+      rating: false,
+      error: null,
+      info: null,
+    },
+  };
+}
+
+function getRemainingCards(session: WritingPracticeSessionResponse | null, ratedIds: string[]) {
+  return session?.vocabFlashcards.filter((card) => !ratedIds.includes(card.id)) ?? [];
+}
+
+function resetReviewState(internal: InternalData) {
+  internal.currentIndex = 0;
+  internal.flipped = false;
+  internal.ratedCardIds = [];
+  internal.pending.cardId = null;
+  internal.pending.rating = null;
+}
+
+export const writingReviewFlow = defineFlow<DomainData, InternalData>(
+  {
+    review: {
+      input: (_domain, internal, events) => ({
+        mode: (events?.screenMode?.get() as WritingScreenMode | undefined) ?? "list",
+        session: (events?.currentWritingSession?.get() as WritingPracticeSessionResponse | null | undefined) ?? null,
+        flashcardReview: {
+          currentIndex: internal.currentIndex,
+          isCurrentCardFlipped: internal.flipped,
+          ratedCardIds: internal.ratedCardIds,
         },
-    };
-}
+        isRatingFlashcard: internal.ui.rating,
+        error: internal.ui.error,
+        infoMessage: internal.ui.info,
+      }),
+      view: WritingReviewFlowView,
+      onOutput: (_domain, internal, output: WritingReviewFlowViewOutput, events) => {
+        const session = (events?.currentWritingSession?.get() as WritingPracticeSessionResponse | null | undefined) ?? null;
+        if (!session?.submittedAnswer?.trim()) {
+          return "review";
+        }
 
-function resetReview(internal: WritingReviewInternalData) {
-    internal.flowData.flashcardReview.currentIndex = 0;
-    internal.flowData.flashcardReview.isCurrentCardFlipped = false;
-    internal.flowData.flashcardReview.ratedCardIds = [];
-    internal.flowData.flashcardReview.pendingReview.cardId = null;
-    internal.flowData.flashcardReview.pendingReview.rating = null;
-}
+        if (output.type === "clearError") {
+          internal.ui.error = null;
+          return "review";
+        }
 
-function getRemainingCards(session: WritingPracticeSessionResponse | null, ratedCardIds: string[]) {
-    return session?.vocabFlashcards.filter((card) => !ratedCardIds.includes(card.id)) ?? [];
-}
+        if (output.type === "clearInfo") {
+          internal.ui.info = null;
+          return "review";
+        }
 
-export const writingReviewFlow = defineFlow<WritingReviewDomainData, WritingReviewInternalData>({
-    displayReview: {
-        input: (_domain, internal, events) => ({
-            mode: (events?.screenMode?.get() as WritingScreenMode | undefined) ?? "list",
-            session: (events?.currentWritingSession?.get() as WritingPracticeSessionResponse | null | undefined) ?? null,
-            flashcardReview: internal.flowData.flashcardReview,
-            isRatingFlashcard: internal.flowData.ui.isRatingFlashcard,
-            error: internal.flowData.ui.error,
-            infoMessage: internal.flowData.ui.infoMessage,
-        }),
-        view: WritingReviewFlowView,
-        onOutput: (_domain, internal, output: WritingReviewFlowViewOutput, events) => {
-            const session = (events?.currentWritingSession?.get() as WritingPracticeSessionResponse | null | undefined) ?? null;
-            if (!session?.submittedAnswer?.trim()) {
-                return "displayReview";
-            }
+        if (output.type === "flipFlashcard") {
+          internal.flipped = true;
+          return "review";
+        }
 
-            if (output.type === "clearError") {
-                internal.flowData.ui.error = null;
-                return "displayReview";
-            }
+        if (output.type === "nextFlashcard") {
+          const count = getRemainingCards(session, internal.ratedCardIds).length;
+          if (count <= 0) {
+            return "review";
+          }
 
-            if (output.type === "clearInfo") {
-                internal.flowData.ui.infoMessage = null;
-                return "displayReview";
-            }
+          internal.currentIndex = internal.currentIndex >= count - 1 ? 0 : internal.currentIndex + 1;
+          internal.flipped = false;
+          return "review";
+        }
 
-            if (output.type === "flipFlashcard") {
-                internal.flowData.flashcardReview.isCurrentCardFlipped = true;
-                return "displayReview";
-            }
+        if (output.type === "previousFlashcard") {
+          internal.currentIndex = Math.max(0, internal.currentIndex - 1);
+          internal.flipped = false;
+          return "review";
+        }
 
-            if (output.type === "nextFlashcard") {
-                const totalCards = getRemainingCards(session, internal.flowData.flashcardReview.ratedCardIds).length;
-                if (totalCards <= 0) {
-                    return "displayReview";
-                }
+        if (output.type === "resetFlashcards") {
+          internal.currentIndex = 0;
+          internal.flipped = false;
+          internal.pending.cardId = null;
+          internal.pending.rating = null;
+          events?.writingReviewedCardIds.emit([]);
+          return "review";
+        }
 
-                internal.flowData.flashcardReview.currentIndex =
-                    internal.flowData.flashcardReview.currentIndex >= totalCards - 1
-                        ? 0
-                        : internal.flowData.flashcardReview.currentIndex + 1;
-                internal.flowData.flashcardReview.isCurrentCardFlipped = false;
-                return "displayReview";
-            }
+        if (output.type === "rateFlashcard") {
+          const card = getRemainingCards(session, internal.ratedCardIds)[internal.currentIndex];
+          if (!card) {
+            return "review";
+          }
 
-            if (output.type === "previousFlashcard") {
-                internal.flowData.flashcardReview.currentIndex = Math.max(
-                    internal.flowData.flashcardReview.currentIndex - 1,
-                    0
-                );
-                internal.flowData.flashcardReview.isCurrentCardFlipped = false;
-                return "displayReview";
-            }
-
-            if (output.type === "resetFlashcards") {
-                internal.flowData.flashcardReview.currentIndex = 0;
-                internal.flowData.flashcardReview.isCurrentCardFlipped = false;
-                internal.flowData.flashcardReview.pendingReview.cardId = null;
-                internal.flowData.flashcardReview.pendingReview.rating = null;
-                events?.writingReviewedCardIds.emit([]);
-                return "displayReview";
-            }
-
-            if (output.type === "rateFlashcard") {
-                const currentCard = getRemainingCards(session, internal.flowData.flashcardReview.ratedCardIds)[internal.flowData.flashcardReview.currentIndex];
-                if (!currentCard) {
-                    return "displayReview";
-                }
-
-                // Unflip immediately before async rating starts so the next card never
-                // briefly inherits back-side visibility during transition.
-                internal.flowData.flashcardReview.isCurrentCardFlipped = false;
-                internal.flowData.flashcardReview.pendingReview.cardId = currentCard.id;
-                internal.flowData.flashcardReview.pendingReview.rating = output.rating;
-                return "rateFlashcard";
-            }
-        },
+          internal.flipped = false;
+          internal.pending.cardId = card.id;
+          internal.pending.rating = output.rating;
+          return "rate";
+        }
+      },
     },
 
     syncReview: {
-        input: (_domain, _internal, events) => ({
-            mode: (events?.screenMode?.get() as WritingScreenMode | undefined) ?? "list",
-            session: (events?.currentWritingSession?.get() as WritingPracticeSessionResponse | null | undefined) ?? null,
-        }),
-        action: async ({ mode, session }, _domain, internal, events) => {
-            if (mode !== "detail" || !session) {
-                resetReview(internal);
-                events?.writingReviewedCardIds.emit([]);
-                return { ok: true };
-            }
+      input: (_domain, _internal, events) => ({
+        mode: (events?.screenMode?.get() as WritingScreenMode | undefined) ?? "list",
+        session: (events?.currentWritingSession?.get() as WritingPracticeSessionResponse | null | undefined) ?? null,
+      }),
+      action: async ({ mode, session }, _domain, internal, events) => {
+        if (mode !== "detail" || !session) {
+          resetReviewState(internal);
+          events?.writingReviewedCardIds.emit([]);
+          return { ok: true };
+        }
 
-            const existingReviewedIds = (events?.writingReviewedCardIds?.get() as string[] | undefined) ?? [];
-            internal.flowData.flashcardReview.ratedCardIds = existingReviewedIds.filter((cardId) =>
-                session.vocabFlashcards.some((card: WritingVocabularyFlashCardView) => card.id === cardId)
-            );
-            internal.flowData.flashcardReview.currentIndex = 0;
-            internal.flowData.flashcardReview.isCurrentCardFlipped = false;
-            internal.flowData.flashcardReview.pendingReview.cardId = null;
-            internal.flowData.flashcardReview.pendingReview.rating = null;
-            return { ok: true };
-        },
-        onOutput: () => "displayReview",
+        const reviewed = (events?.writingReviewedCardIds?.get() as string[] | undefined) ?? [];
+        internal.ratedCardIds = reviewed.filter((id) => session.vocabFlashcards.some((card: WritingVocabularyFlashCardView) => card.id === id));
+        internal.currentIndex = 0;
+        internal.flipped = false;
+        internal.pending.cardId = null;
+        internal.pending.rating = null;
+        return { ok: true };
+      },
+      onOutput: () => "review",
     },
 
-    rateFlashcard: {
-        input: (_domain, internal, events) => ({
-            session: (events?.currentWritingSession?.get() as WritingPracticeSessionResponse | null | undefined) ?? null,
-            cardId: internal.flowData.flashcardReview.pendingReview.cardId,
-            rating: internal.flowData.flashcardReview.pendingReview.rating,
-        }),
-        render: {
-            mode: "preserve-previous",
-        },
-        action: async ({ session, cardId, rating }, _domain, internal, events) => {
-            if (!session?.sessionId || !cardId || !rating) {
-                return { ok: false };
+    rate: {
+      input: (_domain, internal, events) => ({
+        session: (events?.currentWritingSession?.get() as WritingPracticeSessionResponse | null | undefined) ?? null,
+        cardId: internal.pending.cardId,
+        rating: internal.pending.rating,
+      }),
+      render: { mode: "preserve-previous" },
+      action: async ({ session, cardId, rating }, _domain, internal, events) => {
+        if (!session?.sessionId || !cardId || !rating) {
+          return { ok: false };
+        }
+
+        internal.ui.rating = true;
+        internal.ui.error = null;
+
+        try {
+          const reviewed = await reviewWritingFlashcardAction(cardId, rating);
+          if (!reviewed) {
+            throw new Error("Flashcard review was not accepted");
+          }
+
+          const nextRatedIds = internal.ratedCardIds.includes(cardId) ? internal.ratedCardIds : [...internal.ratedCardIds, cardId];
+          internal.ratedCardIds = nextRatedIds;
+          events?.writingReviewedCardIds.emit(nextRatedIds);
+
+          if (rating === Rating.GOOD || rating === Rating.EASY) {
+            const detached = await detachWritingFlashcardAction(session.sessionId, cardId);
+            if (!detached) {
+              throw new Error("Flashcard was reviewed but could not be detached from the writing session");
             }
 
-            internal.flowData.ui.isRatingFlashcard = true;
-            internal.flowData.ui.error = null;
-            let reviewSaved = false;
+            events?.currentWritingSession.emit({
+              ...session,
+              vocabFlashcards: session.vocabFlashcards.filter((card: WritingVocabularyFlashCardView) => card.id !== cardId),
+            });
 
-            try {
-                reviewSaved = await reviewWritingFlashcardAction(cardId, rating);
-                if (!reviewSaved) {
-                    throw new Error("Flashcard review was not accepted");
-                }
+            internal.ui.info = "Card reviewed and removed from this writing session.";
+          }
+        } catch (error) {
+          internal.ui.error = error instanceof Error ? error.message : "Failed to rate flashcard";
+        } finally {
+          const currentSession = ((events?.currentWritingSession?.get() as WritingPracticeSessionResponse | null | undefined) ?? session);
+          const remainingCount = getRemainingCards(currentSession, internal.ratedCardIds).length;
 
-                const nextRatedIds = internal.flowData.flashcardReview.ratedCardIds.includes(cardId)
-                    ? internal.flowData.flashcardReview.ratedCardIds
-                    : [...internal.flowData.flashcardReview.ratedCardIds, cardId];
-                internal.flowData.flashcardReview.ratedCardIds = nextRatedIds;
-                events?.writingReviewedCardIds.emit(nextRatedIds);
+          internal.currentIndex = remainingCount > 0 ? Math.min(internal.currentIndex, remainingCount - 1) : 0;
+          internal.flipped = false;
+          internal.pending.cardId = null;
+          internal.pending.rating = null;
+          internal.ui.rating = false;
+        }
 
-                if (rating === Rating.GOOD || rating === Rating.EASY) {
-                    const detached = await detachWritingFlashcardAction(session.sessionId, cardId);
-                    if (!detached) {
-                        throw new Error("Flashcard was reviewed but could not be detached from the writing session");
-                    }
-
-                    const updatedSession = {
-                        ...session,
-                        vocabFlashcards: session.vocabFlashcards.filter((card: WritingVocabularyFlashCardView) => card.id !== cardId),
-                    };
-                    events?.currentWritingSession.emit(updatedSession);
-                    internal.flowData.ui.infoMessage = "Card reviewed and removed from this writing session.";
-                }
-            } catch (error) {
-                internal.flowData.ui.error = error instanceof Error ? error.message : "Failed to rate flashcard";
-            } finally {
-                const remainingCardsCount = getRemainingCards(
-                    ((events?.currentWritingSession?.get() as WritingPracticeSessionResponse | null | undefined) ?? session),
-                    internal.flowData.flashcardReview.ratedCardIds
-                ).length;
-                internal.flowData.flashcardReview.currentIndex = remainingCardsCount > 0
-                    ? Math.min(internal.flowData.flashcardReview.currentIndex, remainingCardsCount - 1)
-                    : 0;
-                internal.flowData.flashcardReview.isCurrentCardFlipped = false;
-                internal.flowData.flashcardReview.pendingReview.cardId = null;
-                internal.flowData.flashcardReview.pendingReview.rating = null;
-                internal.flowData.ui.isRatingFlashcard = false;
-            }
-
-            return { ok: true };
-        },
-        onOutput: () => "displayReview",
+        return { ok: true };
+      },
+      onOutput: () => "review",
     },
-}, {
-    start: "displayReview",
+  },
+  {
+    start: "review",
     channelTransitions: {
-        currentWritingSession: ({ events }) => {
-            const mode = (events?.screenMode?.get() as WritingScreenMode | undefined) ?? "list";
-            if (mode === "detail") {
-                return "syncReview";
-            }
-            return "displayReview";
-        },
-        screenMode: ({ events }) => {
-            const mode = (events?.screenMode?.get() as WritingScreenMode | undefined) ?? "list";
-            if (mode === "detail") {
-                return "syncReview";
-            }
-            return "displayReview";
-        },
+      currentWritingSession: ({ events }) => {
+        const mode = (events?.screenMode?.get() as WritingScreenMode | undefined) ?? "list";
+        if (mode === "detail") {
+          return "syncReview";
+        }
+        return "review";
+      },
+      screenMode: ({ events }) => {
+        const mode = (events?.screenMode?.get() as WritingScreenMode | undefined) ?? "list";
+        if (mode === "detail") {
+          return "syncReview";
+        }
+        return "review";
+      },
     },
-    createInternalData: createWritingReviewInternalData,
-});
+    createInternalData,
+  }
+);
