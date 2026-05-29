@@ -160,14 +160,14 @@ export const grammarRulesListFlow = defineFlow<GrammarRulesListDomainData, Gramm
                 return { ok: true };
             }
             try {
-                internal.flowData.ui.message = "Deleting explanation...";
+                internal.flowData.ui.message = "Deleting grammar rule...";
                 const deleted = await deleteGrammarRuleExplanationAction(grammarRuleId, { admin_key: adminKey.trim() });
                 if (!deleted) {
-                    throw new Error("Failed to delete explanation");
+                    throw new Error("Failed to delete grammar rule");
                 }
-                internal.flowData.ui.message = "Explanation deleted.";
+                internal.flowData.ui.message = "Grammar rule deleted.";
             } catch (err) {
-                internal.flowData.ui.error = err instanceof Error ? err.message : "Failed to delete explanation";
+                internal.flowData.ui.error = err instanceof Error ? err.message : "Failed to delete grammar rule";
                 internal.flowData.ui.message = null;
             } finally {
                 (internal as GrammarRulesListInternalData & { selectedDeleteRuleId?: string }).selectedDeleteRuleId = undefined;
@@ -250,7 +250,7 @@ export const grammarRulesListFlow = defineFlow<GrammarRulesListDomainData, Gramm
 
             if (output.type === "deleteExplanation") {
                 if (!internal.flowData.ui.draftAdminKey.trim()) {
-                    internal.flowData.ui.error = "Admin key is required to delete explanation";
+                    internal.flowData.ui.error = "Admin key is required to delete grammar rule";
                     return "displayList";
                 }
                 (internal as GrammarRulesListInternalData & { selectedDeleteRuleId?: string }).selectedDeleteRuleId = output.grammarRuleId;

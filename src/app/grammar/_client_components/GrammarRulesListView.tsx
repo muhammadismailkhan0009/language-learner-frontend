@@ -171,7 +171,7 @@ export default function GrammarRulesListView({ input, output }: GrammarRulesList
                                                         Edit Rule
                                                     </Button>
                                                     <Button type="button" variant="outline" onClick={() => output.emit({ type: "deleteExplanation", grammarRuleId: selectedRule.id })}>
-                                                        Delete Explanation
+                                                        Delete Rule
                                                     </Button>
                                                 </div>
                                             </div>
