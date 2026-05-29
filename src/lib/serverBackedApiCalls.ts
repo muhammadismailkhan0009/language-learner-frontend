@@ -20,6 +20,7 @@ import { DraftGrammarRulesRequest } from "./types/requests/DraftGrammarRulesRequ
 import { GrammarRuleDraftResponse } from "./types/responses/GrammarRuleDraftResponse";
 import { GenerateGrammarRuleDraftDetailsRequest } from "./types/requests/GenerateGrammarRuleDraftDetailsRequest";
 import { GrammarRuleDraftDetailsResponse } from "./types/responses/GrammarRuleDraftDetailsResponse";
+import { DeleteGrammarRuleExplanationRequest } from "./types/requests/DeleteGrammarRuleExplanationRequest";
 import { VocabularyResponse } from "./types/responses/VocabularyResponse";
 import { AddVocabularyRequest } from "./types/requests/AddVocabularyRequest";
 import { UpdateVocabularyRequest } from "./types/requests/UpdateVocabularyRequest";
@@ -331,6 +332,17 @@ export async function editGrammarRule(
     requestBody: EditGrammarRuleRequest
 ): Promise<AxiosResponse<ApiResponse<GrammarRuleResponse>>> {
     const response = await api.put<ApiResponse<GrammarRuleResponse>>(`/api/v1/grammar-rules/${grammarRuleId}/v1`, requestBody);
+    return response;
+}
+
+export async function deleteGrammarRuleExplanation(
+    grammarRuleId: string,
+    requestBody: DeleteGrammarRuleExplanationRequest
+): Promise<AxiosResponse<ApiResponse<GrammarRuleResponse>>> {
+    const response = await api.delete<ApiResponse<GrammarRuleResponse>>(
+        `/api/v1/grammar-rules/${grammarRuleId}/explanation/v1`,
+        { data: requestBody }
+    );
     return response;
 }
 
