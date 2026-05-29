@@ -16,7 +16,7 @@ export type GrammarRulesListViewOutput =
     | { type: "openEdit"; grammarRuleId: string }
     | { type: "toggleDrafts" }
     | { type: "setDraftAdminKey"; adminKey: string }
-    | { type: "reloadDrafts" }
+    | { type: "reloadDrafts"; adminKey: string }
     | { type: "generateDraftDetails"; draftId: string };
 
 type GrammarRulesListViewProps = {
@@ -79,7 +79,12 @@ export default function GrammarRulesListView({ input, output }: GrammarRulesList
                                         placeholder="Admin key"
                                         onChange={(e) => output.emit({ type: "setDraftAdminKey", adminKey: e.target.value })}
                                     />
-                                    <Button type="button" variant="outline" onClick={() => output.emit({ type: "reloadDrafts" })} disabled={isLoadingDrafts}>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => output.emit({ type: "reloadDrafts", adminKey: draftAdminKey })}
+                                        disabled={isLoadingDrafts}
+                                    >
                                         {isLoadingDrafts ? "Loading..." : "Load Drafts"}
                                     </Button>
                                 </div>

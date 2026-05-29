@@ -206,6 +206,7 @@ export const grammarRulesListFlow = defineFlow<GrammarRulesListDomainData, Gramm
             }
 
             if (output.type === "reloadDrafts") {
+                internal.flowData.ui.draftAdminKey = output.adminKey;
                 return "fetchDrafts";
             }
 
