@@ -47,7 +47,7 @@ function formatDate(dateValue: string): string {
 }
 
 export default function WritingReviewFlowView({ input, output }: Props) {
-  if (input.mode !== "detail" || !input.session || !input.session.submittedAnswer?.trim()) {
+  if (input.mode !== "detail" || !input.session || !input.session.submittedAt) {
     return null;
   }
 

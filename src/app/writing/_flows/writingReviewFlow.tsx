@@ -7,7 +7,7 @@ import reviewWritingFlashcardAction from "../_server_actions/reviewWritingFlashc
 import WritingReviewFlowView, { WritingReviewFlowViewOutput } from "../_client_components/WritingReviewFlowView";
 import { WritingScreenMode } from "../types";
 
-type DomainData = {};
+type DomainData = Record<string, never>;
 
 type InternalData = {
   currentIndex: number;
@@ -71,7 +71,7 @@ export const writingReviewFlow = defineFlow<DomainData, InternalData>(
       view: WritingReviewFlowView,
       onOutput: (_domain, internal, output: WritingReviewFlowViewOutput, events) => {
         const session = (events?.currentWritingSession?.get() as WritingPracticeSessionResponse | null | undefined) ?? null;
-        if (!session?.submittedAnswer?.trim()) {
+        if (!session?.submittedAt) {
           return "review";
         }
 

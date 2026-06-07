@@ -104,7 +104,7 @@ export default function WritingSessionShellFlowView({ input, output }: Props) {
                 <div className="mt-1 text-sm text-muted-foreground">
                   {Math.max(input.session.vocabFlashcards.length - input.reviewedCardsCount, 0)} of {input.session.vocabFlashcards.length} remaining
                 </div>
-                {!input.session.submittedAnswer?.trim() ? (
+                {!input.session.submittedAt ? (
                   <div className="mt-2 text-sm text-muted-foreground">Review cards unlock after you submit your answer.</div>
                 ) : null}
               </div>

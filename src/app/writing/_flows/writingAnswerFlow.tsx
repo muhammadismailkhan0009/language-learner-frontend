@@ -4,10 +4,11 @@ import submitWritingPracticeAnswerAction from "../_server_actions/submitWritingP
 import WritingAnswerFlowView, { WritingAnswerFlowViewOutput } from "../_client_components/WritingAnswerFlowView";
 import { WritingScreenMode } from "../types";
 
-type DomainData = {};
+type DomainData = Record<string, never>;
 
 type InternalData = {
   draftAnswer: string;
+  submitAsDraft: boolean;
   ui: {
     submitting: boolean;
     error: string | null;
@@ -18,6 +19,7 @@ type InternalData = {
 function createInternalData(): InternalData {
   return {
     draftAnswer: "",
+    submitAsDraft: false,
     ui: {
       submitting: false,
       error: null,
@@ -45,6 +47,12 @@ export const writingAnswerFlow = defineFlow<DomainData, InternalData>(
         }
 
         if (output.type === "submitAnswer") {
+          internal.submitAsDraft = false;
+          return "submit";
+        }
+
+        if (output.type === "saveDraft") {
+          internal.submitAsDraft = true;
           return "submit";
         }
 
@@ -81,9 +89,10 @@ export const writingAnswerFlow = defineFlow<DomainData, InternalData>(
       input: (_domain, internal, events) => ({
         session: (events?.currentWritingSession?.get() as WritingPracticeSessionResponse | null | undefined) ?? null,
         answer: internal.draftAnswer.trim(),
+        draft: internal.submitAsDraft,
       }),
       render: { mode: "preserve-previous" },
-      action: async ({ session, answer }, _domain, internal, events) => {
+      action: async ({ session, answer, draft }, _domain, internal, events) => {
         if (!session?.sessionId) {
           internal.ui.error = "No writing session selected.";
           return { ok: false };
@@ -99,17 +108,18 @@ export const writingAnswerFlow = defineFlow<DomainData, InternalData>(
         internal.ui.info = null;
 
         try {
-          const accepted = await submitWritingPracticeAnswerAction(session.sessionId, answer);
+          const accepted = await submitWritingPracticeAnswerAction(session.sessionId, answer, draft);
           if (!accepted) {
-            throw new Error("Writing answer submission was not accepted");
+            throw new Error(draft ? "Writing draft save was not accepted" : "Writing answer submission was not accepted");
           }
 
-          internal.ui.info = "Answer submitted.";
+          internal.ui.info = draft ? "Draft saved." : "Answer submitted.";
           events?.writingSessionsRefresh.emit((n: number) => n + 1);
         } catch (error) {
-          internal.ui.error = error instanceof Error ? error.message : "Failed to submit writing answer";
+          internal.ui.error = error instanceof Error ? error.message : draft ? "Failed to save writing draft" : "Failed to submit writing answer";
         } finally {
           internal.ui.submitting = false;
+          internal.submitAsDraft = false;
         }
 
         return { ok: true };

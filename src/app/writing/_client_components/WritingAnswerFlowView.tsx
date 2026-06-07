@@ -9,6 +9,7 @@ import { WritingScreenMode } from "../types";
 
 export type WritingAnswerFlowViewOutput =
   | { type: "updateDraftAnswer"; value: string }
+  | { type: "saveDraft" }
   | { type: "submitAnswer" }
   | { type: "clearError" }
   | { type: "clearInfo" };
@@ -26,7 +27,7 @@ type Props = {
 };
 
 export default function WritingAnswerFlowView({ input, output }: Props) {
-  if (input.mode !== "detail" || !input.session || input.session.submittedAnswer?.trim()) {
+  if (input.mode !== "detail" || !input.session || input.session.submittedAt) {
     return null;
   }
 
@@ -44,7 +45,10 @@ export default function WritingAnswerFlowView({ input, output }: Props) {
             className="min-h-48"
             disabled={input.isSubmittingAnswer}
           />
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={() => output.emit({ type: "saveDraft" })} disabled={input.isSubmittingAnswer}>
+              {input.isSubmittingAnswer ? "Saving..." : "Save Draft"}
+            </Button>
             <Button type="button" onClick={() => output.emit({ type: "submitAnswer" })} disabled={input.isSubmittingAnswer}>
               {input.isSubmittingAnswer ? "Submitting..." : "Submit Answer"}
             </Button>

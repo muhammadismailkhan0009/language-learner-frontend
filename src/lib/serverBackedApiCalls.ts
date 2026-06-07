@@ -621,7 +621,8 @@ export async function getWritingPracticeSession(
 
 export async function submitWritingPracticeAnswer(
     sessionId: string,
-    submittedAnswer: string
+    submittedAnswer: string,
+    draft = false
 ): Promise<AxiosResponse<void>> {
     const userId = (await cookies()).get("userId")?.value;
     if (!userId) {
@@ -633,7 +634,9 @@ export async function submitWritingPracticeAnswer(
         submittedAnswer,
     };
 
-    const response = await api.post<void>(`/api/v1/writing-practice/sessions/${sessionId}/submission`, requestBody);
+    const response = await api.post<void>(`/api/v1/writing-practice/sessions/${sessionId}/submission`, requestBody, {
+        params: { draft },
+    });
     return response;
 }
 

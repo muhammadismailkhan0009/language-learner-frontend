@@ -6,10 +6,10 @@ export type WritingPracticeSessionResponse = {
     topic: string;
     englishParagraph: string;
     germanParagraph: string;
-    submittedAnswer: string;
-    submittedAt: string;
-    feedbackText: string;
-    feedbackGeneratedAt: string;
+    submittedAnswer: string | null;
+    submittedAt: string | null;
+    feedbackText: string | null;
+    feedbackGeneratedAt: string | null;
     sentencePairs: WritingSentencePairResponse[];
     vocabFlashcards: WritingVocabularyFlashCardView[];
     createdAt: string;
