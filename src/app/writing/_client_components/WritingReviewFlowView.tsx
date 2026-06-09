@@ -7,6 +7,7 @@ import { Rating } from "@/lib/types/Rating";
 import { WritingPracticeSessionResponse } from "@/lib/types/responses/WritingPracticeSessionResponse";
 import { WritingScreenMode } from "../types";
 import WritingFlashcardReview from "./WritingFlashcardReview";
+import WritingStructuredFeedbackView from "./WritingStructuredFeedbackView";
 
 export type WritingReviewFlowViewOutput =
   | { type: "flipFlashcard" }
@@ -78,19 +79,24 @@ export default function WritingReviewFlowView({ input, output }: Props) {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>LLM Feedback</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {input.session.feedbackGeneratedAt ? (
-            <div className="mb-2 text-xs text-muted-foreground">Generated {formatDate(input.session.feedbackGeneratedAt)}</div>
-          ) : null}
-          <div className="whitespace-pre-wrap rounded-md border p-4 text-sm leading-6">
-            {input.session.feedbackText?.trim() || "No feedback available yet."}
-          </div>
-        </CardContent>
-      </Card>
+      {input.session.feedbackGeneratedAt ? (
+        <div className="text-xs text-muted-foreground">Feedback generated {formatDate(input.session.feedbackGeneratedAt)}</div>
+      ) : null}
+
+      {input.session.structuredFeedback ? (
+        <WritingStructuredFeedbackView feedback={input.session.structuredFeedback} />
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>LLM Feedback</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="whitespace-pre-wrap rounded-md border p-4 text-sm leading-6">
+              {input.session.feedbackText?.trim() || "No feedback available yet."}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
