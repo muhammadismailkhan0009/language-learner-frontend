@@ -3,6 +3,7 @@ import { Rating } from "@/lib/types/Rating";
 import { WritingPracticeSessionResponse } from "@/lib/types/responses/WritingPracticeSessionResponse";
 import { WritingVocabularyFlashCardView } from "@/lib/types/responses/WritingVocabularyFlashCardView";
 import detachWritingFlashcardAction from "../_server_actions/detachWritingFlashcardAction";
+import reEvaluateWritingFeedbackAction from "../_server_actions/reEvaluateWritingFeedbackAction";
 import reviewWritingFlashcardAction from "../_server_actions/reviewWritingFlashcardAction";
 import WritingReviewFlowView, { WritingReviewFlowViewOutput } from "../_client_components/WritingReviewFlowView";
 import { WritingScreenMode } from "../types";
@@ -19,6 +20,7 @@ type InternalData = {
   };
   ui: {
     rating: boolean;
+    reEvaluating: boolean;
     error: string | null;
     info: string | null;
   };
@@ -35,6 +37,7 @@ function createInternalData(): InternalData {
     },
     ui: {
       rating: false,
+      reEvaluating: false,
       error: null,
       info: null,
     },
@@ -65,6 +68,7 @@ export const writingReviewFlow = defineFlow<DomainData, InternalData>(
           ratedCardIds: internal.ratedCardIds,
         },
         isRatingFlashcard: internal.ui.rating,
+        isReEvaluatingFeedback: internal.ui.reEvaluating,
         error: internal.ui.error,
         infoMessage: internal.ui.info,
       }),
@@ -116,6 +120,10 @@ export const writingReviewFlow = defineFlow<DomainData, InternalData>(
           return "review";
         }
 
+        if (output.type === "reEvaluateFeedback") {
+          return "reEvaluate";
+        }
+
         if (output.type === "rateFlashcard") {
           const card = getRemainingCards(session, internal.ratedCardIds)[internal.currentIndex];
           if (!card) {
@@ -148,6 +156,41 @@ export const writingReviewFlow = defineFlow<DomainData, InternalData>(
         internal.flipped = false;
         internal.pending.cardId = null;
         internal.pending.rating = null;
+        return { ok: true };
+      },
+      onOutput: () => "review",
+    },
+
+    reEvaluate: {
+      input: (_domain, _internal, events) => ({
+        session: (events?.currentWritingSession?.get() as WritingPracticeSessionResponse | null | undefined) ?? null,
+      }),
+      render: { mode: "preserve-previous" },
+      action: async ({ session }, _domain, internal, events) => {
+        if (!session?.sessionId) {
+          internal.ui.error = "No writing session selected.";
+          return { ok: false };
+        }
+
+        internal.ui.reEvaluating = true;
+        internal.ui.error = null;
+        internal.ui.info = "Re-evaluating feedback. This can take a moment.";
+
+        try {
+          const updated = await reEvaluateWritingFeedbackAction(session.sessionId);
+          if (!updated) {
+            throw new Error("Writing feedback re-evaluation was not accepted");
+          }
+
+          events?.currentWritingSession.emit(updated);
+          events?.writingSessionsRefresh.emit((n: number) => n + 1);
+          internal.ui.info = "Feedback re-evaluated.";
+        } catch (error) {
+          internal.ui.error = error instanceof Error ? error.message : "Failed to re-evaluate writing feedback";
+        } finally {
+          internal.ui.reEvaluating = false;
+        }
+
         return { ok: true };
       },
       onOutput: () => "review",

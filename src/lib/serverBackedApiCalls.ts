@@ -640,6 +640,22 @@ export async function submitWritingPracticeAnswer(
     return response;
 }
 
+export async function reEvaluateWritingFeedback(
+    sessionId: string
+): Promise<AxiosResponse<ApiResponse<WritingPracticeSessionResponse>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const response = await api.post<ApiResponse<WritingPracticeSessionResponse>>(
+        `/api/v1/writing-practice/sessions/${sessionId}/feedback/re-evaluate`,
+        null,
+        { params: { userId } }
+    );
+    return response;
+}
+
 export async function deleteWritingPracticeSession(sessionId: string): Promise<AxiosResponse<void>> {
     const userId = (await cookies()).get("userId")?.value;
     if (!userId) {

@@ -15,6 +15,7 @@ export type WritingReviewFlowViewOutput =
   | { type: "nextFlashcard" }
   | { type: "previousFlashcard" }
   | { type: "resetFlashcards" }
+  | { type: "reEvaluateFeedback" }
   | { type: "clearError" }
   | { type: "clearInfo" };
 
@@ -28,6 +29,7 @@ type Props = {
       ratedCardIds: string[];
     };
     isRatingFlashcard: boolean;
+    isReEvaluatingFeedback: boolean;
     error: string | null;
     infoMessage: string | null;
   };
@@ -79,8 +81,27 @@ export default function WritingReviewFlowView({ input, output }: Props) {
         </CardContent>
       </Card>
 
-      {input.session.feedbackGeneratedAt ? (
-        <div className="text-xs text-muted-foreground">Feedback generated {formatDate(input.session.feedbackGeneratedAt)}</div>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        {input.session.feedbackGeneratedAt ? (
+          <div className="text-xs text-muted-foreground">Feedback generated {formatDate(input.session.feedbackGeneratedAt)}</div>
+        ) : (
+          <div className="text-xs text-muted-foreground">No generated feedback yet.</div>
+        )}
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={input.isReEvaluatingFeedback}
+          onClick={() => output.emit({ type: "reEvaluateFeedback" })}
+        >
+          {input.isReEvaluatingFeedback ? "Re-evaluating..." : "Re-evaluate Feedback"}
+        </Button>
+      </div>
+
+      {input.isReEvaluatingFeedback ? (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          Re-evaluating feedback. This can take a moment.
+        </div>
       ) : null}
 
       {input.session.structuredFeedback ? (
