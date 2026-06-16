@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { GeneratedGrammarRuleDraft, GrammarRuleListItem, ScreenMode } from "../types";
+import { GeneratedGrammarRuleDraft, GrammarLevelReassignmentSummary, GrammarRuleListItem, ScreenMode } from "../types";
 
 export type GrammarRulesListViewOutput =
     | { type: "reload" }
@@ -18,7 +18,8 @@ export type GrammarRulesListViewOutput =
     | { type: "setDraftAdminKey"; adminKey: string }
     | { type: "reloadDrafts"; adminKey: string }
     | { type: "generateDraftDetails"; draftId: string }
-    | { type: "deleteExplanation"; grammarRuleId: string };
+    | { type: "deleteExplanation"; grammarRuleId: string }
+    | { type: "reassignLevels" };
 
 type GrammarRulesListViewProps = {
     input: {
@@ -31,14 +32,16 @@ type GrammarRulesListViewProps = {
         isLoading: boolean;
         isLoadingDrafts: boolean;
         isGeneratingDetails: boolean;
+        isReassigningLevels: boolean;
         showDrafts: boolean;
         draftAdminKey: string;
+        reassignmentSummary: GrammarLevelReassignmentSummary | null;
     };
     output: OutputHandle<GrammarRulesListViewOutput>;
 };
 
 export default function GrammarRulesListView({ input, output }: GrammarRulesListViewProps) {
-    const { mode, rules, drafts, selectedGrammarRuleId, error, message, isLoading, isLoadingDrafts, isGeneratingDetails, showDrafts, draftAdminKey } = input;
+    const { mode, rules, drafts, selectedGrammarRuleId, error, message, isLoading, isLoadingDrafts, isGeneratingDetails, isReassigningLevels, showDrafts, draftAdminKey, reassignmentSummary } = input;
 
     if (mode !== "list") {
         return null;
@@ -60,6 +63,9 @@ export default function GrammarRulesListView({ input, output }: GrammarRulesList
                         <div className="flex items-center gap-2">
                             <Button type="button" variant="outline" size="sm" onClick={() => output.emit({ type: "reload" })} disabled={isLoading}>
                                 {isLoading ? "Refreshing..." : "Refresh"}
+                            </Button>
+                            <Button type="button" variant="outline" size="sm" onClick={() => output.emit({ type: "reassignLevels" })} disabled={isReassigningLevels}>
+                                {isReassigningLevels ? "Reassigning..." : "Reassign Grammar Levels"}
                             </Button>
                             <Button type="button" variant="outline" onClick={() => output.emit({ type: "toggleDrafts" })}>
                                 {showDrafts ? "Hide Drafts" : "Show Drafts"}
@@ -117,6 +123,24 @@ export default function GrammarRulesListView({ input, output }: GrammarRulesList
 
                         {message ? (
                             <div className="text-sm text-blue-700">{message}</div>
+                        ) : null}
+
+                        {reassignmentSummary ? (
+                            <div className="rounded-md border p-3 space-y-2 text-sm">
+                                <div className="font-medium">
+                                    {reassignmentSummary.reviewedCount} rules reviewed · {reassignmentSummary.changedCount} levels changed · {reassignmentSummary.unchangedCount} levels unchanged
+                                </div>
+                                {reassignmentSummary.changedRules.length > 0 ? (
+                                    <div className="space-y-1">
+                                        {reassignmentSummary.changedRules.map((rule) => (
+                                            <div key={rule.id} className="text-muted-foreground">
+                                                <span className="font-medium text-foreground">{rule.name}</span>: {rule.previousLevel} → {rule.proposedLevel}
+                                                {rule.reason ? <span> · {rule.reason}</span> : null}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : null}
+                            </div>
                         ) : null}
 
                         {error ? (

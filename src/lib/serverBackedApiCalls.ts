@@ -21,6 +21,9 @@ import { GrammarRuleDraftResponse } from "./types/responses/GrammarRuleDraftResp
 import { GenerateGrammarRuleDraftDetailsRequest } from "./types/requests/GenerateGrammarRuleDraftDetailsRequest";
 import { GrammarRuleDraftDetailsResponse } from "./types/responses/GrammarRuleDraftDetailsResponse";
 import { DeleteGrammarRuleExplanationRequest } from "./types/requests/DeleteGrammarRuleExplanationRequest";
+import { GrammarLevelReassignmentSummaryResponse } from "./types/responses/GrammarLevelReassignmentSummaryResponse";
+import { UserProfileResponse } from "./types/responses/UserProfileResponse";
+import { UpdateUserDifficultyLevelRequest } from "./types/requests/UpdateUserDifficultyLevelRequest";
 import { VocabularyResponse } from "./types/responses/VocabularyResponse";
 import { AddVocabularyRequest } from "./types/requests/AddVocabularyRequest";
 import { UpdateVocabularyRequest } from "./types/requests/UpdateVocabularyRequest";
@@ -315,6 +318,20 @@ export async function fetchGrammarRules(): Promise<AxiosResponse<ApiResponse<Gra
     return response;
 }
 
+export async function reassignGrammarLevels(): Promise<AxiosResponse<ApiResponse<GrammarLevelReassignmentSummaryResponse>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const response = await api.post<ApiResponse<GrammarLevelReassignmentSummaryResponse>>(
+        "/api/v1/grammar-rules/reassign-levels/v1",
+        null,
+        { params: { userId } }
+    );
+    return response;
+}
+
 export async function fetchGrammarRule(grammarRuleId: string): Promise<AxiosResponse<ApiResponse<GrammarRuleResponse>>> {
     const response = await api.get<ApiResponse<GrammarRuleResponse>>(`/api/v1/grammar-rules/${grammarRuleId}/v1`);
     return response;
@@ -367,6 +384,34 @@ export async function generateGrammarRuleDraftDetails(
     const response = await api.post<ApiResponse<GrammarRuleDraftDetailsResponse>>(
         `/api/v1/grammar-rules/admin/drafts/${draftId}/details/v1`,
         requestBody
+    );
+    return response;
+}
+
+export async function fetchUserProfile(): Promise<AxiosResponse<ApiResponse<UserProfileResponse>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const response = await api.get<ApiResponse<UserProfileResponse>>("/api/v1/users/me/profile", {
+        params: { userId },
+    });
+    return response;
+}
+
+export async function updateUserDifficultyLevel(
+    requestBody: UpdateUserDifficultyLevelRequest
+): Promise<AxiosResponse<ApiResponse<UserProfileResponse>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const response = await api.patch<ApiResponse<UserProfileResponse>>(
+        "/api/v1/users/me/profile/difficulty-level",
+        requestBody,
+        { params: { userId } }
     );
     return response;
 }

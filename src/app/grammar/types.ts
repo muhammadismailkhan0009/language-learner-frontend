@@ -43,3 +43,18 @@ export type GrammarRuleListItem = {
     isFixed: boolean;
     sentences: GrammarSentenceDraft[];
 };
+
+export type GrammarLevelReassignmentChangedRule = {
+    id: string;
+    name: string;
+    previousLevel: string;
+    proposedLevel: string;
+    reason: string | null;
+};
+
+export type GrammarLevelReassignmentSummary = {
+    reviewedCount: number;
+    changedCount: number;
+    unchangedCount: number;
+    changedRules: GrammarLevelReassignmentChangedRule[];
+};

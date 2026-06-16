@@ -3,7 +3,7 @@ import {
     SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
     SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
-import { BookOpenText, ChevronDown, Headphones, NotebookPen } from "lucide-react"
+import { BookOpenText, ChevronDown, Headphones, NotebookPen, User } from "lucide-react"
 
 export function AppSidebar() {
     return (
@@ -93,6 +93,15 @@ export function AppSidebar() {
                                 <a href="/grammar">
                                     <NotebookPen />
                                     <span>Grammar</span>
+                                </a>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+
+                        <SidebarMenuItem>
+                            <SidebarMenuButton asChild>
+                                <a href="/profile">
+                                    <User />
+                                    <span>Profile</span>
                                 </a>
                             </SidebarMenuButton>
                         </SidebarMenuItem>

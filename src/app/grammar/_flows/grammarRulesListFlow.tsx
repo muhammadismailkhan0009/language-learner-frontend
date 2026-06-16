@@ -3,8 +3,9 @@ import fetchGrammarRulesAction from "../_server_actions/fetchGrammarRulesAction"
 import fetchDraftGrammarRulesAction from "../_server_actions/fetchDraftGrammarRulesAction";
 import generateGrammarRuleDraftDetailsAction from "../_server_actions/generateGrammarRuleDraftDetailsAction";
 import deleteGrammarRuleExplanationAction from "../_server_actions/deleteGrammarRuleExplanationAction";
+import reassignGrammarLevelsAction from "../_server_actions/reassignGrammarLevelsAction";
 import GrammarRulesListView, { GrammarRulesListViewOutput } from "../_client_components/GrammarRulesListView";
-import { GeneratedGrammarRuleDraft, GrammarRuleListItem, ScreenMode } from "../types";
+import { GeneratedGrammarRuleDraft, GrammarLevelReassignmentSummary, GrammarRuleListItem, ScreenMode } from "../types";
 
 type GrammarRulesListDomainData = Record<string, never>;
 
@@ -17,10 +18,12 @@ interface GrammarRulesListInternalData {
             isLoading: boolean;
             isLoadingDrafts: boolean;
             isGeneratingDetails: boolean;
+            isReassigningLevels: boolean;
             showDrafts: boolean;
             draftAdminKey: string;
             error: string | null;
             message: string | null;
+            reassignmentSummary: GrammarLevelReassignmentSummary | null;
         };
     };
 }
@@ -35,10 +38,12 @@ function createGrammarRulesListInternalData(): GrammarRulesListInternalData {
                 isLoading: false,
                 isLoadingDrafts: false,
                 isGeneratingDetails: false,
+                isReassigningLevels: false,
                 showDrafts: false,
                 draftAdminKey: "",
                 error: null,
                 message: null,
+                reassignmentSummary: null,
             },
         },
     };
@@ -178,6 +183,39 @@ export const grammarRulesListFlow = defineFlow<GrammarRulesListDomainData, Gramm
         onOutput: () => "fetchRules",
     },
 
+    reassignLevels: {
+        input: () => ({}),
+        action: async (_input, _domain, internal) => {
+            internal.flowData.ui.isReassigningLevels = true;
+            internal.flowData.ui.error = null;
+            internal.flowData.ui.message = "Reassigning grammar levels...";
+            internal.flowData.ui.reassignmentSummary = null;
+
+            try {
+                const summary = await reassignGrammarLevelsAction();
+                if (!summary) {
+                    throw new Error("Failed to reassign grammar levels");
+                }
+                internal.flowData.ui.reassignmentSummary = summary;
+                internal.flowData.ui.message = "Grammar levels reassigned.";
+            } catch (err) {
+                internal.flowData.ui.error = err instanceof Error ? err.message : "Failed to reassign grammar levels";
+                internal.flowData.ui.message = null;
+            } finally {
+                internal.flowData.ui.isReassigningLevels = false;
+            }
+
+            return { ok: true };
+        },
+        render: { mode: "preserve-previous" },
+        onOutput: (_domain, internal) => {
+            if (internal.flowData.ui.reassignmentSummary) {
+                return "fetchRules";
+            }
+            return "displayList";
+        },
+    },
+
     displayList: {
         input: (_domain, internal, events) => ({
             mode: (events?.screenMode?.get() as ScreenMode | undefined) ?? "list",
@@ -189,8 +227,10 @@ export const grammarRulesListFlow = defineFlow<GrammarRulesListDomainData, Gramm
             isLoading: internal.flowData.ui.isLoading,
             isLoadingDrafts: internal.flowData.ui.isLoadingDrafts,
             isGeneratingDetails: internal.flowData.ui.isGeneratingDetails,
+            isReassigningLevels: internal.flowData.ui.isReassigningLevels,
             showDrafts: internal.flowData.ui.showDrafts,
             draftAdminKey: internal.flowData.ui.draftAdminKey,
+            reassignmentSummary: internal.flowData.ui.reassignmentSummary,
         }),
         view: GrammarRulesListView,
         onOutput: (_domain, internal, output: GrammarRulesListViewOutput, events) => {
@@ -202,6 +242,13 @@ export const grammarRulesListFlow = defineFlow<GrammarRulesListDomainData, Gramm
                 internal.flowData.ui.error = null;
                 internal.flowData.ui.message = null;
                 return "displayList";
+            }
+
+            if (output.type === "reassignLevels") {
+                if (internal.flowData.ui.isReassigningLevels) {
+                    return "displayList";
+                }
+                return "reassignLevels";
             }
 
             if (output.type === "openCreate") {
