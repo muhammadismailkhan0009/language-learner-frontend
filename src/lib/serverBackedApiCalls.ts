@@ -314,7 +314,14 @@ export async function editScenario(
 }
 
 export async function fetchGrammarRules(): Promise<AxiosResponse<ApiResponse<GrammarRuleResponse[]>>> {
-    const response = await api.get<ApiResponse<GrammarRuleResponse[]>>("/api/v1/grammar-rules/v1");
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const response = await api.get<ApiResponse<GrammarRuleResponse[]>>("/api/v1/grammar-rules/v1", {
+        params: { userId },
+    });
     return response;
 }
 
@@ -371,8 +378,13 @@ export async function draftGrammarRules(
 }
 
 export async function fetchDraftGrammarRules(adminKey: string): Promise<AxiosResponse<ApiResponse<GrammarRuleDraftResponse[]>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
     const response = await api.get<ApiResponse<GrammarRuleDraftResponse[]>>("/api/v1/grammar-rules/admin/drafts/v1", {
-        params: { admin_key: adminKey },
+        params: { admin_key: adminKey, userId },
     });
     return response;
 }

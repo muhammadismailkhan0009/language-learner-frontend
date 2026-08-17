@@ -24,13 +24,14 @@ type AddGrammarRuleViewProps = {
         error: string | null;
         isGenerating: boolean;
         isGeneratingDetails: boolean;
+        generatingDraftId: string | null;
         canSubmit: boolean;
     };
     output: OutputHandle<AddGrammarRuleViewOutput>;
 };
 
 export default function AddGrammarRuleView({ input, output }: AddGrammarRuleViewProps) {
-    const { mode, request, generatedDrafts, error, isGenerating, isGeneratingDetails } = input;
+    const { mode, request, generatedDrafts, error, isGenerating, isGeneratingDetails, generatingDraftId } = input;
     const [localRequest, setLocalRequest] = useState<GrammarDraftRequest>(request);
     const localCanSubmit = isGrammarDraftRequestValid(localRequest);
 
@@ -132,7 +133,7 @@ export default function AddGrammarRuleView({ input, output }: AddGrammarRuleView
                                                         })
                                                     }
                                                 >
-                                                    {isGeneratingDetails ? "Generating details..." : "Generate details"}
+                                                    {isGeneratingDetails && generatingDraftId === draft.id ? "Generating details..." : "Generate details"}
                                                 </Button>
                                             </div>
                                         </div>

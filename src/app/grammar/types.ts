@@ -35,6 +35,7 @@ export type GeneratedGrammarRuleDraft = {
 export type GrammarRuleListItem = {
     id: string;
     name: string;
+    level: string;
     explanationParagraphs: string[];
     scenarioTitle: string;
     scenarioDescription: string;

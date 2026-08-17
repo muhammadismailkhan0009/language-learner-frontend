@@ -61,6 +61,7 @@ export const grammarRulesListFlow = defineFlow<GrammarRulesListDomainData, Gramm
                 internal.flowData.rules = rules.map((rule) => ({
                     id: rule.id,
                     name: rule.name,
+                    level: rule.level?.trim() || "Unknown level",
                     explanationParagraphs: (rule.explanationParagraphs ?? [])
                         .map((paragraph) => paragraph.trim())
                         .filter((paragraph) => paragraph.length > 0),
@@ -227,6 +228,7 @@ export const grammarRulesListFlow = defineFlow<GrammarRulesListDomainData, Gramm
             isLoading: internal.flowData.ui.isLoading,
             isLoadingDrafts: internal.flowData.ui.isLoadingDrafts,
             isGeneratingDetails: internal.flowData.ui.isGeneratingDetails,
+            generatingDraftId: (internal as GrammarRulesListInternalData & { selectedDraftId?: string }).selectedDraftId ?? null,
             isReassigningLevels: internal.flowData.ui.isReassigningLevels,
             showDrafts: internal.flowData.ui.showDrafts,
             draftAdminKey: internal.flowData.ui.draftAdminKey,

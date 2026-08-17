@@ -32,6 +32,7 @@ type GrammarRulesListViewProps = {
         isLoading: boolean;
         isLoadingDrafts: boolean;
         isGeneratingDetails: boolean;
+        generatingDraftId: string | null;
         isReassigningLevels: boolean;
         showDrafts: boolean;
         draftAdminKey: string;
@@ -41,7 +42,7 @@ type GrammarRulesListViewProps = {
 };
 
 export default function GrammarRulesListView({ input, output }: GrammarRulesListViewProps) {
-    const { mode, rules, drafts, selectedGrammarRuleId, error, message, isLoading, isLoadingDrafts, isGeneratingDetails, isReassigningLevels, showDrafts, draftAdminKey, reassignmentSummary } = input;
+    const { mode, rules, drafts, selectedGrammarRuleId, error, message, isLoading, isLoadingDrafts, isGeneratingDetails, generatingDraftId, isReassigningLevels, showDrafts, draftAdminKey, reassignmentSummary } = input;
 
     if (mode !== "list") {
         return null;
@@ -112,7 +113,7 @@ export default function GrammarRulesListView({ input, output }: GrammarRulesList
                                                     disabled={isGeneratingDetails}
                                                     onClick={() => output.emit({ type: "generateDraftDetails", draftId: draft.id })}
                                                 >
-                                                    {isGeneratingDetails ? "Generating..." : "Generate Details"}
+                                                    {isGeneratingDetails && generatingDraftId === draft.id ? "Generating..." : "Generate Details"}
                                                 </Button>
                                             </div>
                                         ))}
@@ -171,7 +172,12 @@ export default function GrammarRulesListView({ input, output }: GrammarRulesList
                                                     }`}
                                                     onClick={() => output.emit({ type: "setSelectedRule", grammarRuleId: rule.id })}
                                                 >
-                                                    <div className="font-medium truncate">{rule.name}</div>
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <div className="font-medium truncate">{rule.name}</div>
+                                                        <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                                                            {rule.level}
+                                                        </span>
+                                                    </div>
                                                     <div className="text-xs text-muted-foreground truncate">{rule.scenarioTitle || "Untitled scenario"}</div>
                                                     <div className="text-xs text-muted-foreground mt-1">{rule.sentenceCount} sentence(s)</div>
                                                 </button>
@@ -187,7 +193,7 @@ export default function GrammarRulesListView({ input, output }: GrammarRulesList
                                                 <div className="space-y-1">
                                                     <div className="text-xl font-semibold">{selectedRule.name}</div>
                                                     <div className="text-sm text-muted-foreground">
-                                                        {selectedRule.scenarioTitle} • {selectedRule.targetLanguage.toUpperCase()} • {selectedRule.isFixed ? "Fixed" : "Editable"}
+                                                        {selectedRule.level} • {selectedRule.scenarioTitle} • {selectedRule.targetLanguage.toUpperCase()} • {selectedRule.isFixed ? "Fixed" : "Editable"}
                                                     </div>
                                                 </div>
                                                 <div className="flex gap-2">

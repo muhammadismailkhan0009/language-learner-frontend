@@ -48,6 +48,7 @@ export const addGrammarRuleFlow = defineFlow<AddGrammarRuleDomainData, AddGramma
             error: internal.flowData.ui.error,
             isGenerating: internal.flowData.ui.isGenerating,
             isGeneratingDetails: internal.flowData.ui.isGeneratingDetails,
+            generatingDraftId: (internal as AddGrammarRuleInternalData & { draftIdForDetails?: string }).draftIdForDetails ?? null,
             canSubmit: isGrammarDraftRequestValid(internal.flowData.request),
         }),
         view: AddGrammarRuleView,
