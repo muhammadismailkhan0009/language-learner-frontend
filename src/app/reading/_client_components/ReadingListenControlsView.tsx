@@ -137,6 +137,7 @@ export default function ReadingListenControlsView({ input, output }: ReadingList
                     <option value={2}>2s pause</option>
                     <option value={3}>3s pause</option>
                     <option value={5}>5s pause</option>
+                    <option value={10}>10s pause</option>
                 </select>
                 {isPlaying ? (
                     <Button type="button" size="sm" variant="destructive" onClick={stopPlayback}>
