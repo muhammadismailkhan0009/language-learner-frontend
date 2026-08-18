@@ -15,7 +15,7 @@ export type WritingReviewFlowViewOutput =
   | { type: "nextFlashcard" }
   | { type: "previousFlashcard" }
   | { type: "resetFlashcards" }
-  | { type: "reEvaluateFeedback" }
+  | { type: "getFeedback" }
   | { type: "clearError" }
   | { type: "clearInfo" };
 
@@ -29,7 +29,7 @@ type Props = {
       ratedCardIds: string[];
     };
     isRatingFlashcard: boolean;
-    isReEvaluatingFeedback: boolean;
+    isGettingFeedback: boolean;
     error: string | null;
     infoMessage: string | null;
   };
@@ -91,16 +91,16 @@ export default function WritingReviewFlowView({ input, output }: Props) {
           type="button"
           size="sm"
           variant="outline"
-          disabled={input.isReEvaluatingFeedback}
-          onClick={() => output.emit({ type: "reEvaluateFeedback" })}
+          disabled={input.isGettingFeedback}
+          onClick={() => output.emit({ type: "getFeedback" })}
         >
-          {input.isReEvaluatingFeedback ? "Re-evaluating..." : "Re-evaluate Feedback"}
+          {input.isGettingFeedback ? "Getting Feedback..." : "Get Feedback"}
         </Button>
       </div>
 
-      {input.isReEvaluatingFeedback ? (
+      {input.isGettingFeedback ? (
         <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          Re-evaluating feedback. This can take a moment.
+          Generating feedback. This can take a moment.
         </div>
       ) : null}
 

@@ -20,7 +20,7 @@ type InternalData = {
   };
   ui: {
     rating: boolean;
-    reEvaluating: boolean;
+    gettingFeedback: boolean;
     error: string | null;
     info: string | null;
   };
@@ -37,7 +37,7 @@ function createInternalData(): InternalData {
     },
     ui: {
       rating: false,
-      reEvaluating: false,
+      gettingFeedback: false,
       error: null,
       info: null,
     },
@@ -68,7 +68,7 @@ export const writingReviewFlow = defineFlow<DomainData, InternalData>(
           ratedCardIds: internal.ratedCardIds,
         },
         isRatingFlashcard: internal.ui.rating,
-        isReEvaluatingFeedback: internal.ui.reEvaluating,
+        isGettingFeedback: internal.ui.gettingFeedback,
         error: internal.ui.error,
         infoMessage: internal.ui.info,
       }),
@@ -120,8 +120,8 @@ export const writingReviewFlow = defineFlow<DomainData, InternalData>(
           return "review";
         }
 
-        if (output.type === "reEvaluateFeedback") {
-          return "reEvaluate";
+        if (output.type === "getFeedback") {
+          return "getFeedback";
         }
 
         if (output.type === "rateFlashcard") {
@@ -161,7 +161,7 @@ export const writingReviewFlow = defineFlow<DomainData, InternalData>(
       onOutput: () => "review",
     },
 
-    reEvaluate: {
+    getFeedback: {
       input: (_domain, _internal, events) => ({
         session: (events?.currentWritingSession?.get() as WritingPracticeSessionResponse | null | undefined) ?? null,
       }),
@@ -172,23 +172,23 @@ export const writingReviewFlow = defineFlow<DomainData, InternalData>(
           return { ok: false };
         }
 
-        internal.ui.reEvaluating = true;
+        internal.ui.gettingFeedback = true;
         internal.ui.error = null;
-        internal.ui.info = "Re-evaluating feedback. This can take a moment.";
+        internal.ui.info = "Generating feedback. This can take a moment.";
 
         try {
           const updated = await reEvaluateWritingFeedbackAction(session.sessionId);
           if (!updated) {
-            throw new Error("Writing feedback re-evaluation was not accepted");
+            throw new Error("Writing feedback request was not accepted");
           }
 
           events?.currentWritingSession.emit(updated);
           events?.writingSessionsRefresh.emit((n: number) => n + 1);
-          internal.ui.info = "Feedback re-evaluated.";
+          internal.ui.info = "Feedback generated.";
         } catch (error) {
-          internal.ui.error = error instanceof Error ? error.message : "Failed to re-evaluate writing feedback";
+          internal.ui.error = error instanceof Error ? error.message : "Failed to generate writing feedback";
         } finally {
-          internal.ui.reEvaluating = false;
+          internal.ui.gettingFeedback = false;
         }
 
         return { ok: true };
