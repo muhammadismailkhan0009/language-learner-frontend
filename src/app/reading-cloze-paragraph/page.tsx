@@ -1,5 +1,5 @@
-import ReadingParagraphClozePageClient from "./_client_components/ReadingParagraphClozePageClient";
+import ReadingParagraphClozeFeature from "@/bootstrap/ReadingParagraphClozeFeature";
 
 export default function ReadingParagraphClozePage() {
-    return <ReadingParagraphClozePageClient />;
+    return <ReadingParagraphClozeFeature />;
 }
