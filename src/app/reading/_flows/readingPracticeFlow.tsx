@@ -1,6 +1,4 @@
 import { defineFlow } from "@myriadcodelabs/uiflow";
-import { ReadingPracticeSessionSummaryResponse } from "@/lib/types/responses/ReadingPracticeSessionSummaryResponse";
-import { ReadingPracticeSessionResponse } from "@/lib/types/responses/ReadingPracticeSessionResponse";
 import { Rating } from "@/lib/types/Rating";
 import listReadingPracticeSessionsAction from "../_server_actions/listReadingPracticeSessionsAction";
 import getReadingPracticeSessionAction from "../_server_actions/getReadingPracticeSessionAction";
@@ -9,62 +7,15 @@ import deleteReadingPracticeSessionAction from "../_server_actions/deleteReading
 import reviewReadingFlashcardAction from "../_server_actions/reviewReadingFlashcardAction";
 import detachReadingFlashcardAction from "../_server_actions/detachReadingFlashcardAction";
 import ReadingPracticeView, { ReadingPracticeViewOutput } from "../_client_components/ReadingPracticeView";
-
-type ReadingPracticeDomainData = Record<string, never>;
-
-type ReadingPracticeInternalData = {
-    flowData: {
-        sessions: ReadingPracticeSessionSummaryResponse[];
-        selectedSession: ReadingPracticeSessionResponse | null;
-        activeSessionId: string | null;
-        flashcardReview: {
-            currentIndex: number;
-            isCurrentCardFlipped: boolean;
-            ratedCardIds: string[];
-            pendingReview: {
-                cardId: string | null;
-                rating: Rating | null;
-            };
-        };
-        ui: {
-            isLoadingSessions: boolean;
-            isLoadingSessionDetail: boolean;
-            isCreatingSession: boolean;
-            isDeletingSession: boolean;
-            isRatingFlashcard: boolean;
-            error: string | null;
-            infoMessage: string | null;
-        };
-    };
-};
-
-function createInternalData(): ReadingPracticeInternalData {
-    return {
-        flowData: {
-            sessions: [],
-            selectedSession: null,
-            activeSessionId: null,
-            flashcardReview: {
-                currentIndex: 0,
-                isCurrentCardFlipped: false,
-                ratedCardIds: [],
-                pendingReview: {
-                    cardId: null,
-                    rating: null,
-                },
-            },
-            ui: {
-                isLoadingSessions: false,
-                isLoadingSessionDetail: false,
-                isCreatingSession: false,
-                isDeletingSession: false,
-                isRatingFlashcard: false,
-                error: null,
-                infoMessage: null,
-            },
-        },
-    };
-}
+import {
+    activeReadingScenario,
+    createReadingPracticeInternalData,
+    moveActiveScenario,
+    resetScenarioReview,
+    resetSessionReview,
+    type ReadingPracticeDomainData,
+    type ReadingPracticeInternalData,
+} from "./readingPracticeFlowState";
 
 export const readingPracticeFlow = defineFlow<ReadingPracticeDomainData, ReadingPracticeInternalData>(
     {
@@ -122,9 +73,8 @@ export const readingPracticeFlow = defineFlow<ReadingPracticeDomainData, Reading
 
                 try {
                     internal.flowData.selectedSession = await getReadingPracticeSessionAction(sessionId);
-                    internal.flowData.flashcardReview.currentIndex = 0;
-                    internal.flowData.flashcardReview.isCurrentCardFlipped = false;
-                    internal.flowData.flashcardReview.ratedCardIds = [];
+                    internal.flowData.activeScenarioIndex = 0;
+                    resetSessionReview(internal);
                 } catch (error) {
                     internal.flowData.ui.error = error instanceof Error ? error.message : "Failed to load reading session details";
                 } finally {
@@ -201,7 +151,7 @@ export const readingPracticeFlow = defineFlow<ReadingPracticeDomainData, Reading
                     }
 
                     const remainingCardsCount =
-                        internal.flowData.selectedSession?.vocabFlashcards.filter(
+                        activeReadingScenario(internal)?.vocabFlashcards.filter(
                             (card) => !internal.flowData.flashcardReview.ratedCardIds.includes(card.id)
                         ).length ?? 0;
 
@@ -229,6 +179,7 @@ export const readingPracticeFlow = defineFlow<ReadingPracticeDomainData, Reading
                 sessions: internal.flowData.sessions,
                 selectedSession: internal.flowData.selectedSession,
                 activeSessionId: internal.flowData.activeSessionId,
+                activeScenarioIndex: internal.flowData.activeScenarioIndex,
                 flashcardReview: internal.flowData.flashcardReview,
                 isLoadingSessions: internal.flowData.ui.isLoadingSessions,
                 isLoadingSessionDetail: internal.flowData.ui.isLoadingSessionDetail,
@@ -261,11 +212,15 @@ export const readingPracticeFlow = defineFlow<ReadingPracticeDomainData, Reading
                 if (output.type === "clearSelection") {
                     internal.flowData.selectedSession = null;
                     internal.flowData.activeSessionId = null;
-                    internal.flowData.flashcardReview.currentIndex = 0;
-                    internal.flowData.flashcardReview.isCurrentCardFlipped = false;
-                    internal.flowData.flashcardReview.ratedCardIds = [];
-                    internal.flowData.flashcardReview.pendingReview.cardId = null;
-                    internal.flowData.flashcardReview.pendingReview.rating = null;
+                    internal.flowData.activeScenarioIndex = 0;
+                    resetSessionReview(internal);
+                    return "showSessions";
+                }
+
+                if (output.type === "nextScenario" || output.type === "previousScenario") {
+                    const offset = output.type === "nextScenario" ? 1 : -1;
+                    moveActiveScenario(internal, offset);
+                    resetScenarioReview(internal);
                     return "showSessions";
                 }
 
@@ -276,7 +231,7 @@ export const readingPracticeFlow = defineFlow<ReadingPracticeDomainData, Reading
 
                 if (output.type === "nextFlashcard") {
                     const totalCards =
-                        internal.flowData.selectedSession?.vocabFlashcards.filter(
+                        activeReadingScenario(internal)?.vocabFlashcards.filter(
                             (card) => !internal.flowData.flashcardReview.ratedCardIds.includes(card.id)
                         ).length ?? 0;
                     if (totalCards <= 0) {
@@ -293,7 +248,7 @@ export const readingPracticeFlow = defineFlow<ReadingPracticeDomainData, Reading
 
                 if (output.type === "rateFlashcard") {
                     const cards =
-                        internal.flowData.selectedSession?.vocabFlashcards.filter(
+                        activeReadingScenario(internal)?.vocabFlashcards.filter(
                             (card) => !internal.flowData.flashcardReview.ratedCardIds.includes(card.id)
                         ) ?? [];
                     const currentCard = cards[internal.flowData.flashcardReview.currentIndex];
@@ -338,6 +293,6 @@ export const readingPracticeFlow = defineFlow<ReadingPracticeDomainData, Reading
     },
     {
         start: "loadSessions",
-        createInternalData,
+        createInternalData: createReadingPracticeInternalData,
     }
 );

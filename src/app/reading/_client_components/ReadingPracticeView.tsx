@@ -11,6 +11,9 @@ import { Rating } from "@/lib/types/Rating";
 import ReadingFlashcardReview from "./ReadingFlashcardReview";
 import { readingListenControlsFlow } from "../_flows/readingListenControlsFlow";
 import { readingSentenceSelectionFlow } from "../_flows/readingSentenceSelectionFlow";
+import ReadingScenarioNavigation from "./ReadingScenarioNavigation";
+import { readingScenarios } from "../_flows/readingPracticeFlowState";
+import { formatReadingDate } from "./readingPracticeViewModel";
 
 export type ReadingPracticeViewOutput =
     | { type: "reload" }
@@ -18,6 +21,8 @@ export type ReadingPracticeViewOutput =
     | { type: "openSession"; sessionId: string }
     | { type: "deleteSession"; sessionId: string }
     | { type: "clearSelection" }
+    | { type: "nextScenario" }
+    | { type: "previousScenario" }
     | { type: "flipFlashcard" }
     | { type: "rateFlashcard"; rating: Rating }
     | { type: "nextFlashcard" }
@@ -31,6 +36,7 @@ type ReadingPracticeViewProps = {
         sessions: ReadingPracticeSessionSummaryResponse[];
         selectedSession: ReadingPracticeSessionResponse | null;
         activeSessionId: string | null;
+        activeScenarioIndex: number;
         flashcardReview: {
             currentIndex: number;
             isCurrentCardFlipped: boolean;
@@ -47,24 +53,12 @@ type ReadingPracticeViewProps = {
     output: OutputHandle<ReadingPracticeViewOutput>;
 };
 
-function formatDate(dateValue: string): string {
-    if (!dateValue) {
-        return "-";
-    }
-
-    const parsed = new Date(dateValue);
-    if (Number.isNaN(parsed.getTime())) {
-        return dateValue;
-    }
-
-    return parsed.toLocaleString();
-}
-
 export default function ReadingPracticeView({ input, output }: ReadingPracticeViewProps) {
     const {
         sessions,
         selectedSession,
         activeSessionId,
+        activeScenarioIndex,
         flashcardReview,
         isLoadingSessions,
         isLoadingSessionDetail,
@@ -77,6 +71,8 @@ export default function ReadingPracticeView({ input, output }: ReadingPracticeVi
 
     const [isInfoFading, setIsInfoFading] = useState(false);
     const selectedSentence = useMemo(() => createFlowChannel<string | null>(null), []);
+    const scenarios = readingScenarios(selectedSession);
+    const activeScenario = scenarios[activeScenarioIndex] ?? scenarios[0] ?? null;
 
     useEffect(() => {
         if (!infoMessage) {
@@ -96,10 +92,10 @@ export default function ReadingPracticeView({ input, output }: ReadingPracticeVi
 
     useEffect(() => {
         selectedSentence.emit(null);
-    }, [selectedSentence, selectedSession?.sessionId]);
+    }, [selectedSentence, selectedSession?.sessionId, activeScenario?.scenarioId]);
 
-    const remainingCards = selectedSession
-        ? selectedSession.vocabFlashcards.filter((card) => !flashcardReview.ratedCardIds.includes(card.id))
+    const remainingCards = activeScenario
+        ? activeScenario.vocabFlashcards.filter((card) => !flashcardReview.ratedCardIds.includes(card.id))
         : [];
 
     return (
@@ -108,7 +104,7 @@ export default function ReadingPracticeView({ input, output }: ReadingPracticeVi
                 {selectedSession ? (
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle>{selectedSession.topic}</CardTitle>
+                            <CardTitle>{activeScenario?.topic ?? selectedSession.topic}</CardTitle>
                             <div className="flex items-center gap-2">
                                 <Button type="button" variant="outline" size="sm" onClick={() => output.emit({ type: "clearSelection" })}>
                                     Back To Sessions
@@ -125,20 +121,26 @@ export default function ReadingPracticeView({ input, output }: ReadingPracticeVi
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="text-xs text-muted-foreground">Created {formatDate(selectedSession.createdAt)}</div>
+                            <div className="text-xs text-muted-foreground">Created {formatReadingDate(selectedSession.createdAt)}</div>
+                            <ReadingScenarioNavigation
+                                activeIndex={activeScenarioIndex}
+                                scenarioCount={scenarios.length}
+                                onPrevious={() => output.emit({ type: "previousScenario" })}
+                                onNext={() => output.emit({ type: "nextScenario" })}
+                            />
                             <FlowRunner
-                                key={`reading-listen-controls-${selectedSession.sessionId}`}
+                                key={`reading-listen-controls-${selectedSession.sessionId}-${activeScenario?.scenarioId ?? "none"}`}
                                 initialData={{
-                                    readingParagraphs: selectedSession.readingParagraphs ?? [],
+                                    readingParagraphs: activeScenario?.readingParagraphs ?? [],
                                 }}
                                 flow={readingListenControlsFlow}
                                 eventChannels={{ selectedSentence }}
                             />
                             <FlowRunner
-                                key={`reading-sentence-selection-${selectedSession.sessionId}`}
+                                key={`reading-sentence-selection-${selectedSession.sessionId}-${activeScenario?.scenarioId ?? "none"}`}
                                 initialData={{
-                                    readingParagraphs: selectedSession.readingParagraphs ?? [],
-                                    fallbackReadingText: selectedSession.readingText?.trim() ?? "",
+                                    readingParagraphs: activeScenario?.readingParagraphs ?? [],
+                                    fallbackReadingText: activeScenario?.readingText?.trim() ?? "",
                                 }}
                                 flow={readingSentenceSelectionFlow}
                                 eventChannels={{ selectedSentence }}
@@ -245,7 +247,7 @@ export default function ReadingPracticeView({ input, output }: ReadingPracticeVi
                                                     return (
                                                         <TableRow key={session.sessionId}>
                                                             <TableCell className="font-medium">{session.topic}</TableCell>
-                                                            <TableCell>{formatDate(session.createdAt)}</TableCell>
+                                                            <TableCell>{formatReadingDate(session.createdAt)}</TableCell>
                                                             <TableCell>{session.vocabCount}</TableCell>
                                                             <TableCell className="max-w-[20rem] truncate">{session.readingTextPreview}</TableCell>
                                                             <TableCell className="text-right">
