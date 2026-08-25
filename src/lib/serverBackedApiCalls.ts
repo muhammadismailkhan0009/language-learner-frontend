@@ -23,6 +23,7 @@ import { GrammarRuleDraftDetailsResponse } from "./types/responses/GrammarRuleDr
 import { DeleteGrammarRuleExplanationRequest } from "./types/requests/DeleteGrammarRuleExplanationRequest";
 import { GrammarLevelReassignmentSummaryResponse } from "./types/responses/GrammarLevelReassignmentSummaryResponse";
 import { UserProfileResponse } from "./types/responses/UserProfileResponse";
+import { McpUrlResponse } from "./types/responses/McpUrlResponse";
 import { UpdateUserDifficultyLevelRequest } from "./types/requests/UpdateUserDifficultyLevelRequest";
 import { VocabularyResponse } from "./types/responses/VocabularyResponse";
 import { AddVocabularyRequest } from "./types/requests/AddVocabularyRequest";
@@ -407,6 +408,17 @@ export async function fetchUserProfile(): Promise<AxiosResponse<ApiResponse<User
         params: { userId },
     });
     return response;
+}
+
+export async function fetchMcpUrl(): Promise<AxiosResponse<ApiResponse<McpUrlResponse>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    return api.post<ApiResponse<McpUrlResponse>>("/api/v1/users/me/profile/mcp-url", undefined, {
+        params: { userId },
+    });
 }
 
 export async function updateUserDifficultyLevel(

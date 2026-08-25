@@ -270,7 +270,7 @@ export const vocabularyListFlow = defineFlow<VocabularyListDomainData, Vocabular
 
                 const refreshedVocabularies = await fetchVocabulariesAction();
                 internal.flowData.vocabularies = (refreshedVocabularies ?? []).map(mapVocabularyResponseToListItem);
-                internal.flowData.ui.clozeStatus = `Generated ${response.generatedCount} cloze sentence${response.generatedCount === 1 ? "" : "s"}.`;
+                internal.flowData.ui.clozeStatus = "Cloze generation requested. Run your MCP tool.";
             } catch (err) {
                 internal.flowData.ui.error = err instanceof Error ? err.message : "Failed to generate cloze sentences";
             } finally {
