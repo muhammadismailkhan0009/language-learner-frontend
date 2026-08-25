@@ -8,7 +8,7 @@ import { ClozeSessionList } from "./ClozeSessionList";
 export type ReadingParagraphClozeViewProps = {
     sessions: ReadingParagraphClozeSession[]; selectedSession: ReadingParagraphClozeSession | null;
     answers: ClozeAnswers; results: ClozeResults | null; limit: number; busy: string | null;
-    error: string | null; canSubmit: boolean; setLimit(value: number): void;
+    error: string | null; generationStatus: string | null; canSubmit: boolean; setLimit(value: number): void;
     setAnswer(id: string, value: string): void; load(): void; open(id: string): void;
     create(): void; remove(id: string): void; submit(): void; back(): void; clearError(): void;
 };
@@ -20,7 +20,8 @@ export function ReadingParagraphClozeView(props: ReadingParagraphClozeViewProps)
         {props.selectedSession ? <ClozePracticeDetail session={props.selectedSession} answers={props.answers} results={props.results}
             canSubmit={props.canSubmit} busy={props.busy} onAnswer={props.setAnswer} onSubmit={props.submit} onBack={props.back}
             onDelete={() => props.remove(props.selectedSession!.sessionId)} />
-            : <ClozeSessionList sessions={props.sessions} limit={props.limit} busy={props.busy} onLimit={props.setLimit}
+            : <ClozeSessionList sessions={props.sessions} limit={props.limit} busy={props.busy}
+                generationStatus={props.generationStatus} onLimit={props.setLimit}
                 onRefresh={props.load} onCreate={props.create} onOpen={props.open} onDelete={props.remove} />}
     </div></main>;
 }

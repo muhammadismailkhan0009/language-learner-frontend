@@ -13,6 +13,7 @@ export function useReadingParagraphClozeFlow(port: ReadingParagraphClozeBackendP
     const [limit, setLimit] = useState(50);
     const [busy, setBusy] = useState<"list" | "create" | "open" | "delete" | null>("list");
     const [error, setError] = useState<string | null>(null);
+    const [generationStatus, setGenerationStatus] = useState<string | null>(null);
 
     const load = useCallback(async () => {
         setBusy("list"); setError(null);
@@ -30,8 +31,8 @@ export function useReadingParagraphClozeFlow(port: ReadingParagraphClozeBackendP
         finally { setBusy(null); }
     };
     const create = async () => {
-        setBusy("create"); setError(null);
-        try { await port.create(limit); await load(); }
+        setBusy("create"); setError(null); setGenerationStatus(null);
+        try { setGenerationStatus(await port.create(limit)); setBusy(null); }
         catch (cause) { setError(message(cause, "Could not create cloze session")); setBusy(null); }
     };
     const remove = async (sessionId: string) => {
@@ -46,7 +47,7 @@ export function useReadingParagraphClozeFlow(port: ReadingParagraphClozeBackendP
         if (evaluation.allCorrect) await remove(selectedSession.sessionId);
     };
 
-    return { sessions, selectedSession, answers, results, limit, busy, error,
+    return { sessions, selectedSession, answers, results, limit, busy, error, generationStatus,
         canSubmit: selectedSession ? allBlanksAnswered(selectedSession, answers) : false,
         setLimit: (value: number) => setLimit(Math.max(1, Math.min(300, value))),
         setAnswer: (blankId: string, value: string) => { setAnswers((old) => ({ ...old, [blankId]: value })); setResults(null); },

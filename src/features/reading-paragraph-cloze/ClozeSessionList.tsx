@@ -9,9 +9,10 @@ import { ReadingParagraphClozeSession } from "@/flows/reading-paragraph-cloze/co
 import { ArrowRight, BookOpenText, RefreshCw, Sparkles, Trash2 } from "lucide-react";
 
 type Props = { sessions: ReadingParagraphClozeSession[]; limit: number; busy: string | null;
+    generationStatus: string | null;
     onLimit(value: number): void; onRefresh(): void; onCreate(): void; onOpen(id: string): void; onDelete(id: string): void };
 
-export function ClozeSessionList({ sessions, limit, busy, onLimit, onRefresh, onCreate, onOpen, onDelete }: Props) {
+export function ClozeSessionList({ sessions, limit, busy, generationStatus, onLimit, onRefresh, onCreate, onOpen, onDelete }: Props) {
     return <Card>
         <CardHeader>
             <CardTitle className="flex items-center gap-2"><BookOpenText /> Cloze practice</CardTitle>
@@ -26,6 +27,9 @@ export function ClozeSessionList({ sessions, limit, busy, onLimit, onRefresh, on
             </CardAction>
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
+            {generationStatus ? <p className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm" role="status">
+                {generationStatus}
+            </p> : null}
             <div className="flex max-w-52 flex-col gap-2">
                 <Label htmlFor="cloze-word-limit">Vocabulary limit</Label>
                 <Input id="cloze-word-limit" type="number" min={1} max={300} value={limit}

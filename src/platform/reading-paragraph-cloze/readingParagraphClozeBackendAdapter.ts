@@ -5,6 +5,7 @@ import { api } from "@/lib/apiClient";
 import { ReadingParagraphClozeSession } from "@/flows/reading-paragraph-cloze/contracts";
 
 type Envelope<T> = { response: T };
+type GenerationRequestResponse = { message: string };
 
 async function userId(): Promise<string> {
     const value = (await cookies()).get("userId")?.value;
@@ -25,12 +26,11 @@ export async function getClozeSession(sessionId: string): Promise<ReadingParagra
     return response.data.response;
 }
 
-export async function createClozeSession(limit: number): Promise<ReadingParagraphClozeSession> {
+export async function createClozeSession(limit: number): Promise<string> {
     const id = await userId();
-    const response = await api.post<Envelope<ReadingParagraphClozeSession>>(
+    const response = await api.post<Envelope<GenerationRequestResponse>>(
         "/api/v1/reading-cloze-paragraph/sessions", { userId: id, limit });
-    if (!response.data.response) throw new Error("Cloze session could not be created");
-    return response.data.response;
+    return response.data.response?.message ?? "Reading paragraph cloze generation requested. Run your MCP tool.";
 }
 
 export async function deleteClozeSession(sessionId: string): Promise<void> {

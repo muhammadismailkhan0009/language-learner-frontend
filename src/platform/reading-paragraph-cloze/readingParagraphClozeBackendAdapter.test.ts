@@ -18,8 +18,8 @@ describe("reading paragraph cloze backend adapter", () => {
         expect(mocks.get).toHaveBeenNthCalledWith(2, "/api/v1/reading-cloze-paragraph/sessions/s1", { params: { userId: "u1" } });
     });
     it("maps create and delete contracts", async () => {
-        mocks.post.mockResolvedValue({ data: { response: session } }); mocks.remove.mockResolvedValue({});
-        expect(await createClozeSession(30)).toEqual(session);
+        mocks.post.mockResolvedValue({ data: { response: { message: "Run your MCP tool." } } }); mocks.remove.mockResolvedValue({});
+        expect(await createClozeSession(30)).toBe("Run your MCP tool.");
         expect(mocks.post).toHaveBeenCalledWith("/api/v1/reading-cloze-paragraph/sessions", { userId: "u1", limit: 30 });
         await deleteClozeSession("s1");
         expect(mocks.remove).toHaveBeenCalledWith("/api/v1/reading-cloze-paragraph/sessions/s1", { params: { userId: "u1" } });

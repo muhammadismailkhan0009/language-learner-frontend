@@ -13,13 +13,13 @@ const session: ReadingParagraphClozeSession = { sessionId: "s1", learnerLevel: "
 
 describe("cloze session library", () => {
     it("shows session metadata without leaking exact answers", () => {
-        render(<ClozeSessionList sessions={[session]} limit={50} busy={null} onLimit={vi.fn()} onRefresh={vi.fn()} onCreate={vi.fn()} onOpen={vi.fn()} onDelete={vi.fn()} />);
+        render(<ClozeSessionList sessions={[session]} limit={50} busy={null} generationStatus={null} onLimit={vi.fn()} onRefresh={vi.fn()} onCreate={vi.fn()} onOpen={vi.fn()} onDelete={vi.fn()} />);
         expect(screen.getAllByText("Train journey")).toHaveLength(2);
         expect(screen.getAllByText(/A2/).length).toBeGreaterThan(0);
         expect(screen.queryByText("fährt")).not.toBeInTheDocument();
     });
     it("opens the chosen session", async () => {
-        const open = vi.fn(); render(<ClozeSessionList sessions={[session]} limit={50} busy={null} onLimit={vi.fn()} onRefresh={vi.fn()} onCreate={vi.fn()} onOpen={open} onDelete={vi.fn()} />);
+        const open = vi.fn(); render(<ClozeSessionList sessions={[session]} limit={50} busy={null} generationStatus={null} onLimit={vi.fn()} onRefresh={vi.fn()} onCreate={vi.fn()} onOpen={open} onDelete={vi.fn()} />);
         await userEvent.click(screen.getByRole("button", { name: "Open session" }));
         expect(open).toHaveBeenCalledWith("s1");
     });

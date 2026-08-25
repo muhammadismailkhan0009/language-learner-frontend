@@ -13,7 +13,7 @@ const session: ReadingParagraphClozeSession = { sessionId: "s1", learnerLevel: "
 
 function port(): ReadingParagraphClozeBackendPort {
     return { list: vi.fn().mockResolvedValue([session]), get: vi.fn().mockResolvedValue(session),
-        create: vi.fn().mockResolvedValue(session), delete: vi.fn().mockResolvedValue(undefined) };
+        create: vi.fn().mockResolvedValue("Run your MCP tool."), delete: vi.fn().mockResolvedValue(undefined) };
 }
 
 describe("reading paragraph cloze flow", () => {
@@ -57,5 +57,6 @@ describe("reading paragraph cloze flow", () => {
         await act(() => result.current.create());
         expect(backend.create).toHaveBeenCalledWith(50);
         expect(result.current.sessions).toEqual([session]);
+        expect(result.current.generationStatus).toBe("Run your MCP tool.");
     });
 });

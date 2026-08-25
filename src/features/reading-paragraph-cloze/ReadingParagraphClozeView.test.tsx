@@ -4,6 +4,7 @@ import { ReadingParagraphClozeView, ReadingParagraphClozeViewProps } from "./Rea
 
 function props(overrides: Partial<ReadingParagraphClozeViewProps> = {}): ReadingParagraphClozeViewProps {
     return { sessions: [], selectedSession: null, answers: {}, results: null, limit: 50, busy: null, error: null,
+        generationStatus: null,
         canSubmit: false, setLimit: vi.fn(), setAnswer: vi.fn(), load: vi.fn(), open: vi.fn(), create: vi.fn(),
         remove: vi.fn(), submit: vi.fn(), back: vi.fn(), clearError: vi.fn(), ...overrides };
 }
