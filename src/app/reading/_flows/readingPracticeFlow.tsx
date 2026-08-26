@@ -43,15 +43,17 @@ export const readingPracticeFlow = defineFlow<ReadingPracticeDomainData, Reading
             render: {
                 mode: "preserve-previous",
             },
-            action: (_input, _domain, internal) => {
+            action: async (_input, _domain, internal) => {
+                internal.flowData.ui.isCreatingSession = true;
                 internal.flowData.ui.error = null;
-                internal.flowData.ui.infoMessage = "You'll see content in list when done.";
-                internal.flowData.ui.isCreatingSession = false;
+                internal.flowData.ui.infoMessage = null;
 
                 try {
-                    void createReadingPracticeSessionAction();
+                    internal.flowData.ui.infoMessage = await createReadingPracticeSessionAction();
                 } catch (error) {
                     internal.flowData.ui.error = error instanceof Error ? error.message : "Failed to create reading session";
+                } finally {
+                    internal.flowData.ui.isCreatingSession = false;
                 }
 
                 return { ok: true };

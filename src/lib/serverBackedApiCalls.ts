@@ -39,6 +39,7 @@ import { ReadingPracticeSessionResponse } from "./types/responses/ReadingPractic
 import { WritingPracticeSessionSummaryResponse } from "./types/responses/WritingPracticeSessionSummaryResponse";
 import { WritingPracticeSessionResponse } from "./types/responses/WritingPracticeSessionResponse";
 import { GenerateVocabularyClozeSentencesResponse } from "./types/responses/GenerateVocabularyClozeSentencesResponse";
+import { ReadingPracticeGenerationRequestResponse } from "./types/responses/ReadingPracticeGenerationRequestResponse";
 import { VocabularyFlashCardView } from "./types/responses/VocabularyFlashCardView";
 import { ExtractPracticeVocabularyRequest } from "./types/requests/ExtractPracticeVocabularyRequest";
 import { ExtractPracticeVocabularyResponse } from "./types/responses/ExtractPracticeVocabularyResponse";
@@ -593,7 +594,7 @@ export async function listReadingPracticeSessions(): Promise<AxiosResponse<ApiRe
     return response;
 }
 
-export async function createReadingPracticeSession(): Promise<AxiosResponse<void>> {
+export async function createReadingPracticeSession(): Promise<AxiosResponse<ApiResponse<ReadingPracticeGenerationRequestResponse>>> {
     const userId = (await cookies()).get("userId")?.value;
     if (!userId) {
         throw new Error("Missing userId cookie");
@@ -601,7 +602,10 @@ export async function createReadingPracticeSession(): Promise<AxiosResponse<void
 
     const requestBody: CreateReadingPracticeSessionRequest = { userId };
 
-    const response = await api.post<void>("/api/v1/reading-practice/sessions", requestBody);
+    const response = await api.post<ApiResponse<ReadingPracticeGenerationRequestResponse>>(
+        "/api/v1/reading-practice/sessions",
+        requestBody
+    );
     return response;
 }
 

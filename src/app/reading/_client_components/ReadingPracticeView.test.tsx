@@ -58,6 +58,15 @@ function input(activeScenarioIndex: number) {
 }
 
 describe("reading scenario navigation", () => {
+    it("announces the MCP generation instruction", () => {
+        render(<ReadingPracticeView
+            input={{ ...input(0), selectedSession: null, infoMessage: "Reading exercise generation requested. Run your MCP tool." }}
+            output={{ emit: vi.fn() }}
+        />);
+
+        expect(screen.getByRole("status")).toHaveTextContent("Run your MCP tool");
+    });
+
     it("shows active scenario and emits next intent", () => {
         const emit = vi.fn();
         const { rerender } = render(<ReadingPracticeView input={input(0)} output={{ emit }} />);
