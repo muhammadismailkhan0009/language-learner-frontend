@@ -49,7 +49,7 @@ export default function WritingSessionsListFlowView({ input, output }: Props) {
         />
 
         {input.infoMessage ? (
-          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <div role="status" aria-live="polite" className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
             {input.infoMessage}
             <Button type="button" size="sm" variant="ghost" onClick={() => output.emit({ type: "clearInfo" })}>
               Dismiss

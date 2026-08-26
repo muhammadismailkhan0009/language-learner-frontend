@@ -6,10 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getFlashCardBackText, getFlashCardFrontText } from "@/lib/flashcards/flashCardText";
 import { WritingPracticeSessionResponse } from "@/lib/types/responses/WritingPracticeSessionResponse";
 import { WritingScreenMode } from "../types";
+import { activeWritingScenario } from "../_flows/writingScenarioState";
+import WritingScenarioNavigation from "./WritingScenarioNavigation";
 
 export type WritingSessionShellFlowViewOutput =
   | { type: "back" }
   | { type: "deleteSession" }
+  | { type: "previousScenario" }
+  | { type: "nextScenario" }
   | { type: "clearError" }
   | { type: "clearInfo" };
 
@@ -17,6 +21,7 @@ type Props = {
   input: {
     mode: WritingScreenMode;
     session: WritingPracticeSessionResponse | null;
+    activeScenarioIndex: number;
     isLoadingSessionDetail: boolean;
     isDeletingSession: boolean;
     reviewedCardsCount: number;
@@ -44,11 +49,13 @@ export default function WritingSessionShellFlowView({ input, output }: Props) {
     return null;
   }
 
+  const scenario = activeWritingScenario(input.session, input.activeScenarioIndex);
+
   return (
     <>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>{input.session?.topic ?? "Writing Session"}</CardTitle>
+          <CardTitle>{scenario?.topic ?? "Writing Session"}</CardTitle>
           <div className="flex items-center gap-2">
             <Button type="button" variant="outline" size="sm" onClick={() => output.emit({ type: "back" })}>
               Back To Sessions
@@ -74,21 +81,28 @@ export default function WritingSessionShellFlowView({ input, output }: Props) {
             <>
               <div className="text-xs text-muted-foreground">
                 Created {formatDate(input.session.createdAt)}
-                {input.session.submittedAt ? ` • Submitted ${formatDate(input.session.submittedAt)}` : ""}
+                {scenario?.submittedAt ? ` • Submitted ${formatDate(scenario.submittedAt)}` : ""}
               </div>
+
+              <WritingScenarioNavigation
+                activeIndex={input.activeScenarioIndex}
+                scenarioCount={input.session.scenarios.length}
+                onPrevious={() => output.emit({ type: "previousScenario" })}
+                onNext={() => output.emit({ type: "nextScenario" })}
+              />
 
               <div className="space-y-2">
                 <h3 className="text-sm font-semibold">English Prompt</h3>
                 <div className="whitespace-pre-wrap rounded-md border p-4 text-sm leading-6">
-                  {input.session.englishParagraph?.trim() || "No English prompt available yet."}
+                  {scenario?.englishParagraph?.trim() || "No English prompt available yet."}
                 </div>
               </div>
 
               <div className="space-y-2">
                 <h3 className="text-sm font-semibold">Target Practice Vocabulary</h3>
-                {input.session.vocabFlashcards.length > 0 ? (
+                {scenario && scenario.vocabFlashcards.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {input.session.vocabFlashcards.map((card) => (
+                    {scenario.vocabFlashcards.map((card) => (
                       <span key={card.id} className="rounded-full border px-3 py-1 text-xs">
                         {getFlashCardFrontText(card)?.trim() || getFlashCardBackText(card)?.trim() || "Vocabulary"}
                       </span>
@@ -102,9 +116,9 @@ export default function WritingSessionShellFlowView({ input, output }: Props) {
               <div className="rounded-md border bg-muted/30 p-4">
                 <div className="text-sm font-medium">Cards To Review</div>
                 <div className="mt-1 text-sm text-muted-foreground">
-                  {Math.max(input.session.vocabFlashcards.length - input.reviewedCardsCount, 0)} of {input.session.vocabFlashcards.length} remaining
+                  {Math.max((scenario?.vocabFlashcards.length ?? 0) - input.reviewedCardsCount, 0)} of {scenario?.vocabFlashcards.length ?? 0} remaining
                 </div>
-                {!input.session.submittedAt ? (
+                {!scenario?.submittedAt ? (
                   <div className="mt-2 text-sm text-muted-foreground">Review cards unlock after you submit your answer.</div>
                 ) : null}
               </div>

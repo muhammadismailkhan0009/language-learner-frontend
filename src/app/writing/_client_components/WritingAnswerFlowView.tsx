@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { WritingPracticeSessionResponse } from "@/lib/types/responses/WritingPracticeSessionResponse";
 import { WritingScreenMode } from "../types";
+import { activeWritingScenario } from "../_flows/writingScenarioState";
 
 export type WritingAnswerFlowViewOutput =
   | { type: "updateDraftAnswer"; value: string }
@@ -18,6 +19,7 @@ type Props = {
   input: {
     mode: WritingScreenMode;
     session: WritingPracticeSessionResponse | null;
+    activeScenarioIndex: number;
     draftAnswer: string;
     isSubmittingAnswer: boolean;
     error: string | null;
@@ -27,7 +29,8 @@ type Props = {
 };
 
 export default function WritingAnswerFlowView({ input, output }: Props) {
-  if (input.mode !== "detail" || !input.session || input.session.submittedAt) {
+  const scenario = activeWritingScenario(input.session, input.activeScenarioIndex);
+  if (input.mode !== "detail" || !input.session || !scenario || scenario.submittedAt) {
     return null;
   }
 

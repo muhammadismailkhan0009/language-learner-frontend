@@ -4,8 +4,9 @@ import deleteWritingPracticeSessionAction from "../_server_actions/deleteWriting
 import getWritingPracticeSessionAction from "../_server_actions/getWritingPracticeSessionAction";
 import WritingSessionShellFlowView, { WritingSessionShellFlowViewOutput } from "../_client_components/WritingSessionShellFlowView";
 import { WritingScreenMode } from "../types";
+import { nextWritingScenarioIndex } from "./writingScenarioState";
 
-type DomainData = {};
+type DomainData = Record<string, never>;
 
 type InternalData = {
   session: WritingPracticeSessionResponse | null;
@@ -35,6 +36,7 @@ export const writingSessionShellFlow = defineFlow<DomainData, InternalData>(
       input: (_domain, internal, events) => ({
         mode: (events?.screenMode?.get() as WritingScreenMode | undefined) ?? "list",
         session: internal.session,
+        activeScenarioIndex: (events?.activeWritingScenarioIndex?.get() as number | undefined) ?? 0,
         isLoadingSessionDetail: internal.ui.loading,
         isDeletingSession: internal.ui.deleting,
         reviewedCardsCount: ((events?.writingReviewedCardIds?.get() as string[] | undefined) ?? []).length,
@@ -49,12 +51,22 @@ export const writingSessionShellFlow = defineFlow<DomainData, InternalData>(
           events?.currentWritingSession.emit(null);
           events?.selectedWritingSessionId.emit(null);
           events?.writingReviewedCardIds.emit([]);
+          events?.activeWritingScenarioIndex.emit(0);
           events?.screenMode.emit("list");
           return "shell";
         }
 
         if (output.type === "deleteSession") {
           return "delete";
+        }
+
+        if (output.type === "previousScenario" || output.type === "nextScenario") {
+          const current = (events?.activeWritingScenarioIndex?.get() as number | undefined) ?? 0;
+          const offset = output.type === "nextScenario" ? 1 : -1;
+          const next = nextWritingScenarioIndex(current, internal.session?.scenarios.length ?? 0, offset);
+          events?.activeWritingScenarioIndex.emit(next);
+          events?.writingReviewedCardIds.emit([]);
+          return "shell";
         }
 
         if (output.type === "clearError") {
@@ -80,6 +92,7 @@ export const writingSessionShellFlow = defineFlow<DomainData, InternalData>(
           internal.session = null;
           events?.currentWritingSession.emit(null);
           events?.writingReviewedCardIds.emit([]);
+          events?.activeWritingScenarioIndex.emit(0);
           return { ok: true };
         }
 
@@ -87,12 +100,16 @@ export const writingSessionShellFlow = defineFlow<DomainData, InternalData>(
         internal.ui.error = null;
 
         try {
+          const isNewSession = internal.session?.sessionId !== sessionId;
           const session = await getWritingPracticeSessionAction(sessionId);
           if (!session) {
             throw new Error("Writing session not found");
           }
 
           internal.session = session;
+          if (isNewSession) {
+            events?.activeWritingScenarioIndex.emit(0);
+          }
           events?.currentWritingSession.emit(session);
           events?.writingReviewedCardIds.emit([]);
         } catch (error) {
@@ -100,6 +117,7 @@ export const writingSessionShellFlow = defineFlow<DomainData, InternalData>(
           internal.session = null;
           events?.currentWritingSession.emit(null);
           events?.writingReviewedCardIds.emit([]);
+          events?.activeWritingScenarioIndex.emit(0);
         } finally {
           internal.ui.loading = false;
         }

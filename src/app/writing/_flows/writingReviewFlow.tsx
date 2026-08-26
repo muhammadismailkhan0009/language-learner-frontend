@@ -1,12 +1,13 @@
 import { defineFlow } from "@myriadcodelabs/uiflow";
 import { Rating } from "@/lib/types/Rating";
-import { WritingPracticeSessionResponse } from "@/lib/types/responses/WritingPracticeSessionResponse";
+import { WritingPracticeScenarioResponse, WritingPracticeSessionResponse } from "@/lib/types/responses/WritingPracticeSessionResponse";
 import { WritingVocabularyFlashCardView } from "@/lib/types/responses/WritingVocabularyFlashCardView";
 import detachWritingFlashcardAction from "../_server_actions/detachWritingFlashcardAction";
 import reEvaluateWritingFeedbackAction from "../_server_actions/reEvaluateWritingFeedbackAction";
 import reviewWritingFlashcardAction from "../_server_actions/reviewWritingFlashcardAction";
 import WritingReviewFlowView, { WritingReviewFlowViewOutput } from "../_client_components/WritingReviewFlowView";
 import { WritingScreenMode } from "../types";
+import { activeWritingScenario } from "./writingScenarioState";
 
 type DomainData = Record<string, never>;
 
@@ -44,8 +45,8 @@ function createInternalData(): InternalData {
   };
 }
 
-function getRemainingCards(session: WritingPracticeSessionResponse | null, ratedIds: string[]) {
-  return session?.vocabFlashcards.filter((card) => !ratedIds.includes(card.id)) ?? [];
+function getRemainingCards(scenario: WritingPracticeScenarioResponse | null, ratedIds: string[]) {
+  return scenario?.vocabFlashcards.filter((card) => !ratedIds.includes(card.id)) ?? [];
 }
 
 function resetReviewState(internal: InternalData) {
@@ -62,6 +63,7 @@ export const writingReviewFlow = defineFlow<DomainData, InternalData>(
       input: (_domain, internal, events) => ({
         mode: (events?.screenMode?.get() as WritingScreenMode | undefined) ?? "list",
         session: (events?.currentWritingSession?.get() as WritingPracticeSessionResponse | null | undefined) ?? null,
+        activeScenarioIndex: (events?.activeWritingScenarioIndex?.get() as number | undefined) ?? 0,
         flashcardReview: {
           currentIndex: internal.currentIndex,
           isCurrentCardFlipped: internal.flipped,
@@ -75,7 +77,8 @@ export const writingReviewFlow = defineFlow<DomainData, InternalData>(
       view: WritingReviewFlowView,
       onOutput: (_domain, internal, output: WritingReviewFlowViewOutput, events) => {
         const session = (events?.currentWritingSession?.get() as WritingPracticeSessionResponse | null | undefined) ?? null;
-        if (!session?.submittedAt) {
+        const scenario = activeWritingScenario(session, (events?.activeWritingScenarioIndex?.get() as number | undefined) ?? 0);
+        if (!scenario?.submittedAt) {
           return "review";
         }
 
@@ -95,7 +98,7 @@ export const writingReviewFlow = defineFlow<DomainData, InternalData>(
         }
 
         if (output.type === "nextFlashcard") {
-          const count = getRemainingCards(session, internal.ratedCardIds).length;
+          const count = getRemainingCards(scenario, internal.ratedCardIds).length;
           if (count <= 0) {
             return "review";
           }
@@ -125,7 +128,7 @@ export const writingReviewFlow = defineFlow<DomainData, InternalData>(
         }
 
         if (output.type === "rateFlashcard") {
-          const card = getRemainingCards(session, internal.ratedCardIds)[internal.currentIndex];
+          const card = getRemainingCards(scenario, internal.ratedCardIds)[internal.currentIndex];
           if (!card) {
             return "review";
           }
@@ -142,16 +145,18 @@ export const writingReviewFlow = defineFlow<DomainData, InternalData>(
       input: (_domain, _internal, events) => ({
         mode: (events?.screenMode?.get() as WritingScreenMode | undefined) ?? "list",
         session: (events?.currentWritingSession?.get() as WritingPracticeSessionResponse | null | undefined) ?? null,
+        activeScenarioIndex: (events?.activeWritingScenarioIndex?.get() as number | undefined) ?? 0,
       }),
-      action: async ({ mode, session }, _domain, internal, events) => {
+      action: async ({ mode, session, activeScenarioIndex }, _domain, internal, events) => {
         if (mode !== "detail" || !session) {
           resetReviewState(internal);
           events?.writingReviewedCardIds.emit([]);
           return { ok: true };
         }
 
+        const scenario = activeWritingScenario(session, activeScenarioIndex);
         const reviewed = (events?.writingReviewedCardIds?.get() as string[] | undefined) ?? [];
-        internal.ratedCardIds = reviewed.filter((id) => session.vocabFlashcards.some((card: WritingVocabularyFlashCardView) => card.id === id));
+        internal.ratedCardIds = reviewed.filter((id) => scenario?.vocabFlashcards.some((card: WritingVocabularyFlashCardView) => card.id === id));
         internal.currentIndex = 0;
         internal.flipped = false;
         internal.pending.cardId = null;
@@ -164,11 +169,15 @@ export const writingReviewFlow = defineFlow<DomainData, InternalData>(
     getFeedback: {
       input: (_domain, _internal, events) => ({
         session: (events?.currentWritingSession?.get() as WritingPracticeSessionResponse | null | undefined) ?? null,
+        scenario: activeWritingScenario(
+          (events?.currentWritingSession?.get() as WritingPracticeSessionResponse | null | undefined) ?? null,
+          (events?.activeWritingScenarioIndex?.get() as number | undefined) ?? 0,
+        ),
       }),
       render: { mode: "preserve-previous" },
-      action: async ({ session }, _domain, internal, events) => {
-        if (!session?.sessionId) {
-          internal.ui.error = "No writing session selected.";
+      action: async ({ session, scenario }, _domain, internal, events) => {
+        if (!session?.sessionId || !scenario?.scenarioId) {
+          internal.ui.error = "No writing scenario selected.";
           return { ok: false };
         }
 
@@ -177,7 +186,7 @@ export const writingReviewFlow = defineFlow<DomainData, InternalData>(
         internal.ui.info = "Generating feedback. This can take a moment.";
 
         try {
-          const updated = await reEvaluateWritingFeedbackAction(session.sessionId);
+          const updated = await reEvaluateWritingFeedbackAction(session.sessionId, scenario.scenarioId);
           if (!updated) {
             throw new Error("Writing feedback request was not accepted");
           }
@@ -199,12 +208,16 @@ export const writingReviewFlow = defineFlow<DomainData, InternalData>(
     rate: {
       input: (_domain, internal, events) => ({
         session: (events?.currentWritingSession?.get() as WritingPracticeSessionResponse | null | undefined) ?? null,
+        scenario: activeWritingScenario(
+          (events?.currentWritingSession?.get() as WritingPracticeSessionResponse | null | undefined) ?? null,
+          (events?.activeWritingScenarioIndex?.get() as number | undefined) ?? 0,
+        ),
         cardId: internal.pending.cardId,
         rating: internal.pending.rating,
       }),
       render: { mode: "preserve-previous" },
-      action: async ({ session, cardId, rating }, _domain, internal, events) => {
-        if (!session?.sessionId || !cardId || !rating) {
+      action: async ({ session, scenario, cardId, rating }, _domain, internal, events) => {
+        if (!session?.sessionId || !scenario?.scenarioId || !cardId || !rating) {
           return { ok: false };
         }
 
@@ -222,14 +235,16 @@ export const writingReviewFlow = defineFlow<DomainData, InternalData>(
           events?.writingReviewedCardIds.emit(nextRatedIds);
 
           if (rating === Rating.GOOD || rating === Rating.EASY) {
-            const detached = await detachWritingFlashcardAction(session.sessionId, cardId);
+            const detached = await detachWritingFlashcardAction(session.sessionId, scenario.scenarioId, cardId);
             if (!detached) {
               throw new Error("Flashcard was reviewed but could not be detached from the writing session");
             }
 
             events?.currentWritingSession.emit({
               ...session,
-              vocabFlashcards: session.vocabFlashcards.filter((card: WritingVocabularyFlashCardView) => card.id !== cardId),
+              scenarios: session.scenarios.map((item: WritingPracticeScenarioResponse) => item.scenarioId === scenario.scenarioId
+                ? { ...item, vocabFlashcards: item.vocabFlashcards.filter((card: WritingVocabularyFlashCardView) => card.id !== cardId) }
+                : item),
             });
 
             internal.ui.info = "Card reviewed and removed from this writing session.";
@@ -238,7 +253,11 @@ export const writingReviewFlow = defineFlow<DomainData, InternalData>(
           internal.ui.error = error instanceof Error ? error.message : "Failed to rate flashcard";
         } finally {
           const currentSession = ((events?.currentWritingSession?.get() as WritingPracticeSessionResponse | null | undefined) ?? session);
-          const remainingCount = getRemainingCards(currentSession, internal.ratedCardIds).length;
+          const currentScenario = activeWritingScenario(
+            currentSession,
+            (events?.activeWritingScenarioIndex?.get() as number | undefined) ?? 0,
+          );
+          const remainingCount = getRemainingCards(currentScenario, internal.ratedCardIds).length;
 
           internal.currentIndex = remainingCount > 0 ? Math.min(internal.currentIndex, remainingCount - 1) : 0;
           internal.flipped = false;
@@ -269,6 +288,7 @@ export const writingReviewFlow = defineFlow<DomainData, InternalData>(
         }
         return "review";
       },
+      activeWritingScenarioIndex: () => "syncReview",
     },
     createInternalData,
   }

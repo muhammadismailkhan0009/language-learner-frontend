@@ -14,6 +14,7 @@ export default function WritingPageClient() {
     const selectedWritingSessionId = useMemo(() => createFlowChannel<string | null>(null), []);
     const writingSessionsRefresh = useMemo(() => createFlowChannel<number>(0), []);
     const currentWritingSession = useMemo(() => createFlowChannel<WritingPracticeSessionResponse | null>(null), []);
+    const activeWritingScenarioIndex = useMemo(() => createFlowChannel<number>(0), []);
     const writingReviewedCardIds = useMemo(() => createFlowChannel<string[]>([]), []);
 
     return (
@@ -28,17 +29,17 @@ export default function WritingPageClient() {
                     <FlowRunner
                         initialData={{}}
                         flow={writingSessionShellFlow}
-                        eventChannels={{ screenMode, selectedWritingSessionId, writingSessionsRefresh, currentWritingSession, writingReviewedCardIds }}
+                        eventChannels={{ screenMode, selectedWritingSessionId, writingSessionsRefresh, currentWritingSession, activeWritingScenarioIndex, writingReviewedCardIds }}
                     />
                     <FlowRunner
                         initialData={{}}
                         flow={writingAnswerFlow}
-                        eventChannels={{ screenMode, selectedWritingSessionId, writingSessionsRefresh, currentWritingSession }}
+                        eventChannels={{ screenMode, selectedWritingSessionId, writingSessionsRefresh, currentWritingSession, activeWritingScenarioIndex }}
                     />
                     <FlowRunner
                         initialData={{}}
                         flow={writingReviewFlow}
-                        eventChannels={{ screenMode, selectedWritingSessionId, writingSessionsRefresh, currentWritingSession, writingReviewedCardIds }}
+                        eventChannels={{ screenMode, selectedWritingSessionId, writingSessionsRefresh, currentWritingSession, activeWritingScenarioIndex, writingReviewedCardIds }}
                     />
                 </div>
             </div>

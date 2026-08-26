@@ -5,7 +5,7 @@ import listWritingPracticeSessionsAction from "../_server_actions/listWritingPra
 import WritingSessionsListFlowView, { WritingSessionsListFlowViewOutput } from "../_client_components/WritingSessionsListFlowView";
 import { WritingScreenMode } from "../types";
 
-type DomainData = {};
+type DomainData = Record<string, never>;
 
 type InternalData = {
   sessions: WritingPracticeSessionSummaryResponse[];

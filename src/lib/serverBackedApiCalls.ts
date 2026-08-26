@@ -691,6 +691,7 @@ export async function getWritingPracticeSession(
 
 export async function submitWritingPracticeAnswer(
     sessionId: string,
+    scenarioId: string,
     submittedAnswer: string,
     draft = false
 ): Promise<AxiosResponse<void>> {
@@ -704,14 +705,15 @@ export async function submitWritingPracticeAnswer(
         submittedAnswer,
     };
 
-    const response = await api.post<void>(`/api/v1/writing-practice/sessions/${sessionId}/submission`, requestBody, {
+    const response = await api.post<void>(`/api/v1/writing-practice/sessions/${sessionId}/scenarios/${scenarioId}/submission`, requestBody, {
         params: { draft },
     });
     return response;
 }
 
 export async function reEvaluateWritingFeedback(
-    sessionId: string
+    sessionId: string,
+    scenarioId: string
 ): Promise<AxiosResponse<ApiResponse<WritingPracticeSessionResponse>>> {
     const userId = (await cookies()).get("userId")?.value;
     if (!userId) {
@@ -719,7 +721,7 @@ export async function reEvaluateWritingFeedback(
     }
 
     const response = await api.post<ApiResponse<WritingPracticeSessionResponse>>(
-        `/api/v1/writing-practice/sessions/${sessionId}/feedback/re-evaluate`,
+        `/api/v1/writing-practice/sessions/${sessionId}/scenarios/${scenarioId}/feedback/re-evaluate`,
         null,
         { params: { userId } }
     );
@@ -740,6 +742,7 @@ export async function deleteWritingPracticeSession(sessionId: string): Promise<A
 
 export async function detachWritingPracticeFlashcard(
     sessionId: string,
+    scenarioId: string,
     flashcardId: string
 ): Promise<AxiosResponse<void>> {
     const userId = (await cookies()).get("userId")?.value;
@@ -747,7 +750,7 @@ export async function detachWritingPracticeFlashcard(
         throw new Error("Missing userId cookie");
     }
 
-    const response = await api.delete<void>(`/api/v1/writing-practice/sessions/${sessionId}/flashcards/${flashcardId}`, {
+    const response = await api.delete<void>(`/api/v1/writing-practice/sessions/${sessionId}/scenarios/${scenarioId}/flashcards/${flashcardId}`, {
         params: { userId },
     });
     return response;

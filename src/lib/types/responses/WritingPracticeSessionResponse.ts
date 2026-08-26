@@ -32,8 +32,9 @@ export type WritingMicroPracticeItem = {
     expectedAnswer: string | null;
 };
 
-export type WritingPracticeSessionResponse = {
-    sessionId: string;
+export type WritingPracticeScenarioResponse = {
+    scenarioId: string;
+    position: number;
     topic: string;
     englishParagraph: string;
     germanParagraph: string;
@@ -44,5 +45,10 @@ export type WritingPracticeSessionResponse = {
     feedbackGeneratedAt: string | null;
     sentencePairs: WritingSentencePairResponse[];
     vocabFlashcards: WritingVocabularyFlashCardView[];
+};
+
+export type WritingPracticeSessionResponse = {
+    sessionId: string;
+    scenarios: WritingPracticeScenarioResponse[];
     createdAt: string;
 };

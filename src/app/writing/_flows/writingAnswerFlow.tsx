@@ -3,6 +3,7 @@ import { WritingPracticeSessionResponse } from "@/lib/types/responses/WritingPra
 import submitWritingPracticeAnswerAction from "../_server_actions/submitWritingPracticeAnswerAction";
 import WritingAnswerFlowView, { WritingAnswerFlowViewOutput } from "../_client_components/WritingAnswerFlowView";
 import { WritingScreenMode } from "../types";
+import { activeWritingScenario } from "./writingScenarioState";
 
 type DomainData = Record<string, never>;
 
@@ -34,6 +35,7 @@ export const writingAnswerFlow = defineFlow<DomainData, InternalData>(
       input: (_domain, internal, events) => ({
         mode: (events?.screenMode?.get() as WritingScreenMode | undefined) ?? "list",
         session: (events?.currentWritingSession?.get() as WritingPracticeSessionResponse | null | undefined) ?? null,
+        activeScenarioIndex: (events?.activeWritingScenarioIndex?.get() as number | undefined) ?? 0,
         draftAnswer: internal.draftAnswer,
         isSubmittingAnswer: internal.ui.submitting,
         error: internal.ui.error,
@@ -72,14 +74,15 @@ export const writingAnswerFlow = defineFlow<DomainData, InternalData>(
       input: (_domain, _internal, events) => ({
         mode: (events?.screenMode?.get() as WritingScreenMode | undefined) ?? "list",
         session: (events?.currentWritingSession?.get() as WritingPracticeSessionResponse | null | undefined) ?? null,
+        activeScenarioIndex: (events?.activeWritingScenarioIndex?.get() as number | undefined) ?? 0,
       }),
-      action: async ({ mode, session }, _domain, internal) => {
+      action: async ({ mode, session, activeScenarioIndex }, _domain, internal) => {
         if (mode !== "detail" || !session) {
           internal.draftAnswer = "";
           return { ok: true };
         }
 
-        internal.draftAnswer = session.submittedAnswer ?? "";
+        internal.draftAnswer = activeWritingScenario(session, activeScenarioIndex)?.submittedAnswer ?? "";
         return { ok: true };
       },
       onOutput: () => "form",
@@ -88,13 +91,17 @@ export const writingAnswerFlow = defineFlow<DomainData, InternalData>(
     submit: {
       input: (_domain, internal, events) => ({
         session: (events?.currentWritingSession?.get() as WritingPracticeSessionResponse | null | undefined) ?? null,
+        scenario: activeWritingScenario(
+          (events?.currentWritingSession?.get() as WritingPracticeSessionResponse | null | undefined) ?? null,
+          (events?.activeWritingScenarioIndex?.get() as number | undefined) ?? 0,
+        ),
         answer: internal.draftAnswer.trim(),
         draft: internal.submitAsDraft,
       }),
       render: { mode: "preserve-previous" },
-      action: async ({ session, answer, draft }, _domain, internal, events) => {
-        if (!session?.sessionId) {
-          internal.ui.error = "No writing session selected.";
+      action: async ({ session, scenario, answer, draft }, _domain, internal, events) => {
+        if (!session?.sessionId || !scenario?.scenarioId) {
+          internal.ui.error = "No writing scenario selected.";
           return { ok: false };
         }
 
@@ -108,7 +115,7 @@ export const writingAnswerFlow = defineFlow<DomainData, InternalData>(
         internal.ui.info = null;
 
         try {
-          const accepted = await submitWritingPracticeAnswerAction(session.sessionId, answer, draft);
+          const accepted = await submitWritingPracticeAnswerAction(session.sessionId, scenario.scenarioId, answer, draft);
           if (!accepted) {
             throw new Error(draft ? "Writing draft save was not accepted" : "Writing answer submission was not accepted");
           }
@@ -144,6 +151,7 @@ export const writingAnswerFlow = defineFlow<DomainData, InternalData>(
         }
         return "form";
       },
+      activeWritingScenarioIndex: () => "syncDraft",
     },
     createInternalData,
   }

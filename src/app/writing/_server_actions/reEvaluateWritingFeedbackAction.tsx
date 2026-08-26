@@ -4,9 +4,10 @@ import { reEvaluateWritingFeedback } from "@/lib/serverBackedApiCalls";
 import { WritingPracticeSessionResponse } from "@/lib/types/responses/WritingPracticeSessionResponse";
 
 export default async function reEvaluateWritingFeedbackAction(
-    sessionId: string
+    sessionId: string,
+    scenarioId: string
 ): Promise<WritingPracticeSessionResponse | null> {
-    const response = await reEvaluateWritingFeedback(sessionId);
+    const response = await reEvaluateWritingFeedback(sessionId, scenarioId);
 
     if (response.status === 200) {
         return response.data.response ?? null;

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Rating } from "@/lib/types/Rating";
 import { WritingPracticeSessionResponse } from "@/lib/types/responses/WritingPracticeSessionResponse";
 import { WritingScreenMode } from "../types";
+import { activeWritingScenario } from "../_flows/writingScenarioState";
 import WritingFlashcardReview from "./WritingFlashcardReview";
 import WritingStructuredFeedbackView from "./WritingStructuredFeedbackView";
 
@@ -23,6 +24,7 @@ type Props = {
   input: {
     mode: WritingScreenMode;
     session: WritingPracticeSessionResponse | null;
+    activeScenarioIndex: number;
     flashcardReview: {
       currentIndex: number;
       isCurrentCardFlipped: boolean;
@@ -50,11 +52,12 @@ function formatDate(dateValue: string): string {
 }
 
 export default function WritingReviewFlowView({ input, output }: Props) {
-  if (input.mode !== "detail" || !input.session || !input.session.submittedAt) {
+  const scenario = activeWritingScenario(input.session, input.activeScenarioIndex);
+  if (input.mode !== "detail" || !input.session || !scenario?.submittedAt) {
     return null;
   }
 
-  const remainingCards = input.session.vocabFlashcards.filter((card) => !input.flashcardReview.ratedCardIds.includes(card.id));
+  const remainingCards = scenario.vocabFlashcards.filter((card) => !input.flashcardReview.ratedCardIds.includes(card.id));
   const currentCard = remainingCards[input.flashcardReview.currentIndex] ?? null;
 
   return (
@@ -65,7 +68,7 @@ export default function WritingReviewFlowView({ input, output }: Props) {
         </CardHeader>
         <CardContent>
           <div className="whitespace-pre-wrap rounded-md border p-4 text-sm leading-6">
-            {input.session.submittedAnswer?.trim() || "No submitted answer recorded."}
+            {scenario.submittedAnswer?.trim() || "No submitted answer recorded."}
           </div>
         </CardContent>
       </Card>
@@ -76,14 +79,14 @@ export default function WritingReviewFlowView({ input, output }: Props) {
         </CardHeader>
         <CardContent>
           <div className="whitespace-pre-wrap rounded-md border p-4 text-sm leading-6">
-            {input.session.germanParagraph?.trim() || "No German reference available yet."}
+            {scenario.germanParagraph?.trim() || "No German reference available yet."}
           </div>
         </CardContent>
       </Card>
 
       <div className="flex flex-wrap items-center justify-between gap-2">
-        {input.session.feedbackGeneratedAt ? (
-          <div className="text-xs text-muted-foreground">Feedback generated {formatDate(input.session.feedbackGeneratedAt)}</div>
+        {scenario.feedbackGeneratedAt ? (
+          <div className="text-xs text-muted-foreground">Feedback generated {formatDate(scenario.feedbackGeneratedAt)}</div>
         ) : (
           <div className="text-xs text-muted-foreground">No generated feedback yet.</div>
         )}
@@ -104,8 +107,8 @@ export default function WritingReviewFlowView({ input, output }: Props) {
         </div>
       ) : null}
 
-      {input.session.structuredFeedback ? (
-        <WritingStructuredFeedbackView feedback={input.session.structuredFeedback} />
+      {scenario.structuredFeedback ? (
+        <WritingStructuredFeedbackView feedback={scenario.structuredFeedback} />
       ) : (
         <Card>
           <CardHeader>
@@ -113,7 +116,7 @@ export default function WritingReviewFlowView({ input, output }: Props) {
           </CardHeader>
           <CardContent>
             <div className="whitespace-pre-wrap rounded-md border p-4 text-sm leading-6">
-              {input.session.feedbackText?.trim() || "No feedback available yet."}
+              {scenario.feedbackText?.trim() || "No feedback available yet."}
             </div>
           </CardContent>
         </Card>
