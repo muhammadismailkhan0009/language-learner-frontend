@@ -137,12 +137,15 @@ export const readingPracticeFlow = defineFlow<ReadingPracticeDomainData, Reading
                 internal.flowData.ui.error = null;
 
                 try {
-                    void reviewReadingFlashcardAction(cardId, rating);
+                    const reviewed = await reviewReadingFlashcardAction(cardId, rating);
+                    if (!reviewed) {
+                        throw new Error("Failed to rate flashcard");
+                    }
 
                     if (rating === Rating.GOOD || rating === Rating.EASY) {
                         const sessionId = internal.flowData.selectedSession?.sessionId;
                         if (sessionId) {
-                            void detachReadingFlashcardAction(sessionId, cardId);
+                            await detachReadingFlashcardAction(sessionId, cardId);
                         }
                     }
                 } catch (error) {

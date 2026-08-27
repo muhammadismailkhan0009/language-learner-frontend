@@ -257,6 +257,20 @@ export async function reviewVocabularyFlashcard(cardId: string, rating: Rating):
     return response;
 }
 
+export async function reviewReadingVocabularyFlashcard(
+    cardId: string,
+    rating: Rating,
+): Promise<AxiosResponse<void>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+    return api.post<void>(`/api/v1/reading-practice/sessions/flashcards/${cardId}/review`, {
+        userId,
+        rating,
+    });
+}
+
 export async function fetchScenarios(): Promise<AxiosResponse<ApiResponse<ScenarioResponse[]>>> {
     const userId = (await cookies()).get("userId")?.value;
     if (!userId) {
