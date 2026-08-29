@@ -122,14 +122,15 @@ export const readingPracticeFlow = defineFlow<ReadingPracticeDomainData, Reading
 
         rateFlashcard: {
             input: (_domain, internal) => ({
+                scenarioId: activeReadingScenario(internal)?.scenarioId ?? null,
                 cardId: internal.flowData.flashcardReview.pendingReview.cardId,
                 rating: internal.flowData.flashcardReview.pendingReview.rating,
             }),
             render: {
                 mode: "preserve-previous",
             },
-            action: async ({ cardId, rating }, _domain, internal) => {
-                if (!cardId || !rating) {
+            action: async ({ scenarioId, cardId, rating }, _domain, internal) => {
+                if (!scenarioId || !cardId || !rating) {
                     return { ok: false };
                 }
 
@@ -137,7 +138,7 @@ export const readingPracticeFlow = defineFlow<ReadingPracticeDomainData, Reading
                 internal.flowData.ui.error = null;
 
                 try {
-                    const reviewed = await reviewReadingFlashcardAction(cardId, rating);
+                    const reviewed = await reviewReadingFlashcardAction(scenarioId, cardId, rating);
                     if (!reviewed) {
                         throw new Error("Failed to rate flashcard");
                     }

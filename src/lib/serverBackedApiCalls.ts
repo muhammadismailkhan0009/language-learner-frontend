@@ -258,6 +258,7 @@ export async function reviewVocabularyFlashcard(cardId: string, rating: Rating):
 }
 
 export async function reviewReadingVocabularyFlashcard(
+    scenarioId: string,
     cardId: string,
     rating: Rating,
 ): Promise<AxiosResponse<void>> {
@@ -267,6 +268,7 @@ export async function reviewReadingVocabularyFlashcard(
     }
     return api.post<void>(`/api/v1/reading-practice/sessions/flashcards/${cardId}/review`, {
         userId,
+        scenarioId,
         rating,
     });
 }
