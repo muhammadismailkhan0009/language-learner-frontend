@@ -9,6 +9,7 @@ type CardActionsProps = {
         flipped?: boolean;
         isRevision: boolean;
         disabled?: boolean;
+        ratings?: readonly Rating[];
     },
     output: OutputHandle<CardActionWithoutId>
 }
@@ -30,49 +31,33 @@ type CardActionsInternalProps = {
         flipped?: boolean;
         isRevision: boolean;
         disabled?: boolean;
+        ratings?: readonly Rating[];
     },
     output: OutputHandle<CardActionWithoutId>
 }
 
 function ReviewAction(actions: CardActionsInternalProps) {
+    const ratings = actions.input.ratings ?? [Rating.EASY, Rating.GOOD, Rating.HARD, Rating.AGAIN];
+    const labels: Record<Rating, string> = {
+        [Rating.EASY]: "Easy",
+        [Rating.GOOD]: "Good",
+        [Rating.HARD]: "Hard",
+        [Rating.AGAIN]: "Again",
+    };
 
     return (
         <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:justify-center">
-            <Button
-                size="lg"
-                className="text-base sm:text-lg px-4 sm:px-6 py-3 w-full sm:w-auto min-w-[110px]"
-                onClick={() => actions.output.emit({ action: "rate", rating: Rating.EASY })}
-                disabled={actions.input.disabled}
-            >
-                Easy
-            </Button>
-
-            <Button
-                size="lg"
-                className="text-base sm:text-lg px-4 sm:px-6 py-3 w-full sm:w-auto min-w-[110px]"
-                onClick={() => actions.output.emit({ action: "rate", rating: Rating.GOOD })}
-                disabled={actions.input.disabled}
-            >
-                Good
-            </Button>
-
-            <Button
-                size="lg"
-                className="text-base sm:text-lg px-4 sm:px-6 py-3 w-full sm:w-auto min-w-[110px]"
-                onClick={() => actions.output.emit({ action: "rate", rating: Rating.HARD })}
-                disabled={actions.input.disabled}
-            >
-                Hard
-            </Button>
-
-            <Button
-                size="lg"
-                className="text-base sm:text-lg px-4 sm:px-6 py-3 w-full sm:w-auto min-w-[110px]"
-                onClick={() => actions.output.emit({ action: "rate", rating: Rating.AGAIN })}
-                disabled={actions.input.disabled}
-            >
-                Again
-            </Button>
+            {ratings.map((rating) => (
+                <Button
+                    key={rating}
+                    size="lg"
+                    className="text-base sm:text-lg px-4 sm:px-6 py-3 w-full sm:w-auto min-w-[110px]"
+                    onClick={() => actions.output.emit({ action: "rate", rating })}
+                    disabled={actions.input.disabled}
+                >
+                    {labels[rating]}
+                </Button>
+            ))}
         </div>
     )
 }

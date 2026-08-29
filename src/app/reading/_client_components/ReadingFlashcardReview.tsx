@@ -210,6 +210,7 @@ export default function ReadingFlashcardReview({
                     flipped,
                     isRevision: false,
                     disabled: isRating,
+                    ratings: [Rating.GOOD, Rating.HARD, Rating.AGAIN],
                 }}
                 output={{
                     emit: (action: CardActionWithoutId) => handleAction(action),
