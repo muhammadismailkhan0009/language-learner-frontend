@@ -779,9 +779,9 @@ export async function extractPracticeVocabulary(
     if (!userId) {
         throw new Error("Missing userId cookie");
     }
-    const requestBody: ExtractPracticeVocabularyRequest = { userId, text };
+    const requestBody: ExtractPracticeVocabularyRequest = { userId, sourceText: text };
     return await api.post<ApiResponse<ExtractPracticeVocabularyResponse>>(
-        "/api/v1/practice-vocabulary/extract",
+        "/api/v1/vocabularies/extractions/v1",
         requestBody
     );
 }
