@@ -111,18 +111,8 @@ export const addGrammarRuleFlow = defineFlow<AddGrammarRuleDomainData, AddGramma
                     admin_key: request.adminKey,
                 };
 
-                const drafts = await draftGrammarRulesAction(requestBody);
-                if (!drafts) {
-                    throw new Error("Failed to generate grammar drafts");
-                }
-
-                internal.flowData.generatedDrafts = drafts.map((draft) => ({
-                    id: draft.id,
-                    identifier: draft.identifier,
-                    name: draft.name,
-                    level: draft.level,
-                    targetLanguage: draft.targetLanguage,
-                }));
+                const result = await draftGrammarRulesAction(requestBody);
+                if (!result) throw new Error("Failed to request grammar drafts");
             } catch (err) {
                 internal.flowData.generatedDrafts = [];
                 internal.flowData.ui.error = err instanceof Error ? err.message : "Failed to generate grammar drafts";
@@ -177,11 +167,8 @@ export const addGrammarRuleFlow = defineFlow<AddGrammarRuleDomainData, AddGramma
                 if (!draftId) {
                     throw new Error("Missing draft id");
                 }
-                const details = await generateGrammarRuleDraftDetailsAction(draftId, { admin_key: adminKey.trim() });
-                if (!details) {
-                    throw new Error("Failed to generate draft details");
-                }
-                internal.flowData.generatedDrafts = internal.flowData.generatedDrafts.filter((draft) => draft.id !== draftId);
+                const result = await generateGrammarRuleDraftDetailsAction(draftId, { admin_key: adminKey.trim() });
+                if (!result) throw new Error("Failed to request draft details");
             } catch (err) {
                 internal.flowData.ui.error = err instanceof Error ? err.message : "Failed to generate draft details";
             } finally {

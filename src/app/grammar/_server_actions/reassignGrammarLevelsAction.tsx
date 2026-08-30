@@ -1,12 +1,12 @@
 'use server'
 
 import { reassignGrammarLevels } from "@/lib/serverBackedApiCalls";
-import { GrammarLevelReassignmentSummaryResponse } from "@/lib/types/responses/GrammarLevelReassignmentSummaryResponse";
+import { GrammarGenerationRequestResponse } from "@/lib/types/responses/GrammarGenerationRequestResponse";
 
-export default async function reassignGrammarLevelsAction(): Promise<GrammarLevelReassignmentSummaryResponse | null> {
+export default async function reassignGrammarLevelsAction(): Promise<GrammarGenerationRequestResponse | null> {
     const response = await reassignGrammarLevels();
 
-    if (response.status === 200) {
+    if (response.status === 202) {
         return response.data.response;
     }
 

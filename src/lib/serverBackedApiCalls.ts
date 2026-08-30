@@ -19,9 +19,8 @@ import { EditGrammarRuleRequest } from "./types/requests/EditGrammarRuleRequest"
 import { DraftGrammarRulesRequest } from "./types/requests/DraftGrammarRulesRequest";
 import { GrammarRuleDraftResponse } from "./types/responses/GrammarRuleDraftResponse";
 import { GenerateGrammarRuleDraftDetailsRequest } from "./types/requests/GenerateGrammarRuleDraftDetailsRequest";
-import { GrammarRuleDraftDetailsResponse } from "./types/responses/GrammarRuleDraftDetailsResponse";
+import { GrammarGenerationRequestResponse } from "./types/responses/GrammarGenerationRequestResponse";
 import { DeleteGrammarRuleExplanationRequest } from "./types/requests/DeleteGrammarRuleExplanationRequest";
-import { GrammarLevelReassignmentSummaryResponse } from "./types/responses/GrammarLevelReassignmentSummaryResponse";
 import { UserProfileResponse } from "./types/responses/UserProfileResponse";
 import { McpUrlResponse } from "./types/responses/McpUrlResponse";
 import { UpdateUserDifficultyLevelRequest } from "./types/requests/UpdateUserDifficultyLevelRequest";
@@ -340,13 +339,13 @@ export async function fetchGrammarRules(): Promise<AxiosResponse<ApiResponse<Gra
     return response;
 }
 
-export async function reassignGrammarLevels(): Promise<AxiosResponse<ApiResponse<GrammarLevelReassignmentSummaryResponse>>> {
+export async function reassignGrammarLevels(): Promise<AxiosResponse<ApiResponse<GrammarGenerationRequestResponse>>> {
     const userId = (await cookies()).get("userId")?.value;
     if (!userId) {
         throw new Error("Missing userId cookie");
     }
 
-    const response = await api.post<ApiResponse<GrammarLevelReassignmentSummaryResponse>>(
+    const response = await api.post<ApiResponse<GrammarGenerationRequestResponse>>(
         "/api/v1/grammar-rules/reassign-levels/v1",
         null,
         { params: { userId } }
@@ -387,8 +386,16 @@ export async function deleteGrammarRuleExplanation(
 
 export async function draftGrammarRules(
     requestBody: DraftGrammarRulesRequest
-): Promise<AxiosResponse<ApiResponse<GrammarRuleDraftResponse[]>>> {
-    const response = await api.post<ApiResponse<GrammarRuleDraftResponse[]>>("/api/v1/grammar-rules/admin/drafts/v1", requestBody);
+): Promise<AxiosResponse<ApiResponse<GrammarGenerationRequestResponse>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const response = await api.post<ApiResponse<GrammarGenerationRequestResponse>>("/api/v1/grammar-rules/admin/drafts/v1", {
+        ...requestBody,
+        userId,
+    });
     return response;
 }
 
@@ -407,10 +414,15 @@ export async function fetchDraftGrammarRules(adminKey: string): Promise<AxiosRes
 export async function generateGrammarRuleDraftDetails(
     draftId: string,
     requestBody: GenerateGrammarRuleDraftDetailsRequest
-): Promise<AxiosResponse<ApiResponse<GrammarRuleDraftDetailsResponse>>> {
-    const response = await api.post<ApiResponse<GrammarRuleDraftDetailsResponse>>(
+): Promise<AxiosResponse<ApiResponse<GrammarGenerationRequestResponse>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+
+    const response = await api.post<ApiResponse<GrammarGenerationRequestResponse>>(
         `/api/v1/grammar-rules/admin/drafts/${draftId}/details/v1`,
-        requestBody
+        { ...requestBody, userId }
     );
     return response;
 }

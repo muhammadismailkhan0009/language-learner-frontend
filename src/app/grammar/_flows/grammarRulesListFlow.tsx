@@ -140,9 +140,9 @@ export const grammarRulesListFlow = defineFlow<GrammarRulesListDomainData, Gramm
             internal.flowData.ui.isGeneratingDetails = true;
             internal.flowData.ui.message = "Details generation in progress...";
             try {
-                await generateGrammarRuleDraftDetailsAction(draftId, { admin_key: adminKey.trim() });
-                internal.flowData.drafts = internal.flowData.drafts.filter((draft) => draft.id !== draftId);
-                internal.flowData.ui.message = "Details generated successfully.";
+                const result = await generateGrammarRuleDraftDetailsAction(draftId, { admin_key: adminKey.trim() });
+                if (!result) throw new Error("Failed to request draft details");
+                internal.flowData.ui.message = result.message;
             } catch (err) {
                 internal.flowData.ui.error = err instanceof Error ? err.message : "Failed to generate draft details";
                 internal.flowData.ui.message = null;
@@ -153,7 +153,7 @@ export const grammarRulesListFlow = defineFlow<GrammarRulesListDomainData, Gramm
             return { ok: true };
         },
         render: { mode: "preserve-previous" },
-        onOutput: () => "displayList",
+        onOutput: () => "fetchDrafts",
     },
 
     deleteExplanation: {
@@ -193,12 +193,11 @@ export const grammarRulesListFlow = defineFlow<GrammarRulesListDomainData, Gramm
             internal.flowData.ui.reassignmentSummary = null;
 
             try {
-                const summary = await reassignGrammarLevelsAction();
-                if (!summary) {
+                const result = await reassignGrammarLevelsAction();
+                if (!result) {
                     throw new Error("Failed to reassign grammar levels");
                 }
-                internal.flowData.ui.reassignmentSummary = summary;
-                internal.flowData.ui.message = "Grammar levels reassigned.";
+                internal.flowData.ui.message = result.message;
             } catch (err) {
                 internal.flowData.ui.error = err instanceof Error ? err.message : "Failed to reassign grammar levels";
                 internal.flowData.ui.message = null;
@@ -209,11 +208,8 @@ export const grammarRulesListFlow = defineFlow<GrammarRulesListDomainData, Gramm
             return { ok: true };
         },
         render: { mode: "preserve-previous" },
-        onOutput: (_domain, internal) => {
-            if (internal.flowData.ui.reassignmentSummary) {
-                return "fetchRules";
-            }
-            return "displayList";
+        onOutput: () => {
+            return "fetchRules";
         },
     },
 

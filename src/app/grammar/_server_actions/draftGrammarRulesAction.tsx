@@ -2,12 +2,12 @@
 
 import { draftGrammarRules } from "@/lib/serverBackedApiCalls";
 import { DraftGrammarRulesRequest } from "@/lib/types/requests/DraftGrammarRulesRequest";
-import { GrammarRuleDraftResponse } from "@/lib/types/responses/GrammarRuleDraftResponse";
+import { GrammarGenerationRequestResponse } from "@/lib/types/responses/GrammarGenerationRequestResponse";
 
-export default async function draftGrammarRulesAction(requestBody: DraftGrammarRulesRequest): Promise<GrammarRuleDraftResponse[] | null> {
+export default async function draftGrammarRulesAction(requestBody: DraftGrammarRulesRequest): Promise<GrammarGenerationRequestResponse | null> {
     const response = await draftGrammarRules(requestBody);
 
-    if (response.status === 200 || response.status === 201) {
+    if (response.status === 202) {
         return response.data.response;
     }
 

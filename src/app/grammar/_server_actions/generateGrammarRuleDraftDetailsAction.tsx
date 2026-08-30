@@ -2,15 +2,15 @@
 
 import { generateGrammarRuleDraftDetails } from "@/lib/serverBackedApiCalls";
 import { GenerateGrammarRuleDraftDetailsRequest } from "@/lib/types/requests/GenerateGrammarRuleDraftDetailsRequest";
-import { GrammarRuleDraftDetailsResponse } from "@/lib/types/responses/GrammarRuleDraftDetailsResponse";
+import { GrammarGenerationRequestResponse } from "@/lib/types/responses/GrammarGenerationRequestResponse";
 
 export default async function generateGrammarRuleDraftDetailsAction(
     draftId: string,
     requestBody: GenerateGrammarRuleDraftDetailsRequest
-): Promise<GrammarRuleDraftDetailsResponse | null> {
+): Promise<GrammarGenerationRequestResponse | null> {
     const response = await generateGrammarRuleDraftDetails(draftId, requestBody);
 
-    if (response.status === 200 || response.status === 201) {
+    if (response.status === 202) {
         return response.data.response;
     }
 
