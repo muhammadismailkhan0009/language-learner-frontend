@@ -9,7 +9,11 @@ type ProfileDifficultyDomainData = Record<string, never>;
 interface ProfileDifficultyInternalData {
     flowData: {
         difficultyLevel: LanguageLevel;
+        readingDifficultyLevel: LanguageLevel;
+        writingDifficultyLevel: LanguageLevel;
         savedDifficultyLevel: LanguageLevel | null;
+        savedReadingDifficultyLevel: LanguageLevel | null;
+        savedWritingDifficultyLevel: LanguageLevel | null;
         ui: {
             isLoading: boolean;
             isSaving: boolean;
@@ -23,7 +27,11 @@ function createProfileDifficultyInternalData(): ProfileDifficultyInternalData {
     return {
         flowData: {
             difficultyLevel: "A1",
+            readingDifficultyLevel: "A1",
+            writingDifficultyLevel: "A1",
             savedDifficultyLevel: null,
+            savedReadingDifficultyLevel: null,
+            savedWritingDifficultyLevel: null,
             ui: {
                 isLoading: false,
                 isSaving: false,
@@ -47,7 +55,11 @@ export const profileDifficultyFlow = defineFlow<ProfileDifficultyDomainData, Pro
                     throw new Error("Failed to load profile");
                 }
                 internal.flowData.difficultyLevel = profile.difficultyLevel;
+                internal.flowData.readingDifficultyLevel = profile.readingDifficultyLevel;
+                internal.flowData.writingDifficultyLevel = profile.writingDifficultyLevel;
                 internal.flowData.savedDifficultyLevel = profile.difficultyLevel;
+                internal.flowData.savedReadingDifficultyLevel = profile.readingDifficultyLevel;
+                internal.flowData.savedWritingDifficultyLevel = profile.writingDifficultyLevel;
             } catch (err) {
                 internal.flowData.ui.error = err instanceof Error ? err.message : "Failed to load profile";
             } finally {
@@ -62,20 +74,26 @@ export const profileDifficultyFlow = defineFlow<ProfileDifficultyDomainData, Pro
     saveProfile: {
         input: (_domain, internal) => ({
             difficultyLevel: internal.flowData.difficultyLevel,
+            readingDifficultyLevel: internal.flowData.readingDifficultyLevel,
+            writingDifficultyLevel: internal.flowData.writingDifficultyLevel,
         }),
-        action: async ({ difficultyLevel }: { difficultyLevel: LanguageLevel }, _domain, internal) => {
+        action: async (levels, _domain, internal) => {
             internal.flowData.ui.isSaving = true;
             internal.flowData.ui.error = null;
             internal.flowData.ui.message = null;
 
             try {
-                const profile = await updateUserDifficultyLevelAction({ difficultyLevel });
+                const profile = await updateUserDifficultyLevelAction(levels);
                 if (!profile) {
                     throw new Error("Failed to save difficulty level");
                 }
                 internal.flowData.difficultyLevel = profile.difficultyLevel;
+                internal.flowData.readingDifficultyLevel = profile.readingDifficultyLevel;
+                internal.flowData.writingDifficultyLevel = profile.writingDifficultyLevel;
                 internal.flowData.savedDifficultyLevel = profile.difficultyLevel;
-                internal.flowData.ui.message = "Difficulty level saved.";
+                internal.flowData.savedReadingDifficultyLevel = profile.readingDifficultyLevel;
+                internal.flowData.savedWritingDifficultyLevel = profile.writingDifficultyLevel;
+                internal.flowData.ui.message = "Difficulty levels saved.";
             } catch (err) {
                 internal.flowData.ui.error = err instanceof Error ? err.message : "Failed to save difficulty level";
             } finally {
@@ -91,7 +109,11 @@ export const profileDifficultyFlow = defineFlow<ProfileDifficultyDomainData, Pro
     displayProfile: {
         input: (_domain, internal) => ({
             difficultyLevel: internal.flowData.difficultyLevel,
+            readingDifficultyLevel: internal.flowData.readingDifficultyLevel,
+            writingDifficultyLevel: internal.flowData.writingDifficultyLevel,
             savedDifficultyLevel: internal.flowData.savedDifficultyLevel,
+            savedReadingDifficultyLevel: internal.flowData.savedReadingDifficultyLevel,
+            savedWritingDifficultyLevel: internal.flowData.savedWritingDifficultyLevel,
             isLoading: internal.flowData.ui.isLoading,
             isSaving: internal.flowData.ui.isSaving,
             error: internal.flowData.ui.error,
@@ -100,7 +122,9 @@ export const profileDifficultyFlow = defineFlow<ProfileDifficultyDomainData, Pro
         view: DifficultyLevelSelectorView,
         onOutput: (_domain, internal, output: DifficultyLevelSelectorViewOutput) => {
             if (output.type === "setLevel") {
-                internal.flowData.difficultyLevel = output.difficultyLevel;
+                if (output.levelKind === "general") internal.flowData.difficultyLevel = output.difficultyLevel;
+                if (output.levelKind === "reading") internal.flowData.readingDifficultyLevel = output.difficultyLevel;
+                if (output.levelKind === "writing") internal.flowData.writingDifficultyLevel = output.difficultyLevel;
                 internal.flowData.ui.message = null;
                 return "displayProfile";
             }

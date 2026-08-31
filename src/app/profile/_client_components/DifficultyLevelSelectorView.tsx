@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { LANGUAGE_LEVELS, LanguageLevel } from "@/lib/types/LanguageLevel";
 
 export type DifficultyLevelSelectorViewOutput =
-    | { type: "setLevel"; difficultyLevel: LanguageLevel }
+    | { type: "setLevel"; levelKind: "general" | "reading" | "writing"; difficultyLevel: LanguageLevel }
     | { type: "save" }
     | { type: "reload" }
     | { type: "clearError" };
@@ -15,7 +15,11 @@ export type DifficultyLevelSelectorViewOutput =
 type DifficultyLevelSelectorViewProps = {
     input: {
         difficultyLevel: LanguageLevel;
+        readingDifficultyLevel: LanguageLevel;
+        writingDifficultyLevel: LanguageLevel;
         savedDifficultyLevel: LanguageLevel | null;
+        savedReadingDifficultyLevel: LanguageLevel | null;
+        savedWritingDifficultyLevel: LanguageLevel | null;
         isLoading: boolean;
         isSaving: boolean;
         error: string | null;
@@ -25,7 +29,27 @@ type DifficultyLevelSelectorViewProps = {
 };
 
 export default function DifficultyLevelSelectorView({ input, output }: DifficultyLevelSelectorViewProps) {
-    const hasChanges = input.savedDifficultyLevel !== null && input.savedDifficultyLevel !== input.difficultyLevel;
+    const hasChanges = input.savedDifficultyLevel !== null && (
+        input.savedDifficultyLevel !== input.difficultyLevel
+        || input.savedReadingDifficultyLevel !== input.readingDifficultyLevel
+        || input.savedWritingDifficultyLevel !== input.writingDifficultyLevel
+    );
+    const disabled = input.isLoading || input.isSaving;
+
+    const levelSelector = (id: string, label: string, levelKind: "general" | "reading" | "writing", value: LanguageLevel) => (
+        <div className="flex flex-col gap-2">
+            <Label htmlFor={id}>{label}</Label>
+            <select
+                id={id}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                value={value}
+                disabled={disabled}
+                onChange={(event) => output.emit({ type: "setLevel", levelKind, difficultyLevel: event.target.value as LanguageLevel })}
+            >
+                {LANGUAGE_LEVELS.map((level) => <option key={level} value={level}>{level}</option>)}
+            </select>
+        </div>
+    );
 
     return (
         <Card>
@@ -36,25 +60,11 @@ export default function DifficultyLevelSelectorView({ input, output }: Difficult
                 </Button>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
-                <div className="flex flex-col gap-2">
-                    <Label htmlFor="difficulty-level">Difficulty level</Label>
-                    <select
-                        id="difficulty-level"
-                        className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                        value={input.difficultyLevel}
-                        disabled={input.isLoading || input.isSaving}
-                        onChange={(event) => output.emit({ type: "setLevel", difficultyLevel: event.target.value as LanguageLevel })}
-                    >
-                        {LANGUAGE_LEVELS.map((level) => (
-                            <option key={level} value={level}>
-                                {level}
-                            </option>
-                        ))}
-                    </select>
-                    <p className="text-sm text-muted-foreground">
-                        Changing difficulty affects newly generated reading, writing, and cloze exercises. It does not reset your progress.
-                    </p>
-                </div>
+                {levelSelector("difficulty-level", "General difficulty level", "general", input.difficultyLevel)}
+                <p className="text-sm text-muted-foreground">Used for cloze exercises and other level-based features.</p>
+                {levelSelector("reading-difficulty-level", "Reading difficulty level", "reading", input.readingDifficultyLevel)}
+                {levelSelector("writing-difficulty-level", "Writing difficulty level", "writing", input.writingDifficultyLevel)}
+                <p className="text-sm text-muted-foreground">Reading and writing levels affect newly generated exercises. Changing levels does not reset progress.</p>
 
                 {input.message ? <div className="text-sm text-blue-700">{input.message}</div> : null}
 
@@ -68,7 +78,7 @@ export default function DifficultyLevelSelectorView({ input, output }: Difficult
                 ) : null}
 
                 <Button type="button" onClick={() => output.emit({ type: "save" })} disabled={input.isLoading || input.isSaving || !hasChanges}>
-                    {input.isSaving ? "Saving..." : "Save level"}
+                    {input.isSaving ? "Saving..." : "Save levels"}
                 </Button>
             </CardContent>
         </Card>
