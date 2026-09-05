@@ -2,7 +2,6 @@ import { defineFlow } from "@myriadcodelabs/uiflow";
 import fetchGrammarRulesAction from "../_server_actions/fetchGrammarRulesAction";
 import fetchDraftGrammarRulesAction from "../_server_actions/fetchDraftGrammarRulesAction";
 import generateGrammarRuleDraftDetailsAction from "../_server_actions/generateGrammarRuleDraftDetailsAction";
-import deleteGrammarRuleExplanationAction from "../_server_actions/deleteGrammarRuleExplanationAction";
 import reassignGrammarLevelsAction from "../_server_actions/reassignGrammarLevelsAction";
 import GrammarRulesListView, { GrammarRulesListViewOutput } from "../_client_components/GrammarRulesListView";
 import { GeneratedGrammarRuleDraft, GrammarLevelReassignmentSummary, GrammarRuleListItem, ScreenMode } from "../types";
@@ -156,34 +155,6 @@ export const grammarRulesListFlow = defineFlow<GrammarRulesListDomainData, Gramm
         onOutput: () => "fetchDrafts",
     },
 
-    deleteExplanation: {
-        input: (_domain, internal) => ({
-            adminKey: internal.flowData.ui.draftAdminKey,
-            grammarRuleId: (internal as GrammarRulesListInternalData & { selectedDeleteRuleId?: string }).selectedDeleteRuleId,
-        }),
-        action: async ({ adminKey, grammarRuleId }: { adminKey: string; grammarRuleId?: string }, _domain, internal) => {
-            if (!grammarRuleId) {
-                return { ok: true };
-            }
-            try {
-                internal.flowData.ui.message = "Deleting grammar rule...";
-                const deleted = await deleteGrammarRuleExplanationAction(grammarRuleId, { admin_key: adminKey.trim() });
-                if (!deleted) {
-                    throw new Error("Failed to delete grammar rule");
-                }
-                internal.flowData.ui.message = "Grammar rule deleted.";
-            } catch (err) {
-                internal.flowData.ui.error = err instanceof Error ? err.message : "Failed to delete grammar rule";
-                internal.flowData.ui.message = null;
-            } finally {
-                (internal as GrammarRulesListInternalData & { selectedDeleteRuleId?: string }).selectedDeleteRuleId = undefined;
-            }
-            return { ok: true };
-        },
-        render: { mode: "preserve-previous" },
-        onOutput: () => "fetchRules",
-    },
-
     reassignLevels: {
         input: () => ({}),
         action: async (_input, _domain, internal) => {
@@ -291,15 +262,6 @@ export const grammarRulesListFlow = defineFlow<GrammarRulesListDomainData, Gramm
                 }
                 (internal as GrammarRulesListInternalData & { selectedDraftId?: string }).selectedDraftId = output.draftId;
                 return "generateDraftDetails";
-            }
-
-            if (output.type === "deleteExplanation") {
-                if (!internal.flowData.ui.draftAdminKey.trim()) {
-                    internal.flowData.ui.error = "Admin key is required to delete grammar rule";
-                    return "displayList";
-                }
-                (internal as GrammarRulesListInternalData & { selectedDeleteRuleId?: string }).selectedDeleteRuleId = output.grammarRuleId;
-                return "deleteExplanation";
             }
         },
     },

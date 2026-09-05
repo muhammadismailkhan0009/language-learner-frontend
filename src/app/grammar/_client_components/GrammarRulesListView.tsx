@@ -18,7 +18,6 @@ export type GrammarRulesListViewOutput =
     | { type: "setDraftAdminKey"; adminKey: string }
     | { type: "reloadDrafts"; adminKey: string }
     | { type: "generateDraftDetails"; draftId: string }
-    | { type: "deleteExplanation"; grammarRuleId: string }
     | { type: "reassignLevels" };
 
 type GrammarRulesListViewProps = {
@@ -199,9 +198,6 @@ export default function GrammarRulesListView({ input, output }: GrammarRulesList
                                                 <div className="flex gap-2">
                                                     <Button type="button" variant="outline" onClick={() => output.emit({ type: "openEdit", grammarRuleId: selectedRule.id })}>
                                                         Edit Rule
-                                                    </Button>
-                                                    <Button type="button" variant="outline" onClick={() => output.emit({ type: "deleteExplanation", grammarRuleId: selectedRule.id })}>
-                                                        Delete Rule
                                                     </Button>
                                                 </div>
                                             </div>
