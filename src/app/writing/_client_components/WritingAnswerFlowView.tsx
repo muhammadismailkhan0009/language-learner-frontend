@@ -10,6 +10,7 @@ import { activeWritingScenario } from "../_flows/writingScenarioState";
 
 export type WritingAnswerFlowViewOutput =
   | { type: "updateDraftAnswer"; value: string }
+  | { type: "updateFreeWritingDraft"; value: string }
   | { type: "saveDraft" }
   | { type: "submitAnswer" }
   | { type: "clearError" }
@@ -21,6 +22,7 @@ type Props = {
     session: WritingPracticeSessionResponse | null;
     activeScenarioIndex: number;
     draftAnswer: string;
+    freeWritingDraft: string;
     isSubmittingAnswer: boolean;
     error: string | null;
     infoMessage: string | null;
@@ -41,7 +43,9 @@ export default function WritingAnswerFlowView({ input, output }: Props) {
           <CardTitle>Your German Translation</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          <label htmlFor="writing-translation" className="sr-only">German translation</label>
           <Textarea
+            id="writing-translation"
             value={input.draftAnswer}
             onChange={(event) => output.emit({ type: "updateDraftAnswer", value: event.target.value })}
             placeholder="Write your answer in German."
@@ -56,6 +60,26 @@ export default function WritingAnswerFlowView({ input, output }: Props) {
               {input.isSubmittingAnswer ? "Submitting..." : "Submit Answer"}
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Free-Style Writing</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {scenario.freeWritingInstructions ? (
+            <p className="text-sm leading-6 text-muted-foreground">{scenario.freeWritingInstructions}</p>
+          ) : null}
+          <label htmlFor="free-style-writing" className="sr-only">Free-style writing</label>
+          <Textarea
+            id="free-style-writing"
+            value={input.freeWritingDraft}
+            onChange={(event) => output.emit({ type: "updateFreeWritingDraft", value: event.target.value })}
+            placeholder="Write freely in German using the prompt above."
+            className="min-h-48"
+            disabled={input.isSubmittingAnswer}
+          />
         </CardContent>
       </Card>
 

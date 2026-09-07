@@ -38,6 +38,8 @@ export type WritingPracticeScenarioResponse = {
     topic: string;
     englishParagraph: string;
     germanParagraph: string;
+    freeWritingInstructions: string | null;
+    freeWritingText: string | null;
     submittedAnswer: string | null;
     submittedAt: string | null;
     feedbackText: string | null;

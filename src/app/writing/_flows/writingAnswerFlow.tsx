@@ -9,6 +9,7 @@ type DomainData = Record<string, never>;
 
 type InternalData = {
   draftAnswer: string;
+  freeWritingDraft: string;
   submitAsDraft: boolean;
   ui: {
     submitting: boolean;
@@ -20,6 +21,7 @@ type InternalData = {
 function createInternalData(): InternalData {
   return {
     draftAnswer: "",
+    freeWritingDraft: "",
     submitAsDraft: false,
     ui: {
       submitting: false,
@@ -37,6 +39,7 @@ export const writingAnswerFlow = defineFlow<DomainData, InternalData>(
         session: (events?.currentWritingSession?.get() as WritingPracticeSessionResponse | null | undefined) ?? null,
         activeScenarioIndex: (events?.activeWritingScenarioIndex?.get() as number | undefined) ?? 0,
         draftAnswer: internal.draftAnswer,
+        freeWritingDraft: internal.freeWritingDraft,
         isSubmittingAnswer: internal.ui.submitting,
         error: internal.ui.error,
         infoMessage: internal.ui.info,
@@ -45,6 +48,11 @@ export const writingAnswerFlow = defineFlow<DomainData, InternalData>(
       onOutput: (_domain, internal, output: WritingAnswerFlowViewOutput) => {
         if (output.type === "updateDraftAnswer") {
           internal.draftAnswer = output.value;
+          return "form";
+        }
+
+        if (output.type === "updateFreeWritingDraft") {
+          internal.freeWritingDraft = output.value;
           return "form";
         }
 
@@ -79,10 +87,13 @@ export const writingAnswerFlow = defineFlow<DomainData, InternalData>(
       action: async ({ mode, session, activeScenarioIndex }, _domain, internal) => {
         if (mode !== "detail" || !session) {
           internal.draftAnswer = "";
+          internal.freeWritingDraft = "";
           return { ok: true };
         }
 
-        internal.draftAnswer = activeWritingScenario(session, activeScenarioIndex)?.submittedAnswer ?? "";
+        const scenario = activeWritingScenario(session, activeScenarioIndex);
+        internal.draftAnswer = scenario?.submittedAnswer ?? "";
+        internal.freeWritingDraft = scenario?.freeWritingText ?? "";
         return { ok: true };
       },
       onOutput: () => "form",
@@ -96,17 +107,23 @@ export const writingAnswerFlow = defineFlow<DomainData, InternalData>(
           (events?.activeWritingScenarioIndex?.get() as number | undefined) ?? 0,
         ),
         answer: internal.draftAnswer.trim(),
+        freeWritingText: internal.freeWritingDraft.trim(),
         draft: internal.submitAsDraft,
       }),
       render: { mode: "preserve-previous" },
-      action: async ({ session, scenario, answer, draft }, _domain, internal, events) => {
+      action: async ({ session, scenario, answer, freeWritingText, draft }, _domain, internal, events) => {
         if (!session?.sessionId || !scenario?.scenarioId) {
           internal.ui.error = "No writing scenario selected.";
           return { ok: false };
         }
 
-        if (!answer) {
+        if (!draft && !answer) {
           internal.ui.error = "Write an answer before submitting.";
+          return { ok: false };
+        }
+
+        if (!draft && !freeWritingText) {
+          internal.ui.error = "Complete the free-style writing before submitting.";
           return { ok: false };
         }
 
@@ -115,7 +132,8 @@ export const writingAnswerFlow = defineFlow<DomainData, InternalData>(
         internal.ui.info = null;
 
         try {
-          const accepted = await submitWritingPracticeAnswerAction(session.sessionId, scenario.scenarioId, answer, draft);
+          const accepted = await submitWritingPracticeAnswerAction(
+            session.sessionId, scenario.scenarioId, answer, freeWritingText, draft);
           if (!accepted) {
             throw new Error(draft ? "Writing draft save was not accepted" : "Writing answer submission was not accepted");
           }
