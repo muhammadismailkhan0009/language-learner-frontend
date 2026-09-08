@@ -64,5 +64,6 @@ export function mapVocabularyResponseToListItem(vocabulary: VocabularyResponse):
             translation: sentence.translation ?? "",
         })),
         clozeSentence: vocabulary.clozeSentence,
+        reverseFlashcardState: vocabulary.reverseFlashcardState,
     };
 }

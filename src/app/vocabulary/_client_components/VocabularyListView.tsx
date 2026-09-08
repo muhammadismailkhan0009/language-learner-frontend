@@ -12,6 +12,10 @@ import { playCardAudio, playTextAudio } from "@/lib/ttsGoogle";
 import { PublicVocabularyListItem, ScreenMode, VocabularyListItem } from "../types";
 import { sanitizeNotesHtml } from "../notesHtml";
 import { filterVocabularyRows } from "./vocabularySearch";
+import {
+    filterVocabularyByFlashcardState,
+    FlashcardStateFilter,
+} from "./vocabularyFlashcardStateFilter";
 
 export type VocabularyListViewOutput =
     | { type: "reload" }
@@ -22,6 +26,7 @@ export type VocabularyListViewOutput =
     | { type: "generateClozeSentences" }
     | { type: "generateSongsSelection" }
     | { type: "setSongsSelectionLimit"; limit: number }
+    | { type: "setFlashcardStateFilter"; filter: FlashcardStateFilter }
     | { type: "clearPublishStatus" }
     | { type: "setSelectedVocabulary"; vocabularyId: string }
     | { type: "openEdit"; vocabularyId: string }
@@ -34,6 +39,7 @@ type VocabularyListViewProps = {
         vocabularies: VocabularyListItem[];
         publicVocabularies: PublicVocabularyListItem[];
         selectedVocabularyId: string | null;
+        flashcardStateFilter: FlashcardStateFilter;
         error: string | null;
         isLoading: boolean;
         isPublishing: boolean;
@@ -79,6 +85,7 @@ export default function VocabularyListView({ input, output }: VocabularyListView
         mode,
         vocabularies,
         publicVocabularies,
+        flashcardStateFilter,
         error,
         isLoading,
         isPublishing,
@@ -119,7 +126,7 @@ export default function VocabularyListView({ input, output }: VocabularyListView
 
         if (showPrivate) {
             rows.push(
-                ...vocabularies.map((item) => ({
+                ...filterVocabularyByFlashcardState(vocabularies, flashcardStateFilter).map((item) => ({
                     key: `private:${item.id}`,
                     source: "private" as const,
                     id: item.id,
@@ -148,7 +155,7 @@ export default function VocabularyListView({ input, output }: VocabularyListView
         }
 
         return rows;
-    }, [showPrivate, showPublic, vocabularies, publicVocabularies]);
+    }, [showPrivate, showPublic, vocabularies, publicVocabularies, flashcardStateFilter]);
 
     const visibleRows = useMemo(() => {
         return filterVocabularyRows(currentRows, searchQuery);
@@ -495,6 +502,27 @@ export default function VocabularyListView({ input, output }: VocabularyListView
                                     aria-label="Search German words or translations"
                                 />
                             </div>
+                            <label className="flex items-center gap-2 text-sm">
+                                <span className="text-muted-foreground">Flashcard state</span>
+                                <select
+                                    className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                                    value={flashcardStateFilter}
+                                    onChange={(event) =>
+                                        output.emit({
+                                            type: "setFlashcardStateFilter",
+                                            filter: event.target.value as FlashcardStateFilter,
+                                        })
+                                    }
+                                    aria-label="Filter vocabulary by reverse flashcard state"
+                                >
+                                    <option value="ALL">All</option>
+                                    <option value="NO_ATTACHED">No Attached</option>
+                                    <option value="NEW">New</option>
+                                    <option value="LEARNING">Learning</option>
+                                    <option value="RE_LEARNING">Re-learning</option>
+                                    <option value="REVIEW">Review</option>
+                                </select>
+                            </label>
                             <label
                                 className={`flex cursor-pointer items-center gap-2 rounded-md border px-3 py-1.5 text-sm ${
                                     showPrivate ? "border-primary bg-primary/10" : "border-input"

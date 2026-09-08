@@ -8,6 +8,10 @@ import generateVocabularyClozeSentencesAction from "../_server_actions/generateV
 import VocabularyListView, { VocabularyListViewOutput } from "../_client_components/VocabularyListView";
 import { PublicVocabularyListItem, ScreenMode, VocabularyListItem } from "../types";
 import { mapVocabularyResponseToListItem } from "./vocabularyDraftOps";
+import {
+    DEFAULT_FLASHCARD_STATE_FILTER,
+    FlashcardStateFilter,
+} from "../_client_components/vocabularyFlashcardStateFilter";
 
 type VocabularyListDomainData = Record<string, never>;
 
@@ -16,6 +20,7 @@ interface VocabularyListInternalData {
         vocabularies: VocabularyListItem[];
         publicVocabularies: PublicVocabularyListItem[];
         selectedVocabularyId: string | null;
+        flashcardStateFilter: FlashcardStateFilter;
         publishRequest: {
             vocabularyId: string | null;
             adminKey: string;
@@ -46,6 +51,7 @@ function createVocabularyListInternalData(): VocabularyListInternalData {
             vocabularies: [],
             publicVocabularies: [],
             selectedVocabularyId: null,
+            flashcardStateFilter: DEFAULT_FLASHCARD_STATE_FILTER,
             publishRequest: {
                 vocabularyId: null,
                 adminKey: "",
@@ -125,6 +131,7 @@ export const vocabularyListFlow = defineFlow<VocabularyListDomainData, Vocabular
             mode: (events?.screenMode?.get() as ScreenMode | undefined) ?? "list",
             vocabularies: internal.flowData.vocabularies,
             selectedVocabularyId: internal.flowData.selectedVocabularyId,
+            flashcardStateFilter: internal.flowData.flashcardStateFilter,
             error: internal.flowData.ui.error,
             isLoading: internal.flowData.ui.isLoading,
             publicVocabularies: internal.flowData.publicVocabularies,
@@ -162,6 +169,11 @@ export const vocabularyListFlow = defineFlow<VocabularyListDomainData, Vocabular
 
             if (output.type === "setSongsSelectionLimit") {
                 internal.flowData.songsSelectionLimit = output.limit;
+                return "displayList";
+            }
+
+            if (output.type === "setFlashcardStateFilter") {
+                internal.flowData.flashcardStateFilter = output.filter;
                 return "displayList";
             }
 

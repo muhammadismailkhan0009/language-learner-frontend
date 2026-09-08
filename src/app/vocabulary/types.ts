@@ -1,5 +1,6 @@
 import { VocabularyEntryKind } from "@/lib/types/requests/AddVocabularyRequest";
 import { ClozeSentenceResponse } from "@/lib/types/responses/ClozeSentenceResponse";
+import { ReverseFlashcardState } from "@/lib/types/responses/VocabularyResponse";
 
 export type ScreenMode = "list" | "create" | "edit";
 
@@ -25,6 +26,7 @@ export type VocabularyListItem = {
     notes: string;
     exampleSentences: VocabularyExampleSentenceDraft[];
     clozeSentence?: ClozeSentenceResponse;
+    reverseFlashcardState?: ReverseFlashcardState | null;
 };
 
 export type PublicVocabularyListItem = {
