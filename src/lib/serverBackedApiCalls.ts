@@ -44,6 +44,7 @@ import { ExtractPracticeVocabularyResponse } from "./types/responses/ExtractPrac
 import { CreateStudySessionRequest } from "./types/requests/CreateStudySessionRequest";
 import { SubmitStudyAnswerRequest } from "./types/requests/SubmitStudyAnswerRequest";
 import { StudySessionResponse } from "./types/responses/StudySessionResponse";
+import { WordPracticeQueueResponse } from "./types/responses/WordPracticeQueueResponse";
 
 const VOCABULARY_REVISION_BATCH_SIZE = 1;
 
@@ -827,4 +828,36 @@ export async function submitStudyAnswer(
         `/api/v1/study/sessions/${sessionId}/items/${itemId}/answer`,
         requestBody
     );
+}
+
+export async function getWordPracticeQueue(): Promise<AxiosResponse<ApiResponse<WordPracticeQueueResponse>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+    return await api.get<ApiResponse<WordPracticeQueueResponse>>("/api/v1/word-practice", {
+        params: { userId },
+    });
+}
+
+export async function requestWordPracticeGeneration(): Promise<AxiosResponse<ApiResponse<string>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+    return await api.post<ApiResponse<string>>("/api/v1/word-practice/generation", { userId });
+}
+
+export async function submitWordPracticeAnswer(
+    practiceId: string,
+    answer: string
+): Promise<AxiosResponse<ApiResponse<boolean>>> {
+    const userId = (await cookies()).get("userId")?.value;
+    if (!userId) {
+        throw new Error("Missing userId cookie");
+    }
+    return await api.post<ApiResponse<boolean>>(`/api/v1/word-practice/${practiceId}/answer`, {
+        userId,
+        answer,
+    });
 }

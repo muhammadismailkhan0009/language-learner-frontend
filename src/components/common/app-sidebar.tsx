@@ -136,6 +136,11 @@ export function AppSidebar() {
                                             <a href="/study">Study</a>
                                         </SidebarMenuSubButton>
                                     </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton asChild>
+                                            <a href="/word-practice">Word Practice</a>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
                                 </SidebarMenuSub>
                             </details>
                         </SidebarMenuItem>
