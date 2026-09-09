@@ -37,6 +37,23 @@ describe("WordPracticeView", () => {
         fireEvent.change(screen.getByLabelText("Your answer"), { target: { value: "house" } });
         expect(emit).toHaveBeenCalledWith({ type: "updateAnswer", answer: "house" });
     });
+
+    it("emits a stateless skip intent when another exercise is available", () => {
+        const emit = vi.fn();
+        const nextPractice = { ...practice, id: "practice-2", vocabularyId: "vocabulary-2" };
+        renderView({
+            queue: {
+                activeVocabularyCount: 2,
+                maximumVocabularyCount: 15,
+                generationVocabularyCount: 10,
+                practices: [practice, nextPractice],
+            },
+        }, emit);
+
+        fireEvent.click(screen.getByRole("button", { name: "Skip" }));
+
+        expect(emit).toHaveBeenCalledWith({ type: "skip" });
+    });
 });
 
 function renderView(overrides: Partial<WordPracticeViewInput> = {}, emit = vi.fn()) {

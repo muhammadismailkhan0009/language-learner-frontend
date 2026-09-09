@@ -29,6 +29,7 @@ export type WordPracticeViewInput = {
 export type WordPracticeViewOutput =
     | { type: "updateAnswer"; answer: string }
     | { type: "submitAnswer" }
+    | { type: "skip" }
     | { type: "next" }
     | { type: "generate" }
     | { type: "reload" }
@@ -106,6 +107,11 @@ export default function WordPracticeView({ input, output }: {
                                     placeholder="Type the missing word or phrase" />
                                 <Button type="submit" disabled={!answer.trim() || !!feedback || isSubmitting}>
                                     {isSubmitting && <Loader2 className="animate-spin" />} Check
+                                </Button>
+                                <Button type="button" variant="outline"
+                                    disabled={!!feedback || isSubmitting || (queue?.practices.length ?? 0) < 2}
+                                    onClick={() => output.emit({ type: "skip" })}>
+                                    Skip
                                 </Button>
                             </div>
                         </form>

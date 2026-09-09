@@ -120,6 +120,12 @@ export const wordPracticeFlow = defineFlow<Domain, Internal>({
                 internal.answer = output.answer;
                 return "show";
             }
+            if (output.type === "skip") {
+                if (internal.queue?.practices.length) internal.activeIndex = (internal.activeIndex + 1) % internal.queue.practices.length;
+                internal.answer = "";
+                internal.feedback = null;
+                return "show";
+            }
             if (output.type === "next") {
                 if (internal.feedback?.correct) removeAnsweredPractice(internal);
                 else if (internal.queue?.practices.length) internal.activeIndex = (internal.activeIndex + 1) % internal.queue.practices.length;
