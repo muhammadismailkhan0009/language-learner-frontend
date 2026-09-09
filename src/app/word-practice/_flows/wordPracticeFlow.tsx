@@ -1,4 +1,5 @@
 import { defineFlow } from "@myriadcodelabs/uiflow";
+import { normalizeGermanTransliteration } from "@/lib/germanInputNormalize";
 import { WordPracticeQueueResponse } from "@/lib/types/responses/WordPracticeQueueResponse";
 import getWordPracticeQueueAction from "../_server_actions/getWordPracticeQueueAction";
 import requestWordPracticeGenerationAction from "../_server_actions/requestWordPracticeGenerationAction";
@@ -74,7 +75,10 @@ export const wordPracticeFlow = defineFlow<Domain, Internal>({
         onOutput: () => "show",
     },
     submit: {
-        input: (_domain, internal) => ({ practiceId: activePractice(internal)?.id ?? null, answer: internal.answer.trim() }),
+        input: (_domain, internal) => ({
+            practiceId: activePractice(internal)?.id ?? null,
+            answer: normalizeGermanTransliteration(internal.answer.trim()),
+        }),
         render: { mode: "preserve-previous" },
         action: async ({ practiceId, answer }, _domain, internal) => {
             if (!practiceId || !answer) return { ok: false };
