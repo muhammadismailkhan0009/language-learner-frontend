@@ -77,7 +77,10 @@ export const wordPracticeFlow = defineFlow<Domain, Internal>({
     submit: {
         input: (_domain, internal) => ({
             practiceId: activePractice(internal)?.id ?? null,
-            answer: normalizeGermanTransliteration(internal.answer.trim()),
+            answer: normalizeGermanTransliteration(
+                internal.answer.trim(),
+                activePractice(internal)?.exactAnswer ?? "",
+            ),
         }),
         render: { mode: "preserve-previous" },
         action: async ({ practiceId, answer }, _domain, internal) => {

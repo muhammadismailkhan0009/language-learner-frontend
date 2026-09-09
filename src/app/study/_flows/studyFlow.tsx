@@ -53,7 +53,10 @@ export const studyFlow = defineFlow<Domain, Internal>({
         input: (_domain, internal) => ({
             sessionId: internal.session?.sessionId ?? null,
             itemId: internal.session?.currentItem?.itemId ?? null,
-            answer: normalizeGermanTransliteration(internal.answer.trim()),
+            answer: normalizeGermanTransliteration(
+                internal.answer.trim(),
+                internal.session?.currentItem?.expectedAnswer ?? "",
+            ),
         }),
         render: { mode: "preserve-previous" },
         action: async ({ sessionId, itemId, answer }, _domain, internal) => {
