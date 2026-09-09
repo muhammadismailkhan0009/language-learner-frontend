@@ -45,6 +45,7 @@ import { CreateStudySessionRequest } from "./types/requests/CreateStudySessionRe
 import { SubmitStudyAnswerRequest } from "./types/requests/SubmitStudyAnswerRequest";
 import { StudySessionResponse } from "./types/responses/StudySessionResponse";
 import { WordPracticeQueueResponse } from "./types/responses/WordPracticeQueueResponse";
+import { SubmitWordPracticeAnswerResponse } from "./types/responses/SubmitWordPracticeAnswerResponse";
 
 const VOCABULARY_REVISION_BATCH_SIZE = 1;
 
@@ -851,12 +852,12 @@ export async function requestWordPracticeGeneration(): Promise<AxiosResponse<Api
 export async function submitWordPracticeAnswer(
     practiceId: string,
     answer: string
-): Promise<AxiosResponse<ApiResponse<boolean>>> {
+): Promise<AxiosResponse<ApiResponse<SubmitWordPracticeAnswerResponse>>> {
     const userId = (await cookies()).get("userId")?.value;
     if (!userId) {
         throw new Error("Missing userId cookie");
     }
-    return await api.post<ApiResponse<boolean>>(`/api/v1/word-practice/${practiceId}/answer`, {
+    return await api.post<ApiResponse<SubmitWordPracticeAnswerResponse>>(`/api/v1/word-practice/${practiceId}/answer`, {
         userId,
         answer,
     });

@@ -85,8 +85,8 @@ export const wordPracticeFlow = defineFlow<Domain, Internal>({
             internal.isSubmitting = true;
             internal.error = null;
             try {
-                const correct = await submitWordPracticeAnswerAction(practiceId, answer);
-                internal.feedback = { correct, submittedAnswer: answer };
+                const result = await submitWordPracticeAnswerAction(practiceId, answer);
+                internal.feedback = { ...result, submittedAnswer: answer };
             } catch (error) {
                 internal.error = error instanceof Error ? error.message : "Failed to check answer";
             } finally {

@@ -11,6 +11,7 @@ import { OutputHandle } from "@myriadcodelabs/uiflow";
 export type WordPracticeFeedback = {
     correct: boolean;
     submittedAnswer: string;
+    vocabularySurface: string;
 };
 
 export type WordPracticeViewInput = {
@@ -114,6 +115,7 @@ export default function WordPracticeView({ input, output }: {
                                     {feedback.correct ? <CheckCircle2 /> : <CircleAlert />}
                                     {feedback.correct ? "Correct" : "Not quite — this stays in your queue"}
                                 </div>
+                                <p className="mt-3 text-sm">Vocabulary: <span className="font-medium">{feedback.vocabularySurface}</span></p>
                                 {!feedback.correct && <p className="mt-3 text-sm">Your answer: <span className="font-medium">{feedback.submittedAnswer}</span></p>}
                                 <p className="mt-1 text-sm">Expected: <span className="font-medium">{practice.exactAnswer}</span></p>
                                 <p className="mt-2 text-sm">{practice.completeSentence}</p>

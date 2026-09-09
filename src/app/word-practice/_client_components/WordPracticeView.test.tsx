@@ -21,10 +21,11 @@ describe("WordPracticeView", () => {
     });
 
     it("shows the submitted and expected answers after an incorrect answer", () => {
-        renderView({ feedback: { correct: false, submittedAnswer: "building" } });
+        renderView({ feedback: { correct: false, submittedAnswer: "building", vocabularySurface: "das Gebäude" } });
 
         expect(screen.getByText("Not quite — this stays in your queue")).toBeInTheDocument();
         expect(screen.getByText("building")).toBeInTheDocument();
+        expect(screen.getByText("das Gebäude")).toBeInTheDocument();
         expect(screen.getByText("house")).toBeInTheDocument();
         expect(screen.getByText("The house is large.")).toBeInTheDocument();
     });
