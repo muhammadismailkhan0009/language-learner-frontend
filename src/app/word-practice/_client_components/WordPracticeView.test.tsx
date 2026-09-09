@@ -15,9 +15,9 @@ const practice = {
 };
 
 describe("WordPracticeView", () => {
-    it("allows a ten-word generation batch only with five or fewer active vocabulary words", () => {
-        expect(canGenerateWordPractices({ activeVocabularyCount: 5, maximumVocabularyCount: 15, generationVocabularyCount: 10, practices: [] })).toBe(true);
-        expect(canGenerateWordPractices({ activeVocabularyCount: 6, maximumVocabularyCount: 15, generationVocabularyCount: 10, practices: [] })).toBe(false);
+    it("allows generation whenever at least one vocabulary slot remains", () => {
+        expect(canGenerateWordPractices({ activeVocabularyCount: 14, maximumVocabularyCount: 15, generationVocabularyCount: 10, practices: [] })).toBe(true);
+        expect(canGenerateWordPractices({ activeVocabularyCount: 15, maximumVocabularyCount: 15, generationVocabularyCount: 10, practices: [] })).toBe(false);
     });
 
     it("shows the submitted and expected answers after an incorrect answer", () => {

@@ -34,7 +34,7 @@ export type WordPracticeViewOutput =
     | { type: "clearMessage" };
 
 export function canGenerateWordPractices(queue: WordPracticeQueueResponse | null): boolean {
-    return !!queue && queue.activeVocabularyCount + queue.generationVocabularyCount <= queue.maximumVocabularyCount;
+    return !!queue && queue.activeVocabularyCount < queue.maximumVocabularyCount;
 }
 
 export default function WordPracticeView({ input, output }: {
@@ -44,7 +44,7 @@ export default function WordPracticeView({ input, output }: {
     const { queue, practice, answer, feedback, isLoading, isGenerating, isSubmitting, error, info } = input;
     const generationAllowed = canGenerateWordPractices(queue);
     const generationReason = queue && !generationAllowed
-        ? `Generation needs room for ${queue.generationVocabularyCount} words. Resolve practices until ${queue.activeVocabularyCount} active words drops to ${queue.maximumVocabularyCount - queue.generationVocabularyCount} or fewer.`
+        ? `Generation is available after at least one active vocabulary word is resolved.`
         : null;
 
     const submit = (event: FormEvent) => {
@@ -75,7 +75,7 @@ export default function WordPracticeView({ input, output }: {
                 <CardContent className="space-y-3">
                     <Button onClick={() => output.emit({ type: "generate" })} disabled={!generationAllowed || isGenerating || isLoading}>
                         {isGenerating ? <Loader2 className="animate-spin" /> : <Sparkles />}
-                        {isGenerating ? "Requesting…" : "Generate 10 words"}
+                        {isGenerating ? "Requesting…" : "Generate up to 10 words"}
                     </Button>
                     {generationReason && <p className="text-sm text-muted-foreground">{generationReason}</p>}
                     {info && <button className="block text-left text-sm text-emerald-700 dark:text-emerald-400" onClick={() => output.emit({ type: "clearMessage" })}>{info}</button>}
